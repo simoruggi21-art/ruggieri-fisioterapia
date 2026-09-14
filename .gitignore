@@ -1,0 +1,5 @@
+.claude/
+.tmp/
+.DS_Store
+sql/
+docs/

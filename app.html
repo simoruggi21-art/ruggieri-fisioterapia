@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Area riservata — Simone Ruggieri Fisioterapista</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="index.html" class="monogram" style="text-decoration:none;">SR</a>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html" style="display:flex; align-items:center; gap:6px;">← Sito pubblico</a>
+        <a href="#agenda" class="auth-only">Agenda<span class="nav-badge" id="agendaBadge" style="display:none;"></span></a>
+        <a href="#mio-percorso" class="patient-only">Il mio percorso</a>
+        <a href="#miei-esercizi" class="patient-only">I miei esercizi</a>
+        <a href="#messaggi" class="auth-only">Messaggi<span class="nav-dot" id="messagesBadge" style="display:none;"></span></a>
+        <a href="#pazienti" class="staff-only">Pazienti</a>
+        <a href="#gestionale" class="admin-only">Gestionale</a>
+        <a href="#situazione-annuale" class="admin-only">Situazione annuale</a>
+        <div class="nav-dropdown admin-only" id="settingsDropdown">
+          <button type="button" class="nav-dropdown-trigger" id="settingsDropdownTrigger">Impostazioni ▾</button>
+          <div class="nav-dropdown-menu" id="settingsMenu">
+            <a href="#profilo" id="settingsNavLink">Impostazioni</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:20px;">
+      <div class="nav-user" id="navUserArea"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- SFONDO FISSO decorativo, identico al sito pubblico -->
+<div class="bg-orbits" aria-hidden="true">
+  <svg width="420" height="420" viewBox="0 0 420 420" id="arcSvg">
+    <circle cx="210" cy="210" r="190" fill="none" stroke="#2E3239" stroke-width="1"/>
+    <circle cx="210" cy="210" r="150" fill="none" stroke="#2E3239" stroke-width="1"/>
+    <path id="orbitArc1" d="M 210 60 A 150 150 0 0 1 353 250" fill="none" stroke="#B08A55" stroke-width="1.6"/>
+    <circle cx="210" cy="210" r="105" fill="none" stroke="#2E3239" stroke-width="1"/>
+    <path id="orbitArc2" d="M 105 210 A 105 105 0 0 1 240 108" fill="none" stroke="#B08A55" stroke-width="1.2" opacity="0.6"/>
+    <circle cx="210" cy="210" r="4" fill="#B08A55"/>
+  </svg>
+</div>
+
+<!-- ACCESSO (login/registrazione) -->
+<section class="section guest-only" id="accesso" style="padding-top:160px;">
+  <div class="container auth-shell">
+    <p class="label" style="text-align:center;">accesso</p>
+    <h2 class="heading-lg" style="text-align:center; margin:0 auto 30px;">Accedi o registrati</h2>
+    <div class="auth-tabs">
+      <button id="authTabLogin" class="active">Accedi</button>
+      <button id="authTabSignup">Registrati</button>
+    </div>
+
+    <form id="loginForm" style="display:flex; flex-direction:column;" autocomplete="on">
+      <div class="auth-field"><label>Email</label><input type="email" id="loginEmail" autocomplete="username" required></div>
+      <div class="auth-field">
+        <label>Password</label>
+        <div class="password-field">
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+          <button type="button" class="password-toggle" data-target="loginPassword" aria-label="Mostra/nascondi password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <label style="display:flex; gap:10px; align-items:center; font-size:13px; color:var(--text-dim); margin-bottom:16px;">
+        <input type="checkbox" id="rememberMeCheckbox" checked>
+        Ricordami su questo dispositivo
+      </label>
+      <button type="submit" class="btn btn-primary">Accedi</button>
+    </form>
+
+    <form id="signupForm" style="display:none; flex-direction:column;" autocomplete="on">
+      <div class="auth-field"><label>Nome e cognome</label><input type="text" id="signupFullName" autocomplete="name" required></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="signupEmail" autocomplete="username" required></div>
+      <div class="auth-field">
+        <label>Password (almeno 6 caratteri)</label>
+        <div class="password-field">
+          <input type="password" id="signupPassword" autocomplete="new-password" minlength="6" required>
+          <button type="button" class="password-toggle" data-target="signupPassword" aria-label="Mostra/nascondi password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="auth-field"><label>Telefono</label><input type="tel" id="signupPhone"></div>
+      <div class="auth-field"><label>Genere</label>
+        <select id="signupGender"><option value="">Preferisco non specificare</option><option value="M">Maschio</option><option value="F">Femmina</option><option value="Altro">Altro</option></select>
+      </div>
+      <div class="auth-field"><label>Data di nascita</label><input type="date" id="signupBirthDate"></div>
+      <label style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:var(--text-dim); margin-bottom:16px;">
+        <input type="checkbox" id="consentCheckbox" required style="margin-top:3px;">
+        Ho letto l'<a href="privacy.html" target="_blank" style="color:var(--accent); border-bottom:1px solid var(--accent-deep);">informativa sulla privacy</a>
+        e acconsento al trattamento dei miei dati, inclusi i dati sanitari, per finalità di cura.
+      </label>
+      <button type="submit" class="btn btn-primary">Crea account</button>
+    </form>
+
+    <p class="auth-error" id="authError"></p>
+    <p class="auth-info" id="authInfo"></p>
+    <p class="auth-gate-note">I tuoi dati sono trattati in modo riservato. Il protocollo di cura e le note cliniche sono visibili solo a te e allo studio.</p>
+  </div>
+</section>
+
+<!-- AGENDA -->
+<section class="section auth-only" id="agenda" style="padding-top:160px;">
+  <div class="container">
+    <div class="booking-head">
+      <div>
+        <p class="label">agenda</p>
+        <h2 class="heading-lg">Agenda</h2>
+        <p class="text-dim" id="weekLabel" style="margin-top:8px;"></p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary btn-small admin-only" id="newApptBtn">+ Nuovo appuntamento</button>
+        <button class="btn btn-ghost btn-small" id="weekPrevBtn">← Settimana prec.</button>
+        <button class="btn btn-ghost btn-small" id="weekTodayBtn">Oggi</button>
+        <button class="btn btn-ghost btn-small" id="weekNextBtn">Settimana succ. →</button>
+        <button class="btn btn-ghost btn-small admin-only" id="closeTodayBtn">Chiudi giornata di oggi</button>
+      </div>
+    </div>
+    <div id="agendaSummary"></div>
+    <div class="move-banner admin-only" id="moveBanner" style="display:none;">
+      <span>Clicca su un orario libero in agenda per spostare lì l'appuntamento.</span>
+      <button class="btn btn-ghost btn-small" id="moveCancelBtn">Annulla spostamento</button>
+    </div>
+    <div class="calendar">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--text-dimmer);"></span> disponibile</span>
+      <span><span class="dot" style="background:var(--warn);"></span> in attesa di conferma</span>
+      <span><span class="dot" style="background:var(--ok);"></span> confermato</span>
+      <span><span class="dot" style="background:var(--text-dim);"></span> agenda chiusa</span>
+    </div>
+    <div class="patient-only" id="apptHistorySection" style="margin-top:50px;">
+      <p class="label">storico</p>
+      <h3 class="heading-lg" style="font-size:22px;">Le mie sedute passate</h3>
+      <div id="apptHistoryList" style="margin-top:20px;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- MESSAGGI -->
+<section class="section auth-only" id="messaggi">
+  <div class="container">
+    <p class="label">messaggi</p>
+    <h2 class="heading-lg">Messaggi</h2>
+    <div class="chat-shell">
+      <div class="thread-list" id="threadList"></div>
+      <div class="chat-main">
+        <div class="chat-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <span id="chatHeader">Conversazione</span>
+          <button class="btn btn-ghost btn-small staff-only" id="deleteChatBtn" style="font-size:12px; padding:6px 12px;">Elimina conversazione</button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <button class="icon-btn" id="attachBtn" title="Allega referto (PDF/immagine)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5V7a4 4 0 0 0-4-4H10a4 4 0 0 0-4 4v12a3 3 0 0 0 3 3h6"/><path d="M13 21l7-7a2.5 2.5 0 0 0-3.5-3.5L9 18v3h3z"/></svg>
+          </button>
+          <input type="file" id="fileInput" style="display:none" accept=".pdf,image/*">
+          <input type="text" id="chatText" placeholder="Scrivi un messaggio…">
+          <button class="icon-btn" id="sendBtn" title="Invia">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IL MIO PERCORSO (paziente) -->
+<section class="section patient-only" id="mio-percorso">
+  <div class="container">
+    <p class="label">il mio percorso</p>
+    <h2 class="heading-lg">Protocollo ed esercizi</h2>
+    <p class="text-dim" style="margin-top:10px;">Il piano che lo studio ha preparato per te. Le eventuali note cliniche interne non sono mostrate qui.</p>
+    <div class="record-block public" style="margin-top:30px;">
+      <p id="myProtocolText" class="text-dim" style="white-space:pre-line; line-height:1.7;"></p>
+    </div>
+  </div>
+</section>
+
+<!-- I MIEI ESERCIZI (paziente) -->
+<section class="section patient-only" id="miei-esercizi">
+  <div class="container">
+    <p class="label">i miei esercizi</p>
+    <h2 class="heading-lg">Esercizi assegnati</h2>
+    <p class="text-dim" style="margin-top:10px;">Gli esercizi che il tuo fisioterapista ha scelto per te.</p>
+    <div id="myExercisesList" style="margin-top:30px; display:flex; flex-direction:column; gap:14px;"></div>
+  </div>
+</section>
+
+<!-- SCHEDE PAZIENTI (staff) -->
+<section class="section staff-only" id="pazienti">
+  <div class="container">
+    <div class="booking-head">
+      <div>
+        <p class="label">pazienti</p>
+        <h2 class="heading-lg">Schede pazienti</h2>
+      </div>
+      <button class="btn btn-primary btn-small admin-only" id="registerPatientBtn">+ Registra nuovo paziente</button>
+    </div>
+    <div class="chat-shell" style="height:auto;">
+      <div class="thread-list" id="patientList" style="max-height:560px;"></div>
+      <div class="chat-main" style="padding:26px 30px;">
+        <div id="patientDetail"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GESTIONALE (admin) -->
+<section class="section admin-only" id="gestionale">
+  <div class="container">
+    <p class="label">gestionale</p>
+    <h2 class="heading-lg">Incasso e tasse</h2>
+    <div class="finance-grid">
+      <div>
+        <div class="bars" id="barsChart"></div>
+        <p class="text-dim" style="font-size:13px; margin-top:14px;">Incasso mensile, ultimi 6 mesi (clicca su un valore per modificarlo)</p>
+      </div>
+      <div class="tax-box">
+        <div class="row"><span class="text-dim">Incasso mese corrente</span><span id="curMonth" style="font-family:'Fraunces',serif;">€0</span></div>
+        <div class="row">
+          <span class="text-dim">Accantonamento rapido (% libera)</span>
+          <span><input type="number" id="taxRate" value="22" min="0" max="60"> %</span>
+        </div>
+        <p class="text-dim" style="font-size:13px; margin-top:14px;">Da accantonare questo mese</p>
+        <p class="tax-result" id="taxResult">€0</p>
+        <p class="disclaimer">Calcolo a percentuale libera, utile per un accantonamento veloce mese per mese.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SITUAZIONE ANNUALE (admin) -->
+<section class="section admin-only" id="situazione-annuale">
+  <div class="container">
+    <p class="label">situazione annuale</p>
+    <h2 class="heading-lg">Quanto pago davvero, in base al mio regime</h2>
+    <div class="mode-toggle" style="display:flex; border:1px solid var(--line); border-radius:20px; overflow:hidden; width:fit-content; margin-top:22px;">
+      <button id="btnForfettario" class="active" style="padding:8px 20px; background:var(--accent-soft); color:var(--accent); border:none; font-size:14px;">Forfettario</button>
+      <button id="btnOrdinario" style="padding:8px 20px; background:transparent; color:var(--text-dim); border:none; font-size:14px;">Ordinario</button>
+    </div>
+
+    <div class="finance-grid" style="margin-top:30px;">
+      <div class="tax-box">
+        <div class="row"><span class="text-dim">Fatturato annuo stimato</span><span><input type="number" id="annualRevenue" value="30000" min="0" step="500"> €</span></div>
+
+        <div id="forfettarioFields">
+          <div class="row"><span class="text-dim">Coefficiente redditività (ATECO 86.95.00)</span><span><input type="number" id="coeffRedd" value="78" min="0" max="100"> %</span></div>
+          <div class="row"><span class="text-dim">Aliquota imposta sostitutiva</span>
+            <span>
+              <select id="aliquotaSostitutiva">
+                <option value="5">5% — nuova attività, primi 5 anni</option>
+                <option value="15">15% — regime ordinario forfettario</option>
+              </select>
+            </span>
+          </div>
+        </div>
+
+        <div id="ordinarioFields" style="display:none;">
+          <div class="row"><span class="text-dim">Spese deducibili stimate (annue)</span><span><input type="number" id="deductExpenses" value="4000" min="0" step="100"> €</span></div>
+          <div class="row"><span class="text-dim">Addizionali regionali/comunali</span><span><input type="number" id="addRegCom" value="2" min="0" max="10" step="0.1"> %</span></div>
+        </div>
+
+        <div class="row"><span class="text-dim">Contributi Gestione Separata INPS</span><span><input type="number" id="inpsRate" value="26.07" min="0" max="40" step="0.01"> %</span></div>
+        <p class="disclaimer">I fisioterapisti non hanno una cassa previdenziale dedicata: versano alla Gestione Separata INPS (26,07% senza altra copertura obbligatoria, 24% con altra copertura).</p>
+      </div>
+
+      <div class="tax-box">
+        <div class="row"><span class="text-dim">Reddito imponibile</span><span id="outImponibile" style="font-family:'Fraunces',serif;">€0</span></div>
+        <div class="row"><span class="text-dim">Contributi INPS dovuti</span><span id="outInps" style="font-family:'Fraunces',serif;">€0</span></div>
+        <div class="row"><span class="text-dim" id="outTaxLabel">Imposta sostitutiva</span><span id="outTax" style="font-family:'Fraunces',serif;">€0</span></div>
+        <div class="row" id="outAddRow" style="display:none;"><span class="text-dim">Addizionali regionali/comunali</span><span id="outAdd" style="font-family:'Fraunces',serif;">€0</span></div>
+        <p class="text-dim" style="font-size:13px; margin-top:16px;">Totale annuo da accantonare</p>
+        <p class="tax-result" id="outTotal">€0</p>
+        <p class="text-dim" style="font-size:13px; margin-top:8px;">Netto stimato dopo tasse e contributi</p>
+        <p class="tax-result" id="outNet" style="color:var(--ok); font-size:22px;">€0</p>
+        <p class="disclaimer">Simulazione indicativa basata sulle regole 2026 (aliquote IRPEF 23/33/43%, coefficiente ATECO 86.95.00, Gestione Separata INPS). Non considera detrazioni personali, altre entrate o casi particolari — verifica sempre con il tuo commercialista prima di accantonare o versare.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPOSTAZIONI (admin): profilo, servizi/tariffe, blog, operatori -->
+<section class="section admin-only" id="profilo">
+  <div class="container">
+    <p class="label">impostazioni</p>
+    <h2 class="heading-lg">Impostazioni</h2>
+    <p class="text-dim" style="margin-top:10px; max-width:600px;">Da qui personalizzi tutto ciò che i visitatori vedono sul sito pubblico e gestisci il tuo team. Le prenotazioni, i pazienti e i messaggi si gestiscono invece dalle rispettive sezioni nel menu qui sopra.</p>
+
+    <p class="label" style="margin-top:60px;">1</p>
+    <h2 class="heading-lg" style="font-size:26px;">Impostazioni profilo</h2>
+
+    <div class="two-col" style="margin-top:30px; align-items:flex-start;">
+      <div>
+        <div class="photo-slot" id="profilePhotoPreview" style="max-width:280px;">
+          <span class="initials" id="profilePreviewInitials">SR</span>
+        </div>
+        <input type="file" id="profilePhotoInput" accept="image/*" style="display:none">
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button class="btn btn-ghost btn-small" id="uploadPhotoBtn">Carica foto</button>
+          <button class="btn btn-ghost btn-small" id="removePhotoBtn">Rimuovi foto</button>
+        </div>
+        <p class="disclaimer">Consigliata una foto verticale, sotto i 2 MB.</p>
+
+        <div style="margin-top:28px;">
+          <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:8px;">Foto "in seduta" (facoltativa)</label>
+          <div class="photo-slot photo-slot-sm" id="actionPhotoPreview" style="max-width:180px;"></div>
+          <input type="file" id="actionPhotoInput" accept="image/*" style="display:none">
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn btn-ghost btn-small" id="uploadActionPhotoBtn">Carica foto</button>
+            <button class="btn btn-ghost btn-small" id="removeActionPhotoBtn">Rimuovi</button>
+          </div>
+        </div>
+
+        <div style="margin-top:28px;">
+          <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:8px;">Foto "dettaglio" (facoltativa)</label>
+          <div class="photo-slot photo-slot-sm" id="detailPhotoPreview" style="max-width:180px;"></div>
+          <input type="file" id="detailPhotoInput" accept="image/*" style="display:none">
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn btn-ghost btn-small" id="uploadDetailPhotoBtn">Carica foto</button>
+            <button class="btn btn-ghost btn-small" id="removeDetailPhotoBtn">Rimuovi</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="record-block public">
+          <div class="rb-title">Dati principali</div>
+          <div style="display:flex; flex-direction:column; gap:14px; margin-top:10px;">
+            <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Nome e cognome</label><input type="text" id="profileNameInput" style="width:100%;"></div>
+            <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Qualifica (sotto il titolo in home)</label><input type="text" id="profileTaglineInput" style="width:100%;"></div>
+            <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Biografia</label><textarea id="profileBioInput" style="width:100%; min-height:110px;"></textarea></div>
+            <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Formazione</label><input type="text" id="profileFormazioneInput" style="width:100%;"></div>
+            <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Specializzazione</label><input type="text" id="profileSpecInput" style="width:100%;"></div>
+            <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Albo professionale</label><input type="text" id="profileAlboInput" style="width:100%;"></div>
+            <div>
+              <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Indirizzo dello studio</label>
+              <input type="text" id="profileAddressInput" placeholder="Via Roma 1, 20100 Milano MI" style="width:100%;">
+            </div>
+            <div>
+              <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Telefono (mostrato pubblicamente)</label>
+              <input type="tel" id="profilePhoneInput" placeholder="+39 333 1234567" style="width:100%;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="record-block public" style="margin-top:40px;">
+      <div class="rb-title">Testo dell'hero</div>
+      <div style="display:flex; flex-direction:column; gap:14px; margin-top:10px;">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:160px;"><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Titolo — riga 1</label><input type="text" id="heroLine1Input" style="width:100%;"></div>
+          <div style="flex:1; min-width:160px;"><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Titolo — riga 2</label><input type="text" id="heroLine2Input" style="width:100%;"></div>
+          <div style="flex:1; min-width:160px;"><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Titolo — riga 3</label><input type="text" id="heroLine3Input" style="width:100%;"></div>
+        </div>
+        <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Paragrafo introduttivo</label><textarea id="heroLedeInput" style="width:100%; min-height:90px;"></textarea></div>
+      </div>
+    </div>
+
+    <div class="record-block public" style="margin-top:30px;">
+      <div class="rb-title">Nota collaborazione FIJLKAM</div>
+      <textarea id="fijlkamNoteInput" style="width:100%; min-height:80px; margin-top:8px;"></textarea>
+    </div>
+
+    <div class="record-block public" style="margin-top:30px;">
+      <div class="rb-title">Contatti e social</div>
+      <div style="display:flex; flex-direction:column; gap:14px; margin-top:10px;">
+        <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Nome utente Instagram (senza @)</label><input type="text" id="igHandleInput" style="width:100%;"></div>
+        <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Email di contatto (mostrata nel footer)</label><input type="text" id="footerEmailInput" style="width:100%;"></div>
+        <div>
+          <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Link "Lascia una recensione" (da Google Business Profile)</label>
+          <input type="text" id="googleReviewUrlInput" placeholder="https://g.page/r/.../review" style="width:100%;">
+          <p class="disclaimer" style="margin-top:6px;">Lo trovi nel pannello del tuo Google Business Profile una volta verificata l'attività. Finché è vuoto, il pulsante non compare nel footer.</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-small" id="saveProfileBtn" style="margin-top:30px;">Salva tutto</button>
+    <p class="disclaimer" id="profileSaveStatus"></p>
+
+    <p class="label" style="margin-top:70px;">2</p>
+    <h2 class="heading-lg" style="font-size:26px;">Servizi e tariffe</h2>
+    <div class="record-block public" style="margin-top:20px;">
+      <div class="booking-head" style="margin-bottom:20px;">
+        <div class="rb-title" style="margin-bottom:0;">Trattamenti proposti</div>
+        <button class="btn btn-ghost btn-small" id="addServiceBtn">+ Nuovo trattamento</button>
+      </div>
+      <div id="servicesEditor" style="display:flex; flex-direction:column; gap:16px;"></div>
+    </div>
+
+    <p class="label" style="margin-top:70px;">3</p>
+    <h2 class="heading-lg" style="font-size:26px;">Blog</h2>
+    <p class="text-dim" style="margin-top:14px; max-width:560px;">Articoli pubblicati sul sito pubblico, ognuno con una propria pagina indicizzabile da Google.</p>
+    <div class="record-block public" style="margin-top:20px;">
+      <div class="booking-head" style="margin-bottom:20px;">
+        <div class="rb-title" style="margin-bottom:0;">Nuovo articolo</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Titolo</label><input type="text" id="blogTitleInput" style="width:100%;" placeholder="Es. Lombalgia cronica: cosa dice la ricerca"></div>
+        <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Riassunto (mostrato nell'elenco)</label><input type="text" id="blogExcerptInput" style="width:100%;" placeholder="Una frase che riassume l'articolo"></div>
+        <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Contenuto</label><textarea id="blogContentInput" style="width:100%; min-height:180px;" placeholder="Testo dell'articolo. Lascia una riga vuota tra un paragrafo e l'altro."></textarea></div>
+        <label style="display:flex; gap:10px; align-items:center; font-size:13px; color:var(--text-dim);">
+          <input type="checkbox" id="blogPublishedInput" checked>
+          Pubblicato (visibile sul sito pubblico)
+        </label>
+      </div>
+      <button class="btn btn-primary btn-small" id="blogSaveBtn" style="margin-top:16px;">Pubblica articolo</button>
+      <button class="btn btn-ghost btn-small" id="blogCancelEditBtn" style="margin-top:16px; display:none;">Annulla modifica</button>
+    </div>
+    <div id="blogAdminList" style="margin-top:24px; display:flex; flex-direction:column; gap:10px;"></div>
+
+    <p class="label" style="margin-top:70px;">4</p>
+    <h2 class="heading-lg" style="font-size:26px;">Operatori</h2>
+    <p class="text-dim" style="margin-top:14px; max-width:560px;">
+      Per aggiungere un nuovo operatore: nel pannello Supabase vai su <strong>Authentication → Users → Invite user</strong>
+      e inserisci la sua email. Poi apri <strong>Table Editor → profiles</strong>, trova la riga appena creata
+      (verrà inizialmente inserita come "patient") e cambia il campo <code>role</code> in <code>operator</code>.
+      Da quel momento comparirà qui sotto e potrai assegnargli dei pazienti.
+    </p>
+    <div class="calendar" style="margin-top:30px;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:var(--bg-alt);">
+            <th style="text-align:left; padding:14px 18px; font-size:13px; color:var(--text-dim); border-bottom:1px solid var(--line); font-weight:500;">Nome</th>
+            <th style="text-align:left; padding:14px 18px; font-size:13px; color:var(--text-dim); border-bottom:1px solid var(--line); font-weight:500;">Email</th>
+            <th style="text-align:left; padding:14px 18px; font-size:13px; color:var(--text-dim); border-bottom:1px solid var(--line); font-weight:500;">Pazienti assegnati</th>
+          </tr>
+        </thead>
+        <tbody id="operatorsTableBody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:60px;">
+      <p class="label">assegnazione pazienti</p>
+      <h2 class="heading-lg" style="font-size:22px;">Chi segue chi</h2>
+      <div class="calendar" style="margin-top:24px;">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--bg-alt);">
+              <th style="text-align:left; padding:14px 18px; font-size:13px; color:var(--text-dim); border-bottom:1px solid var(--line); font-weight:500;">Paziente</th>
+              <th style="text-align:left; padding:14px 18px; font-size:13px; color:var(--text-dim); border-bottom:1px solid var(--line); font-weight:500;">Assegnato a</th>
+            </tr>
+          </thead>
+          <tbody id="assignmentTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p class="text-dim" style="font-size:13.5px;"><a href="index.html" style="color:var(--accent); border-bottom:1px solid var(--accent-deep);">← Torna al sito pubblico</a></p>
+    <p class="fine">© <span id="footerYear"></span> Simone Ruggieri — area riservata. <a href="privacy.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Informativa privacy</a> · <a href="#" id="cookiePreferencesLink" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Preferenze cookie</a></p>
+  </div>
+</footer>
+
+<!-- CONFERMA REGISTRAZIONE -->
+<div class="modal-overlay" id="signupSuccessOverlay" style="display:none;">
+  <div class="modal-box" style="text-align:center;">
+    <button class="modal-close" id="signupSuccessCloseBtn" aria-label="Chiudi">✕</button>
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" style="margin:0 auto 20px;">
+      <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>
+    </svg>
+    <h3 class="heading-lg" style="font-size:24px;">Controlla la tua email</h3>
+    <p class="text-dim" style="margin-top:14px; line-height:1.6;">
+      Ti abbiamo inviato un'email di conferma. Apri il link che contiene per attivare il tuo account, poi torna qui e accedi.
+    </p>
+    <button class="btn btn-primary btn-small" id="signupSuccessOkBtn" style="margin-top:26px;">Ho capito, vai al login</button>
+  </div>
+</div>
+
+<!-- CHECK-IN DI SALUTE (popup periodico) -->
+<div class="modal-overlay" id="checkinOverlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="checkinCloseBtn" aria-label="Chiudi">✕</button>
+    <p class="label">check-in di salute</p>
+    <h3 class="heading-lg" style="font-size:26px;" id="checkinTitle">Come stai?</h3>
+    <p class="text-dim" id="checkinSubtitle" style="margin-top:6px; margin-bottom:24px;"></p>
+    <form id="checkinForm"></form>
+    <p class="text-dim" style="font-size:12.5px; margin-top:16px;">Puoi chiudere e rispondere più tardi — te lo richiederemo di nuovo.</p>
+  </div>
+</div>
+
+<!-- DETTAGLIO APPUNTAMENTO (admin: sposta / annulla / scheda trattamento) -->
+<div class="modal-overlay" id="apptDetailOverlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="apptDetailCloseBtn" aria-label="Chiudi">✕</button>
+    <p class="label">appuntamento</p>
+    <h3 class="heading-lg" style="font-size:22px;" id="apptDetailTitle"></h3>
+    <p class="text-dim" id="apptDetailMeta" style="margin-top:6px;"></p>
+
+    <div style="display:flex; gap:10px; margin:22px 0; flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-small" id="apptMoveBtn">Sposta appuntamento</button>
+      <button class="btn btn-ghost btn-small" id="apptCancelBtn">Annulla prenotazione</button>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Prezzo di questa seduta (€)</label>
+      <input type="number" id="apptPriceInput" min="0" step="0.5" placeholder="Lascia vuoto per usare il listino standard" style="width:100%;">
+    </div>
+    <div class="record-block private">
+      <div class="rb-title">Scheda di trattamento — questa seduta</div>
+      <textarea id="apptTreatmentText" placeholder="Cosa è stato fatto in questa seduta, osservazioni, risposta del paziente..."></textarea>
+    </div>
+    <button class="btn btn-primary btn-small" id="apptSaveTreatmentBtn">Salva scheda</button>
+  </div>
+</div>
+
+<!-- NUOVA PRENOTAZIONE MANUALE (admin) -->
+<div class="modal-overlay" id="newApptOverlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="newApptCloseBtn" aria-label="Chiudi">✕</button>
+    <p class="label">nuova prenotazione</p>
+    <h3 class="heading-lg" style="font-size:22px;">Prenota per un paziente</h3>
+
+    <div style="display:flex; gap:12px; margin-top:18px; margin-bottom:8px;">
+      <div style="flex:1;">
+        <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:6px;">Data</label>
+        <input type="date" id="newApptDateInput" style="width:100%;">
+      </div>
+      <div style="flex:1;">
+        <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:6px;">Ora (passi da 30 min, 8:00-18:00)</label>
+        <input type="time" id="newApptTimeInput" step="1800" min="08:00" max="18:00" style="width:100%;">
+      </div>
+    </div>
+    <p class="text-dim" id="newApptMeta" style="margin-top:4px; margin-bottom:22px; font-size:13px;"></p>
+
+    <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:6px;">Paziente</label>
+    <select id="newApptPatientSelect" style="width:100%; margin-bottom:12px;"></select>
+    <button type="button" class="btn btn-ghost btn-small" id="newPatientToggleBtn" style="margin-bottom:20px;">+ Il paziente non è ancora registrato</button>
+
+    <div id="newPatientFields" style="display:none; flex-direction:column; gap:14px; margin-bottom:20px; border:1px solid var(--line); border-radius:4px; padding:16px;">
+      <p class="text-dim" style="font-size:12.5px;">Crea un profilo per un paziente non registrato (nessuna email di invito verrà inviata).</p>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Nome e cognome *</label><input type="text" id="newPatientName" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Email *</label><input type="email" id="newPatientEmail" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Telefono</label><input type="tel" id="newPatientPhone" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Genere</label>
+        <select id="newPatientGender"><option value="">Preferisco non specificare</option><option value="M">Maschio</option><option value="F">Femmina</option><option value="Altro">Altro</option></select>
+      </div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Data di nascita</label><input type="date" id="newPatientBirthDate" style="width:100%;"></div>
+    </div>
+
+    <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:6px;">Prezzo personalizzato (€)</label>
+    <input type="number" id="newApptPrice" min="0" step="0.5" placeholder="Lascia vuoto per usare il listino standard" style="width:100%; margin-bottom:20px;">
+
+    <button class="btn btn-primary btn-small" id="newApptConfirmBtn">Crea prenotazione</button>
+  </div>
+</div>
+
+<!-- REGISTRA NUOVO PAZIENTE (admin, senza prenotazione contestuale) -->
+<div class="modal-overlay" id="registerPatientOverlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="registerPatientCloseBtn" aria-label="Chiudi">✕</button>
+    <p class="label">nuovo paziente</p>
+    <h3 class="heading-lg" style="font-size:22px;">Registra nuovo paziente</h3>
+    <p class="text-dim" style="margin-top:8px; margin-bottom:22px; font-size:13px;">Crea un profilo paziente senza prenotare subito una seduta (nessuna email di invito verrà inviata).</p>
+
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Nome e cognome *</label><input type="text" id="regPatientName" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Email *</label><input type="email" id="regPatientEmail" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Telefono</label><input type="tel" id="regPatientPhone" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Genere</label>
+        <select id="regPatientGender"><option value="">Preferisco non specificare</option><option value="M">Maschio</option><option value="F">Femmina</option><option value="Altro">Altro</option></select>
+      </div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Data di nascita</label><input type="date" id="regPatientBirthDate" style="width:100%;"></div>
+    </div>
+
+    <button class="btn btn-primary btn-small" id="registerPatientConfirmBtn" style="margin-top:24px;">Crea paziente</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="js/app.js"></script>
+<script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
+</body>
+</html>

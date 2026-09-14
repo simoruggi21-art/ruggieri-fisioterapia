@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Articolo — Simone Ruggieri Fisioterapista</title>
+<meta name="description" id="pageDescription" content="Articolo del blog di Simone Ruggieri, fisioterapista.">
+<link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/index.html" style="display:flex;align-items:center;gap:14px; text-decoration:none;">
+      <div class="monogram">SR</div>
+      <span class="text-dim" data-i18n="blogpost.backToSite">Torna al sito</span>
+    </a>
+    <span id="langSwitcherMount"></span>
+  </div>
+</nav>
+
+<section class="section" style="padding-top:160px;">
+  <div class="container" style="max-width:760px;">
+    <a href="/index.html#blog" class="text-dim" style="font-size:13.5px; border-bottom:1px solid var(--line);" data-i18n="blogpost.backToAll">← Tutti gli articoli</a>
+
+    <div id="postBody" style="margin-top:34px;">
+      <h1 class="heading-lg" id="postTitle" style="font-size:38px;"></h1>
+      <div id="postContent" class="text-dim" style="margin-top:30px; line-height:1.85; white-space:pre-line; font-size:16px;"></div>
+    </div>
+
+    <div id="notFoundMsg" style="display:none;">
+      <p class="label" style="margin-top:30px;" data-i18n="blogpost.notFoundLabel">articolo non trovato</p>
+      <h2 class="heading-lg" data-i18n="blogpost.notFoundTitle">Questo articolo non esiste o non è più disponibile.</h2>
+      <p class="text-dim" style="margin-top:16px;"><a href="/index.html#blog" style="color:var(--accent); border-bottom:1px solid var(--accent-deep);" data-i18n="blogpost.notFoundBack">Torna al blog</a></p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p class="fine">© <span id="footerYear"></span> Simone Ruggieri — <a href="/privacy.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.privacyLink">Informativa privacy</a> · <a href="#" id="cookiePreferencesLink" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.cookiePrefs">Preferenze cookie</a></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="/js/blog-post.js"></script>
+<script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
+</body>
+</html>

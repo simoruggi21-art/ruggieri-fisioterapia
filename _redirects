@@ -1,0 +1,5 @@
+# Ogni articolo del blog vive su /blog/<slug>: Netlify serve il contenuto di
+# blog-post.html mantenendo l'indirizzo originale nel browser (rewrite, non
+# redirect: status 200), cosi' ogni articolo ha una propria pagina indicizzabile
+# anche se il sito e' statico e gli articoli vivono nel database.
+/blog/*  /blog-post.html  200
