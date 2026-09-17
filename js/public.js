@@ -1,7 +1,8 @@
 import * as publicContent from './publicContent.js';
 import * as blog from './blog.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
-import { applyTranslations, wireLanguageSwitcher } from './i18n.js';
+import { applyTranslations, wireLanguageSwitcher, t } from './i18n.js';
+import { initTheme, wireThemeTrigger } from './theme.js';
 
 // Sfondo decorativo fisso (vedi .bg-orbits in index.html/styles.css): i
 // cerchi restano fermi, i due archi dorati ruotano attorno al centro (210,210
@@ -83,6 +84,8 @@ async function renderLocalizedContent() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   wireOrbitBackground();
+  initTheme();
+  wireThemeTrigger(() => ({ text: t('theme.text'), dark: t('theme.dark'), light: t('theme.light') }));
   initCookieBanner();
   document.getElementById('cookiePreferencesLink')?.addEventListener('click', (e) => { e.preventDefault(); reopenCookieBanner(); });
   wireLanguageSwitcher(document.getElementById('langSwitcherMount'), renderLocalizedContent);
