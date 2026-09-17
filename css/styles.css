@@ -166,9 +166,9 @@ nav{
 }
 .nav-dropdown-trigger:hover{color:var(--text);}
 .nav-dropdown-menu{
-  display:none; position:absolute; top:calc(100% + 14px); left:0; min-width:170px;
+  display:none; position:fixed; min-width:170px;
   background:var(--surface); border:1px solid var(--line); border-radius:4px;
-  padding:6px; box-shadow:0 10px 30px rgba(0,0,0,.35); z-index:20;
+  padding:6px; box-shadow:0 10px 30px rgba(0,0,0,.35); z-index:150;
 }
 .nav-dropdown-menu.open{display:block;}
 .nav-dropdown-menu a{
