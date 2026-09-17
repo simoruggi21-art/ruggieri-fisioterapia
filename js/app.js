@@ -69,15 +69,34 @@ async function boot(state) {
 // "Impostazioni" si apre come schermata a se stante (vedi CSS
 // body.showing-settings) invece che con il normale scroll: la tendina la
 // apre, un click su un qualsiasi altro link della nav la richiude.
+// Il menu viene spostato come figlio diretto di <body> e posizionato con
+// position:fixed calcolato dal trigger, invece di restare dentro
+// .nav-inner: sotto gli 860px quel contenitore diventa scorrevole
+// (overflow-x:auto, che per spec CSS clippa anche in verticale) e
+// taglierebbe via il menu, rendendolo invisibile.
 function wireSettingsDropdown() {
   const trigger = qs('#settingsDropdownTrigger');
   const menu = qs('#settingsMenu');
   const settingsLink = qs('#settingsNavLink');
   if (!trigger || !menu || !settingsLink) return;
 
-  trigger.onclick = (e) => { e.stopPropagation(); menu.classList.toggle('open'); };
+  document.body.appendChild(menu);
+
+  function positionMenu() {
+    const r = trigger.getBoundingClientRect();
+    menu.style.top = `${r.bottom + 8}px`;
+    menu.style.left = `${r.left}px`;
+  }
+
+  trigger.onclick = (e) => {
+    e.stopPropagation();
+    const opening = !menu.classList.contains('open');
+    if (opening) positionMenu();
+    menu.classList.toggle('open');
+  };
   document.addEventListener('click', () => menu.classList.remove('open'));
   menu.addEventListener('click', (e) => e.stopPropagation());
+  window.addEventListener('resize', () => { if (menu.classList.contains('open')) positionMenu(); });
 
   settingsLink.onclick = () => {
     document.body.classList.add('showing-settings');

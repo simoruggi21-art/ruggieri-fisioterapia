@@ -17,6 +17,7 @@
   --shadow-sm:0 4px 14px rgba(0,0,0,.28);
   --shadow-md:0 10px 28px rgba(0,0,0,.34);
   --shadow-lg:0 24px 60px rgba(0,0,0,.45);
+  --nav-bg:rgba(20,22,26,0.86);
   --ease:cubic-bezier(.2,.7,.3,1);
 }
 /* Modalita' chiara dell'area riservata (solo app.html — pulsante nella barra
@@ -40,6 +41,7 @@ body.light-theme{
   --shadow-sm:0 4px 14px rgba(26,43,51,.10);
   --shadow-md:0 10px 28px rgba(26,43,51,.12);
   --shadow-lg:0 24px 60px rgba(26,43,51,.16);
+  --nav-bg:rgba(248,249,248,0.86);
 }
 /* Venature marmoree del fondo chiaro: layer fisso dietro a tutto, incluso
    .bg-orbits (z-index:-1), cosi' i cerchi e l'arco dorato che ruota con lo
@@ -117,7 +119,7 @@ input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accen
 /* NAV */
 nav{
   position:fixed; top:0; left:0; right:0; z-index:100;
-  background:rgba(20,22,26,0.86); backdrop-filter:blur(10px);
+  background:var(--nav-bg); backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);
   box-shadow:0 12px 30px -18px rgba(0,0,0,.6);
 }
@@ -164,9 +166,9 @@ nav{
 }
 .nav-dropdown-trigger:hover{color:var(--text);}
 .nav-dropdown-menu{
-  display:none; position:absolute; top:calc(100% + 14px); left:0; min-width:170px;
+  display:none; position:fixed; min-width:170px;
   background:var(--surface); border:1px solid var(--line); border-radius:4px;
-  padding:6px; box-shadow:0 10px 30px rgba(0,0,0,.35); z-index:20;
+  padding:6px; box-shadow:0 10px 30px rgba(0,0,0,.35); z-index:150;
 }
 .nav-dropdown-menu.open{display:block;}
 .nav-dropdown-menu a{
