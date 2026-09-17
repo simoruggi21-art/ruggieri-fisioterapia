@@ -26,6 +26,37 @@ function wireOrbitBackground() {
   update();
 }
 
+// Tocco di dinamismo leggero: le card servizi/blog e le righe di
+// credenziali/FAQ compaiono con una dissolvenza quando entrano nello
+// schermo, invece di essere gia' tutte visibili al caricamento. La classe
+// "scroll-reveal" (stato nascosto) viene aggiunta via JS solo agli elementi
+// gia' presenti nel DOM: se questo script non parte, il contenuto resta
+// semplicemente visibile fin da subito (nessun effetto, nessun contenuto
+// perso). Richiamata dopo ogni render, ma ogni elemento viene osservato una
+// sola volta (data-revealed) anche al cambio lingua.
+let revealObserver = null;
+function wireScrollReveal() {
+  if (!revealObserver) {
+    revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -40px 0px' });
+  }
+  document.querySelectorAll('.price-row, .faq-item, .credential-row').forEach((el) => {
+    if (el.dataset.revealed) return;
+    el.dataset.revealed = 'true';
+    el.classList.add('scroll-reveal');
+    revealObserver.observe(el);
+    // Se l'elemento e' gia' dentro il viewport al momento in cui viene
+    // osservato (es. sopra la piega), l'observer lo segnala quasi subito;
+    // nessun bisogno di un controllo aggiuntivo qui.
+  });
+}
+
 // Richiamata al primo caricamento e ogni volta che il visitatore cambia
 // lingua dal selettore: il testo statico si aggiorna subito (applyTranslations),
 // mentre bio/servizi/articoli — che vivono nel database con colonne per
@@ -47,6 +78,7 @@ async function renderLocalizedContent() {
   } catch (err) {
     console.error('Errore nel caricamento delle FAQ:', err);
   }
+  wireScrollReveal();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

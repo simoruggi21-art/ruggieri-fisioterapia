@@ -3,3 +3,4 @@
 .DS_Store
 sql/
 docs/
+.mcp.json

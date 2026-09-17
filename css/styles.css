@@ -500,6 +500,14 @@ body:not(.authed) .guest-only{display:block;}
   .nav-user{flex-shrink:0;}
 }
 
+/* Comparsa leggera allo scroll: usata da wireScrollReveal() in public.js su
+   card servizi/blog/FAQ e righe di credenziali — un tocco di dinamismo senza
+   toccare la palette o la tipografia esistenti. Stato iniziale gia' visibile
+   (.scroll-reveal viene aggiunta via JS solo quando l'observer e' pronto),
+   cosi' il contenuto non sparisce mai se lo script non parte. */
+.scroll-reveal{opacity:0; transform:translateY(22px); transition:opacity .6s var(--ease), transform .6s var(--ease);}
+.scroll-reveal.in{opacity:1; transform:none;}
+
 /* Selettore lingua nel nav: uno <select> nativo, piu' semplice e accessibile
    di un dropdown custom per sole 5 opzioni. */
 #langSwitcher{
