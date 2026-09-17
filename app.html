@@ -93,10 +93,9 @@
         <select id="signupGender"><option value="">Preferisco non specificare</option><option value="M">Maschio</option><option value="F">Femmina</option><option value="Altro">Altro</option></select>
       </div>
       <div class="auth-field"><label>Data di nascita</label><input type="date" id="signupBirthDate"></div>
-      <label style="display:flex; gap:10px; align-items:flex-start; font-size:13px; color:var(--text-dim); margin-bottom:16px;">
-        <input type="checkbox" id="consentCheckbox" required style="margin-top:3px;">
-        Ho letto l'<a href="privacy.html" target="_blank" style="color:var(--accent); border-bottom:1px solid var(--accent-deep);">informativa sulla privacy</a>
-        e acconsento al trattamento dei miei dati, inclusi i dati sanitari, per finalità di cura.
+      <label class="consent-label">
+        <input type="checkbox" id="consentCheckbox" required>
+        <span>Ho letto l'<a href="privacy.html" target="_blank" onclick="event.stopPropagation()">informativa sulla privacy</a> e acconsento al trattamento dei miei dati, inclusi i dati sanitari, per finalità di cura.</span>
       </label>
       <button type="submit" class="btn btn-primary">Crea account</button>
     </form>
