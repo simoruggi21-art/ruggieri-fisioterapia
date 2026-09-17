@@ -180,6 +180,28 @@ function wireOrbitBackground() {
   update();
 }
 
+// Modalita' chiara dell'area riservata, salvata per il prossimo accesso sullo
+// stesso browser (localStorage, come per "ricordami" e la lingua del sito
+// pubblico). Il link nel footer alterna testo e classe ad ogni click.
+const THEME_KEY = 'appTheme';
+
+function applyTheme(theme) {
+  document.body.classList.toggle('light-theme', theme === 'light');
+  const link = qs('#themeToggleLink');
+  if (link) link.textContent = theme === 'light' ? 'Modalità scura' : 'Modalità chiara';
+}
+
+function wireThemeToggle() {
+  const saved = (() => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } })();
+  applyTheme(saved === 'light' ? 'light' : 'dark');
+  qs('#themeToggleLink')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const next = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch { /* preferenza valida solo per questa visita */ }
+  });
+}
+
 function wirePasswordToggles() {
   document.querySelectorAll('.password-toggle').forEach((btn) => {
     btn.onclick = () => {
@@ -256,6 +278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   wirePasswordToggles();
   wireSettingsDropdown();
   wireOrbitBackground();
+  wireThemeToggle();
   initCookieBanner();
   qs('#cookiePreferencesLink')?.addEventListener('click', (e) => { e.preventDefault(); reopenCookieBanner(); });
   checkin.wireCheckinModal();
