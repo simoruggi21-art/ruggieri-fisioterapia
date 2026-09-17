@@ -11,6 +11,7 @@ import * as notifications from './notifications.js';
 import * as checkin from './checkin.js';
 import * as blog from './blog.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
+import { initTheme, wireThemeTrigger } from './theme.js';
 
 const ROLE_LABELS = { admin: 'Amministratore', operator: 'Operatore', patient: 'Paziente' };
 
@@ -92,13 +93,11 @@ function renderNavUser(state) {
   if (!area) return;
   if (state.session && state.profile) {
     area.innerHTML = `
-      <button type="button" class="btn btn-ghost btn-small" id="themeToggleBtn"></button>
       <span class="role-tag">${ROLE_LABELS[state.profile.role] || ''}</span>
       <span>${state.profile.full_name || state.profile.email || ''}</span>
       <button class="btn btn-ghost btn-small" id="logoutBtn">Esci</button>
     `;
     qs('#logoutBtn').onclick = () => auth.signOut();
-    wireThemeToggleBtn();
   } else {
     area.innerHTML = `<a href="#accesso" class="btn btn-ghost btn-small">Accedi / Registrati</a>`;
   }
@@ -182,41 +181,6 @@ function wireOrbitBackground() {
   update();
 }
 
-// Modalita' chiara dell'area riservata, salvata per il prossimo accesso sullo
-// stesso browser (localStorage, come per "ricordami" e la lingua del sito
-// pubblico). Un vero pulsante nella barra in alto (dentro #navUserArea,
-// accanto al nome/Esci) invece di un link in fondo alla pagina: initTheme()
-// applica subito la preferenza salvata al body (visibile anche prima del
-// login, es. sulla schermata di accesso), wireThemeToggleBtn() ricollega il
-// pulsante ogni volta che renderNavUser() lo ridisegna.
-const THEME_KEY = 'appTheme';
-
-function currentTheme() {
-  return document.body.classList.contains('light-theme') ? 'light' : 'dark';
-}
-
-function applyTheme(theme) {
-  document.body.classList.toggle('light-theme', theme === 'light');
-  const btn = qs('#themeToggleBtn');
-  if (btn) btn.textContent = theme === 'light' ? 'Scura' : 'Chiara';
-}
-
-function initTheme() {
-  const saved = (() => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } })();
-  applyTheme(saved === 'light' ? 'light' : 'dark');
-}
-
-function wireThemeToggleBtn() {
-  const btn = qs('#themeToggleBtn');
-  if (!btn) return;
-  applyTheme(currentTheme());
-  btn.onclick = () => {
-    const next = currentTheme() === 'light' ? 'dark' : 'light';
-    applyTheme(next);
-    try { localStorage.setItem(THEME_KEY, next); } catch { /* preferenza valida solo per questa visita */ }
-  };
-}
-
 function wirePasswordToggles() {
   document.querySelectorAll('.password-toggle').forEach((btn) => {
     btn.onclick = () => {
@@ -294,6 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   wireSettingsDropdown();
   wireOrbitBackground();
   initTheme();
+  wireThemeTrigger(() => ({ text: 'Scegli l\'aspetto del sito: chiaro o scuro.', dark: 'Scura', light: 'Chiara' }));
   initCookieBanner();
   qs('#cookiePreferencesLink')?.addEventListener('click', (e) => { e.preventDefault(); reopenCookieBanner(); });
   checkin.wireCheckinModal();
