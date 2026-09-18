@@ -1,0 +1,7 @@
+# Header di sicurezza applicati a tutte le pagine dal CDN Netlify.
+# Vedi https://docs.netlify.com/routing/headers/
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
