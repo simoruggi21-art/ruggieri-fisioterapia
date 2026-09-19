@@ -569,6 +569,19 @@ body:not(.authed) .guest-only{display:block;}
 }
 #langSwitcher:hover{border-color:var(--accent); color:var(--text);}
 
+/* Tendine compatte per le sezioni "aggiungi dalla libreria" nella scheda
+   paziente (esercizi/protocolli): <details>/<summary> nativi come le FAQ,
+   ma piu' discrete — restano chiuse di default cosi' non appesantiscono la
+   vista quando non servono. */
+.library-toggle summary{
+  cursor:pointer; font-size:13.5px; font-weight:500; color:var(--accent);
+  list-style:none; display:flex; align-items:center; gap:6px;
+}
+.library-toggle summary::-webkit-details-marker{display:none;}
+.library-toggle summary::after{content:'▾'; font-size:11px; transition:transform .2s;}
+.library-toggle[open] summary::after{transform:rotate(180deg);}
+.library-toggle .library-toggle-body{margin-top:14px;}
+
 /* FAQ: <details>/<summary> nativi, niente JS per aprire/chiudere. */
 .faq-item{border-top:1px solid var(--line); padding:20px 0;}
 .faq-item:last-child{border-bottom:1px solid var(--line);}
