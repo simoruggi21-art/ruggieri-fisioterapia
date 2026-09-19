@@ -100,6 +100,7 @@ async function registerNewPatient() {
 }
 
 export function wireRegisterPatientModal() {
+  qs('#patientSearchInput')?.addEventListener('input', renderPatientList);
   qs('#registerPatientBtn')?.addEventListener('click', openRegisterPatientModal);
   qs('#registerPatientCloseBtn')?.addEventListener('click', closeRegisterPatientModal);
   qs('#registerPatientConfirmBtn')?.addEventListener('click', registerNewPatient);
@@ -112,27 +113,53 @@ function formatCheckinAnswers(answers) {
     .join(' · ');
 }
 
+let cachedPatients = [];
+let cachedUnreadIds = new Set();
+
 export async function render() {
   const list = qs('#patientList');
   if (!list) return;
   const [patients, unreadIds] = await Promise.all([fetchPatients(), fetchUnreadPatientIds()]);
+  cachedPatients = patients;
+  cachedUnreadIds = unreadIds;
   if (!activePatientId && patients.length) activePatientId = patients[0].id;
+
+  renderPatientList();
+
+  const p = patients.find((x) => x.id === activePatientId);
+  await renderDetail(p, unreadIds.has(activePatientId));
+}
+
+// Filtra sulla ricerca (nome/email) e ordina mettendo prima chi ha messaggi
+// non letti, cosi' con tanti pazienti non si rischia di perderne uno con
+// novita' in fondo a una lista lunga. Separata da render() cosi' digitare
+// nella ricerca non richiede un nuovo giro di query al database: riusa i
+// dati gia' caricati in cachedPatients/cachedUnreadIds.
+function renderPatientList() {
+  const list = qs('#patientList');
+  if (!list) return;
+  const query = (qs('#patientSearchInput')?.value || '').trim().toLowerCase();
+  let patients = cachedPatients;
+  if (query) {
+    patients = patients.filter((p) => (p.full_name || '').toLowerCase().includes(query) || (p.email || '').toLowerCase().includes(query));
+  }
+  // Array.prototype.sort e' stabile: i pazienti arrivano gia' ordinati per
+  // nome da fetchPatients(), quindi qui si preserva l'alfabetico all'interno
+  // dei due gruppi (non letti prima, poi il resto).
+  patients = [...patients].sort((a, b) => (cachedUnreadIds.has(a.id) ? 0 : 1) - (cachedUnreadIds.has(b.id) ? 0 : 1));
 
   list.innerHTML = '';
   if (patients.length === 0) {
-    list.appendChild(el('div', 'patient-item', 'Nessun paziente assegnato al momento.'));
+    list.appendChild(el('div', 'patient-item', query ? 'Nessun paziente trovato.' : 'Nessun paziente assegnato al momento.'));
   }
   patients.forEach((p) => {
     const age = computeAge(p.birth_date);
     const item = el('div', 'patient-item' + (p.id === activePatientId ? ' active' : ''), '');
-    const unreadBadge = unreadIds.has(p.id) ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : '';
+    const unreadBadge = cachedUnreadIds.has(p.id) ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : '';
     item.innerHTML = `${avatarHtml(p.full_name || p.email)}<div class="p-info"><div class="p-name">${escapeHtml(p.full_name || p.email)}${unreadBadge}</div><div class="p-meta">${escapeHtml(p.gender || '—')} · ${age ?? '—'} anni</div></div>`;
-    item.onclick = () => { activePatientId = p.id; render(); };
+    item.onclick = () => { activePatientId = p.id; renderPatientList(); renderDetail(p, cachedUnreadIds.has(p.id)); };
     list.appendChild(item);
   });
-
-  const p = patients.find((x) => x.id === activePatientId);
-  await renderDetail(p, unreadIds.has(activePatientId));
 }
 
 async function renderDetail(p, hasUnread) {
