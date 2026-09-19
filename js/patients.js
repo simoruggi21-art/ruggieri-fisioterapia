@@ -18,7 +18,7 @@ async function fetchPatients() {
   return data;
 }
 
-async function fetchUnreadPatientIds() {
+export async function fetchUnreadPatientIds() {
   const { data } = await supabase.from('messages').select('patient_id').eq('read_by_staff', false);
   return new Set((data || []).map((m) => m.patient_id));
 }
@@ -101,6 +101,7 @@ async function registerNewPatient() {
 }
 
 export function wireRegisterPatientModal() {
+  qs('#patientSearchInput')?.addEventListener('input', renderPatientList);
   qs('#registerPatientBtn')?.addEventListener('click', openRegisterPatientModal);
   qs('#registerPatientCloseBtn')?.addEventListener('click', closeRegisterPatientModal);
   qs('#registerPatientConfirmBtn')?.addEventListener('click', registerNewPatient);
@@ -176,27 +177,53 @@ async function updateMilestoneIndex(patientId, newIndex) {
   if (error) showToast('Errore nell\'aggiornamento del traguardo.', 'error');
 }
 
+let cachedPatients = [];
+let cachedUnreadIds = new Set();
+
 export async function render() {
   const list = qs('#patientList');
   if (!list) return;
   const [patients, unreadIds] = await Promise.all([fetchPatients(), fetchUnreadPatientIds()]);
+  cachedPatients = patients;
+  cachedUnreadIds = unreadIds;
   if (!activePatientId && patients.length) activePatientId = patients[0].id;
+
+  renderPatientList();
+
+  const p = patients.find((x) => x.id === activePatientId);
+  await renderDetail(p, unreadIds.has(activePatientId));
+}
+
+// Filtra sulla ricerca (nome/email) e ordina mettendo prima chi ha messaggi
+// non letti, cosi' con tanti pazienti non si rischia di perderne uno con
+// novita' in fondo a una lista lunga. Separata da render() cosi' digitare
+// nella ricerca non richiede un nuovo giro di query al database: riusa i
+// dati gia' caricati in cachedPatients/cachedUnreadIds.
+function renderPatientList() {
+  const list = qs('#patientList');
+  if (!list) return;
+  const query = (qs('#patientSearchInput')?.value || '').trim().toLowerCase();
+  let patients = cachedPatients;
+  if (query) {
+    patients = patients.filter((p) => (p.full_name || '').toLowerCase().includes(query) || (p.email || '').toLowerCase().includes(query));
+  }
+  // Array.prototype.sort e' stabile: i pazienti arrivano gia' ordinati per
+  // nome da fetchPatients(), quindi qui si preserva l'alfabetico all'interno
+  // dei due gruppi (non letti prima, poi il resto).
+  patients = [...patients].sort((a, b) => (cachedUnreadIds.has(a.id) ? 0 : 1) - (cachedUnreadIds.has(b.id) ? 0 : 1));
 
   list.innerHTML = '';
   if (patients.length === 0) {
-    list.appendChild(el('div', 'patient-item', 'Nessun paziente assegnato al momento.'));
+    list.appendChild(el('div', 'patient-item', query ? 'Nessun paziente trovato.' : 'Nessun paziente assegnato al momento.'));
   }
   patients.forEach((p) => {
     const age = computeAge(p.birth_date);
     const item = el('div', 'patient-item' + (p.id === activePatientId ? ' active' : ''), '');
-    const unreadBadge = unreadIds.has(p.id) ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : '';
+    const unreadBadge = cachedUnreadIds.has(p.id) ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : '';
     item.innerHTML = `${avatarHtml(p.full_name || p.email)}<div class="p-info"><div class="p-name">${escapeHtml(p.full_name || p.email)}${unreadBadge}</div><div class="p-meta">${escapeHtml(p.gender || '—')} · ${age ?? '—'} anni</div></div>`;
-    item.onclick = () => { activePatientId = p.id; render(); };
+    item.onclick = () => { activePatientId = p.id; renderPatientList(); renderDetail(p, cachedUnreadIds.has(p.id)); };
     list.appendChild(item);
   });
-
-  const p = patients.find((x) => x.id === activePatientId);
-  await renderDetail(p, unreadIds.has(activePatientId));
 }
 
 async function renderDetail(p, hasUnread) {
@@ -237,18 +264,22 @@ async function renderDetail(p, hasUnread) {
     </div>
 
     <div class="record-block suggest">
-      <div class="rb-title" style="color:var(--accent);">Suggerimento protocollo</div>
-      <p class="rb-sub">Scegli un quadro clinico: propone un protocollo di partenza da rivedere e personalizzare — non è un'indicazione clinica automatica.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <select id="protocolSuggestSelect" style="flex:1; min-width:220px;">
-          <option value="">— seleziona un quadro clinico —</option>
-          ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
-            `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}">${pl.label}</option>`).join('')}</optgroup>`
-          ).join('')}
-        </select>
-        <button class="btn btn-ghost btn-small" id="useSuggestBtn">Usa suggerimento</button>
-      </div>
-      <p id="suggestPreview" class="text-dim" style="font-size:13px; margin-top:12px; display:none; white-space:pre-line;"></p>
+      <details class="library-toggle">
+        <summary>Suggerimento protocollo</summary>
+        <div class="library-toggle-body">
+          <p class="rb-sub">Scegli un quadro clinico: propone un protocollo di partenza da rivedere e personalizzare — non è un'indicazione clinica automatica.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <select id="protocolSuggestSelect" style="flex:1; min-width:220px;">
+              <option value="">— seleziona un quadro clinico —</option>
+              ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
+                `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}">${pl.label}</option>`).join('')}</optgroup>`
+              ).join('')}
+            </select>
+            <button class="btn btn-ghost btn-small" id="useSuggestBtn">Usa suggerimento</button>
+          </div>
+          <p id="suggestPreview" class="text-dim" style="font-size:13px; margin-top:12px; display:none; white-space:pre-line;"></p>
+        </div>
+      </details>
     </div>
 
     <div class="record-block">
@@ -265,31 +296,36 @@ async function renderDetail(p, hasUnread) {
 
     <div class="record-block public">
       <div class="rb-title">I miei esercizi <span class="visibility-tag">visibile al paziente</span></div>
-      <p class="rb-sub">Tieni premuto Cmd (Mac) o Ctrl (Windows) per selezionare più esercizi dalla libreria insieme, o compilane uno personalizzato: comparirà nella sezione "I miei esercizi" del paziente.</p>
-      <input type="text" id="exerciseSearchInput" placeholder="Cerca nella libreria (es. ginocchio, equilibrio...)" style="width:100%; margin-bottom:10px;">
-      <select id="exerciseSuggestSelect" multiple size="8" style="width:100%; margin-bottom:10px;"></select>
-      <div style="display:flex; justify-content:flex-end;">
-        <button class="btn btn-ghost btn-small" id="addLibraryExerciseBtn">Aggiungi selezionati</button>
-      </div>
-      <div style="margin-top:16px; border-top:1px solid var(--line); padding-top:16px;">
-        <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Nome esercizio personalizzato</label>
-        <input type="text" id="customExerciseName" style="width:100%;" placeholder="Es. Esercizio specifico...">
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:12px;">
-          <div style="flex:1; min-width:90px;">
-            <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Serie</label>
-            <input type="text" id="customExerciseSets" style="width:100%;" placeholder="Es. 3">
+      <details class="library-toggle">
+        <summary>Aggiungi dalla libreria o personalizzato</summary>
+        <div class="library-toggle-body">
+          <p class="rb-sub">Tieni premuto Cmd (Mac) o Ctrl (Windows) per selezionare più esercizi dalla libreria insieme, o compilane uno personalizzato: comparirà nella sezione "I miei esercizi" del paziente.</p>
+          <input type="text" id="exerciseSearchInput" placeholder="Cerca nella libreria (es. ginocchio, equilibrio...)" style="width:100%; margin-bottom:10px;">
+          <select id="exerciseSuggestSelect" multiple size="8" style="width:100%; margin-bottom:10px;"></select>
+          <div style="display:flex; justify-content:flex-end;">
+            <button class="btn btn-ghost btn-small" id="addLibraryExerciseBtn">Aggiungi selezionati</button>
           </div>
-          <div style="flex:1; min-width:90px;">
-            <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Ripetizioni</label>
-            <input type="text" id="customExerciseReps" style="width:100%;" placeholder="Es. 12">
+          <div style="margin-top:16px; border-top:1px solid var(--line); padding-top:16px;">
+            <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Nome esercizio personalizzato</label>
+            <input type="text" id="customExerciseName" style="width:100%;" placeholder="Es. Esercizio specifico...">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:12px;">
+              <div style="flex:1; min-width:90px;">
+                <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Serie</label>
+                <input type="text" id="customExerciseSets" style="width:100%;" placeholder="Es. 3">
+              </div>
+              <div style="flex:1; min-width:90px;">
+                <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Ripetizioni</label>
+                <input type="text" id="customExerciseReps" style="width:100%;" placeholder="Es. 12">
+              </div>
+              <div style="flex:3; min-width:200px;">
+                <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Note</label>
+                <input type="text" id="customExerciseNotes" style="width:100%;" placeholder="Indicazioni aggiuntive...">
+              </div>
+              <button class="btn btn-ghost btn-small" id="addCustomExerciseBtn">Aggiungi personalizzato</button>
+            </div>
           </div>
-          <div style="flex:3; min-width:200px;">
-            <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Note</label>
-            <input type="text" id="customExerciseNotes" style="width:100%;" placeholder="Indicazioni aggiuntive...">
-          </div>
-          <button class="btn btn-ghost btn-small" id="addCustomExerciseBtn">Aggiungi personalizzato</button>
         </div>
-      </div>
+      </details>
       <div id="exerciseList" style="display:flex; flex-direction:column; gap:10px; margin-top:18px;">
         ${exercises.length === 0
           ? '<p class="text-dim" style="font-size:13px;">Nessun esercizio assegnato finora.</p>'

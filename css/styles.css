@@ -315,6 +315,12 @@ body.showing-settings #profilo{display:block !important;}
 
 /* BOOKING */
 .booking-head{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px; flex-wrap:wrap; gap:16px;}
+.patient-search{margin:-24px 0 24px;}
+.patient-search input{
+  width:100%; max-width:340px; box-sizing:border-box; padding:9px 14px; border-radius:3px;
+  border:1px solid var(--line); background:var(--surface); color:var(--text); font-size:13.5px;
+}
+.patient-search input:focus{border-color:var(--accent); outline:none;}
 .move-banner{
   display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
   background:var(--accent-soft); border:1px solid var(--accent-deep); border-radius:4px;
@@ -391,8 +397,10 @@ body.showing-settings #profilo{display:block !important;}
   display:flex; align-items:center; gap:12px;
 }
 .thread-item:hover, .thread-item.active{background:var(--surface);}
-.thread-item .name{font-size:14.5px; font-weight:500;}
+.thread-item-info{min-width:0; flex:1;}
+.thread-item .name{font-size:14.5px; font-weight:500; display:flex; align-items:center; gap:6px;}
 .thread-item .preview{font-size:13px; color:var(--text-dim); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.thread-item-time{font-size:11px; color:var(--text-dimmer); flex-shrink:0; align-self:flex-start; margin-top:2px;}
 /* min-height:0 su entrambi i livelli (l'elemento della grid E il figlio flex
    con flex:1) e' necessario perche' di default un elemento grid/flex non si
    restringe mai sotto l'altezza del proprio contenuto: senza, con molti
@@ -588,6 +596,19 @@ body:not(.authed) .guest-only{display:block;}
   padding:6px 8px; border-radius:3px; font-size:13px; cursor:pointer;
 }
 #langSwitcher:hover{border-color:var(--accent); color:var(--text);}
+
+/* Tendine compatte per le sezioni "aggiungi dalla libreria" nella scheda
+   paziente (esercizi/protocolli): <details>/<summary> nativi come le FAQ,
+   ma piu' discrete — restano chiuse di default cosi' non appesantiscono la
+   vista quando non servono. */
+.library-toggle summary{
+  cursor:pointer; font-size:13.5px; font-weight:500; color:var(--accent);
+  list-style:none; display:flex; align-items:center; gap:6px;
+}
+.library-toggle summary::-webkit-details-marker{display:none;}
+.library-toggle summary::after{content:'▾'; font-size:11px; transition:transform .2s;}
+.library-toggle[open] summary::after{transform:rotate(180deg);}
+.library-toggle .library-toggle-body{margin-top:14px;}
 
 /* FAQ: <details>/<summary> nativi, niente JS per aprire/chiudere. */
 .faq-item{border-top:1px solid var(--line); padding:20px 0;}
