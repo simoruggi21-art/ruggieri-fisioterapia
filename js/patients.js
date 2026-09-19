@@ -17,7 +17,7 @@ async function fetchPatients() {
   return data;
 }
 
-async function fetchUnreadPatientIds() {
+export async function fetchUnreadPatientIds() {
   const { data } = await supabase.from('messages').select('patient_id').eq('read_by_staff', false);
   return new Set((data || []).map((m) => m.patient_id));
 }

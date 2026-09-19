@@ -1,7 +1,8 @@
 import { supabase } from './supabaseClient.js';
 import { getState, isStaff, role } from './state.js';
-import { qs, el, escapeHtml, formatTime, showToast, avatarHtml } from './ui.js';
+import { qs, el, escapeHtml, formatTime, formatDateTime, showToast, avatarHtml } from './ui.js';
 import { refresh as refreshNotifications } from './notifications.js';
+import { fetchUnreadPatientIds } from './patients.js';
 
 let activePatientId = null;
 let pollingStarted = false;
@@ -16,6 +17,23 @@ async function fetchMyPatients() {
     .order('full_name');
   if (error) { console.error(error); return []; }
   return data;
+}
+
+// Un'unica query su tutti i messaggi (ordinati dal piu' recente) invece di
+// una per paziente: si riduce in JS al primo risultato per patient_id, che
+// e' gia' il piu' recente grazie all'ordinamento. Usata per l'anteprima e
+// per ordinare la lista thread per attivita' piu' recente.
+async function fetchLastMessagePerPatient() {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('patient_id, body, attachment_path, created_at')
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return new Map(); }
+  const map = new Map();
+  for (const m of data) {
+    if (!map.has(m.patient_id)) map.set(m.patient_id, m);
+  }
+  return map;
 }
 
 async function fetchMessages(patientId) {
@@ -39,9 +57,22 @@ export async function render() {
   if (!session || !profile) return;
 
   if (isStaff()) {
-    const patients = await fetchMyPatients();
+    const [patients, unreadIds, lastMessages] = await Promise.all([
+      fetchMyPatients(), fetchUnreadPatientIds(), fetchLastMessagePerPatient(),
+    ]);
+    // Prima chi ha messaggi non letti, poi per attivita' piu' recente (chi
+    // non ha ancora scritto resta in fondo, alfabetico): con tanti pazienti
+    // evita che una conversazione con novita' finisca fuori vista.
+    patients.sort((a, b) => {
+      const unreadDiff = (unreadIds.has(a.id) ? 0 : 1) - (unreadIds.has(b.id) ? 0 : 1);
+      if (unreadDiff !== 0) return unreadDiff;
+      const aTime = lastMessages.get(a.id)?.created_at || '';
+      const bTime = lastMessages.get(b.id)?.created_at || '';
+      if (aTime !== bTime) return aTime < bTime ? 1 : -1;
+      return 0;
+    });
     if (!activePatientId && patients.length) activePatientId = patients[0].id;
-    renderThreadList(patients);
+    renderThreadList(patients, unreadIds, lastMessages);
     qs('.chat-shell')?.classList.remove('no-threads');
     qs('#chatHeader').textContent = patients.find(p => p.id === activePatientId)?.full_name || 'Seleziona un paziente';
   } else {
@@ -72,7 +103,7 @@ export async function render() {
   }
 }
 
-function renderThreadList(patients) {
+function renderThreadList(patients, unreadIds, lastMessages) {
   const list = qs('#threadList');
   list.style.display = '';
   list.innerHTML = '';
@@ -82,7 +113,10 @@ function renderThreadList(patients) {
   }
   patients.forEach((p) => {
     const item = el('div', 'thread-item' + (p.id === activePatientId ? ' active' : ''), '');
-    item.innerHTML = `${avatarHtml(p.full_name || p.email)}<div class="name">${escapeHtml(p.full_name || p.email)}</div>`;
+    const last = lastMessages.get(p.id);
+    const previewText = last ? (last.body || (last.attachment_path ? '📎 Allegato' : '')) : 'Nessun messaggio';
+    const unreadBadge = unreadIds.has(p.id) ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : '';
+    item.innerHTML = `${avatarHtml(p.full_name || p.email)}<div class="thread-item-info"><div class="name">${escapeHtml(p.full_name || p.email)}${unreadBadge}</div><div class="preview">${escapeHtml(previewText)}</div></div>${last ? `<div class="thread-item-time">${formatDateTime(last.created_at)}</div>` : ''}`;
     item.onclick = () => { activePatientId = p.id; render(); };
     list.appendChild(item);
   });
