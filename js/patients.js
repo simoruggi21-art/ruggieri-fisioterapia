@@ -3,6 +3,7 @@ import { getState, isAdmin } from './state.js';
 import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime, avatarHtml } from './ui.js';
 import { protocolLibrary } from './protocolLibrary.js';
 import { exerciseLibrary } from './exerciseLibrary.js';
+import { milestonesForCategory } from './milestoneLibrary.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 let activePatientId = null;
@@ -112,6 +113,69 @@ function formatCheckinAnswers(answers) {
     .join(' · ');
 }
 
+// Omino della timeline di avanzamento: stessa silhouette a linee sottili
+// delle altre icone del sito, con una gonna triangolare per le pazienti
+// donne (unica differenza, puramente estetica — non e' un\'illustrazione
+// dettagliata, resta uno stick-figure coerente con lo stile minimale).
+function personSvg(gender) {
+  const legs = gender === 'F'
+    ? '<path d="M9 13 L15 13 L17 18.5 L7 18.5 Z"/><line x1="10" y1="18.5" x2="8.3" y2="21.5"/><line x1="14" y1="18.5" x2="15.7" y2="21.5"/>'
+    : '<line x1="12" y1="13.5" x2="8" y2="21"/><line x1="12" y1="13.5" x2="16" y2="21"/>';
+  return `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="4" r="2.4"/>
+    <line x1="12" y1="6.4" x2="12" y2="13.5"/>
+    <line x1="12" y1="9" x2="7.3" y2="7.2"/>
+    <line x1="12" y1="9" x2="16.7" y2="11"/>
+    ${legs}
+  </svg>`;
+}
+
+function buildMilestoneTimelineHtml(milestones, idx, gender) {
+  const last = milestones.length - 1;
+  const pct = last > 0 ? (idx / last) * 100 : 100;
+  const dots = milestones.map((label, i) => {
+    const dotPct = last > 0 ? (i / last) * 100 : 0;
+    return `<div class="milestone-dot${i <= idx ? ' reached' : ''}" style="left:${dotPct}%;" title="${escapeHtml(label)}"></div>`;
+  }).join('');
+  const labels = milestones.map((label, i) => `<div class="milestone-label${i === idx ? ' current' : ''}">${escapeHtml(label)}</div>`).join('');
+  return `
+    <div class="milestone-track">
+      <div class="milestone-track-line"><div class="milestone-track-line-fill" style="width:${pct}%;"></div></div>
+      ${dots}
+      <div class="milestone-figure" style="left:${pct}%;">${personSvg(gender)}</div>
+    </div>
+    <div class="milestone-labels">${labels}</div>
+  `;
+}
+
+// Disegna la timeline e, se editabile, collega i pulsanti avanti/indietro:
+// ogni spostamento richiama onChange(nuovoIndice) (che persiste su
+// patient_protocol.milestone_index) e ridisegna subito il blocco.
+function renderMilestoneBlock(container, { category, milestoneIndex, gender, editable, onChange }) {
+  if (!container) return;
+  const milestones = milestonesForCategory(category);
+  let idx = Math.max(0, Math.min(milestoneIndex || 0, milestones.length - 1));
+  function draw() {
+    const controls = editable ? `
+      <div class="milestone-controls">
+        <button type="button" class="btn btn-ghost btn-small" id="milestoneBackBtn" ${idx === 0 ? 'disabled' : ''}>◂ Indietro</button>
+        <button type="button" class="btn btn-ghost btn-small" id="milestoneNextBtn" ${idx === milestones.length - 1 ? 'disabled' : ''}>Avanti ▸</button>
+      </div>` : '';
+    container.innerHTML = buildMilestoneTimelineHtml(milestones, idx, gender) + controls;
+    if (editable) {
+      container.querySelector('#milestoneBackBtn')?.addEventListener('click', () => { if (idx > 0) { idx -= 1; onChange(idx); draw(); } });
+      container.querySelector('#milestoneNextBtn')?.addEventListener('click', () => { if (idx < milestones.length - 1) { idx += 1; onChange(idx); draw(); } });
+    }
+  }
+  draw();
+}
+
+async function updateMilestoneIndex(patientId, newIndex) {
+  const { session } = getState();
+  const { error } = await supabase.from('patient_protocol').upsert({ patient_id: patientId, milestone_index: newIndex, updated_at: new Date().toISOString(), updated_by: session.user.id });
+  if (error) showToast('Errore nell\'aggiornamento del traguardo.', 'error');
+}
+
 export async function render() {
   const list = qs('#patientList');
   if (!list) return;
@@ -187,6 +251,12 @@ async function renderDetail(p, hasUnread) {
       <p id="suggestPreview" class="text-dim" style="font-size:13px; margin-top:12px; display:none; white-space:pre-line;"></p>
     </div>
 
+    <div class="record-block">
+      <div class="rb-title">Percorso di avanzamento</div>
+      <p class="rb-sub">Sposta il traguardo quando il paziente lo raggiunge — nessun calcolo automatico, la valutazione resta tua.</p>
+      <div id="milestoneTimeline"></div>
+    </div>
+
     <div class="record-block public">
       <div class="rb-title">Protocollo ed esercizi <span class="visibility-tag">visibile al paziente</span></div>
       <p class="rb-sub">Puoi incollare un link (es. un video YouTube che spiega l'esercizio): diventerà cliccabile per il paziente.</p>
@@ -258,6 +328,12 @@ async function renderDetail(p, hasUnread) {
     </div>
   `;
 
+  // Ricorda quale voce della libreria e' stata usata per l'ultimo
+  // suggerimento applicato: individua la categoria (quindi la sequenza di
+  // traguardi) da salvare insieme al testo del protocollo. Resta null se lo
+  // staff scrive il protocollo a mano senza mai usare un suggerimento.
+  let selectedProtocolLibraryId = protocol?.protocol_library_id || null;
+
   qs('#protocolSuggestSelect').addEventListener('change', (e) => {
     const item = protocolLibrary.find((pl) => pl.id === e.target.value);
     const preview = qs('#suggestPreview');
@@ -267,7 +343,16 @@ async function renderDetail(p, hasUnread) {
     const item = protocolLibrary.find((pl) => pl.id === qs('#protocolSuggestSelect').value);
     if (!item) return;
     qs('#protocolText').value = item.text;
+    selectedProtocolLibraryId = item.id;
   };
+
+  renderMilestoneBlock(qs('#milestoneTimeline'), {
+    category: protocolLibrary.find((pl) => pl.id === protocol?.protocol_library_id)?.category || null,
+    milestoneIndex: protocol?.milestone_index || 0,
+    gender: p.gender,
+    editable: true,
+    onChange: (newIndex) => updateMilestoneIndex(p.id, newIndex),
+  });
   const assignSelect = qs('#assignSelect');
   if (assignSelect) {
     assignSelect.addEventListener('change', async (e) => {
@@ -300,7 +385,7 @@ async function renderDetail(p, hasUnread) {
     const protocolText = qs('#protocolText').value;
     const notesText = qs('#privateText').value;
     const [r1, r2] = await Promise.all([
-      supabase.from('patient_protocol').upsert({ patient_id: p.id, protocol_text: protocolText, updated_at: new Date().toISOString(), updated_by: session.user.id }),
+      supabase.from('patient_protocol').upsert({ patient_id: p.id, protocol_text: protocolText, protocol_library_id: selectedProtocolLibraryId, updated_at: new Date().toISOString(), updated_by: session.user.id }),
       supabase.from('patient_private_notes').upsert({ patient_id: p.id, notes_text: notesText, updated_at: new Date().toISOString(), updated_by: session.user.id }),
     ]);
     if (r1.error || r2.error) { showToast('Errore nel salvataggio.', 'error'); return; }
@@ -457,10 +542,20 @@ async function markExerciseDone(exerciseId) {
 export async function renderOwnProtocol() {
   const target = qs('#myProtocolText');
   if (!target) return;
-  const { session } = getState();
+  const { session, profile } = getState();
   if (!session) return;
   const protocol = await fetchProtocol(session.user.id);
   target.innerHTML = protocol?.protocol_text?.trim()
     ? linkifyHtml(protocol.protocol_text)
     : 'Il tuo fisioterapista non ha ancora inserito un protocollo. Torna a controllare dopo la tua prossima seduta.';
+
+  const timelineEl = qs('#myMilestoneTimeline');
+  if (timelineEl) {
+    renderMilestoneBlock(timelineEl, {
+      category: protocolLibrary.find((pl) => pl.id === protocol?.protocol_library_id)?.category || null,
+      milestoneIndex: protocol?.milestone_index || 0,
+      gender: profile?.gender,
+      editable: false,
+    });
+  }
 }
