@@ -510,6 +510,26 @@ body.showing-settings #profilo{display:block !important;}
   border:1px dashed var(--accent-deep); border-radius:4px; padding:18px 20px; background:rgba(176,138,85,0.05);
 }
 
+/* Timeline di avanzamento del paziente: un omino (personSvg in patients.js)
+   che avanza lungo una linea di traguardi, in base al genere del paziente.
+   Posizioni in percentuale sull'asse orizzontale, mosse via JS. */
+.milestone-track{position:relative; height:56px; margin:26px 14px 10px;}
+.milestone-track-line{position:absolute; top:27px; left:0; right:0; height:2px; background:var(--line); border-radius:2px;}
+.milestone-track-line-fill{position:absolute; top:0; left:0; height:100%; background:var(--accent); border-radius:2px; transition:width .4s var(--ease);}
+.milestone-dot{
+  position:absolute; top:22px; width:10px; height:10px; border-radius:50%;
+  background:var(--bg-alt); border:2px solid var(--line); transform:translateX(-50%);
+}
+.milestone-dot.reached{background:var(--accent); border-color:var(--accent);}
+.milestone-figure{
+  position:absolute; top:-16px; transform:translateX(-50%); color:var(--accent);
+  transition:left .4s var(--ease); pointer-events:none;
+}
+.milestone-labels{display:flex; justify-content:space-between; gap:6px; margin:0 14px;}
+.milestone-label{font-size:10.5px; color:var(--text-dimmer); text-align:center; flex:1; min-width:0; line-height:1.35;}
+.milestone-label.current{color:var(--accent); font-weight:600;}
+.milestone-controls{display:flex; justify-content:center; gap:10px; margin-top:16px;}
+
 /* ADMIN FINANCE */
 .finance-grid{display:grid; grid-template-columns:1.3fr 0.7fr; gap:60px; margin-top:40px;}
 .bars{display:flex; align-items:flex-end; gap:16px; height:200px; border-bottom:1px solid var(--line); padding-bottom:0;}
