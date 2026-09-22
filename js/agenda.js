@@ -187,14 +187,10 @@ export async function render() {
   const corner = el('div', 'cal-corner', '');
   corner.style.gridColumn = '1'; corner.style.gridRow = '1';
   grid.appendChild(corner);
-  days.forEach((d, i) => {
-    const head = el('div', 'cal-day-head', `${DAY_LABELS[i]} ${fmtDay(d)}`);
-    head.style.gridColumn = String(i + 2); head.style.gridRow = '1';
-    grid.appendChild(head);
-  });
 
   const now = new Date();
   const myId = session.user.id;
+  const today0 = new Date(now); today0.setHours(0, 0, 0, 0);
 
   for (let r = 0; r < TOTAL_ROWS; r++) {
     const label = rowTimeLabel(r);
@@ -206,6 +202,7 @@ export async function render() {
   days.forEach((day, dayIdx) => {
     const dayEntries = entries.filter((e) => sameDay(new Date(e.slot_start), day));
     const consumedRows = new Set();
+    let hasChiusoRow = false;
 
     dayEntries.forEach((entry) => {
       const start = new Date(entry.slot_start);
@@ -213,6 +210,7 @@ export async function render() {
       const startRow = rowIndexFor(start);
       const spanRows = Math.max(1, Math.round((end - start) / (SLOT_MIN * 60000)));
       for (let r = startRow; r < startRow + spanRows && r < TOTAL_ROWS; r++) consumedRows.add(r);
+      if (entry.status === 'chiuso') hasChiusoRow = true;
 
       const slotEl = document.createElement('div');
       slotEl.style.gridColumn = String(dayIdx + 2);
@@ -250,6 +248,10 @@ export async function render() {
       grid.appendChild(slotEl);
     });
 
+    const isPastDay = day.getTime() < today0.getTime();
+    let hasLibero = false;
+    const spanRowsForNew = APPT_DURATION_MIN / SLOT_MIN;
+
     for (let r = 0; r < TOTAL_ROWS; r++) {
       if (consumedRows.has(r)) continue;
       const dt = dateForRow(day, r);
@@ -258,7 +260,6 @@ export async function render() {
       // APPT_DURATION_MIN, quindi tutte le righe che coprirebbe (es. anche
       // quella successiva, con durata 60 min e slot da 30) devono esserlo,
       // altrimenti si sovrapporrebbe a un appuntamento già esistente.
-      const spanRowsForNew = APPT_DURATION_MIN / SLOT_MIN;
       let rangeFree = true;
       for (let i = 0; i < spanRowsForNew; i++) {
         if (consumedRows.has(r + i)) { rangeFree = false; break; }
@@ -268,8 +269,14 @@ export async function render() {
       slotEl.style.gridColumn = String(dayIdx + 2);
       slotEl.style.gridRow = String(r + 2);
       slotEl.className = 'slot';
-      if (!isPast && canBook) {
+      if (isPast) {
+        // Slot nel passato: mai prenotabile, marcato visivamente come
+        // "sbarrato" cosi' non si crede per sbaglio che sia ancora libero
+        // (es. la mattina di oggi, o un giorno di settimane precedenti).
+        slotEl.classList.add('past');
+      } else if (canBook) {
         slotEl.classList.add('libero');
+        hasLibero = true;
         if (!isAdmin()) {
           slotEl.onclick = () => requestSlot(dt);
         } else {
@@ -278,6 +285,18 @@ export async function render() {
       }
       grid.appendChild(slotEl);
     }
+
+    // Un giorno e' "chiuso" quando l'admin ha esplicitamente chiuso tutti gli
+    // orari residui (hasChiusoRow) e non resta nessuno slot libero: lo
+    // distinguiamo da un giorno solo "pieno" di appuntamenti veri, che non
+    // e' una chiusura amministrativa e non va segnalato come tale.
+    const isClosedDay = !isPastDay && hasChiusoRow && !hasLibero;
+    const head = document.createElement('div');
+    head.className = 'cal-day-head' + (isPastDay ? ' day-past' : '') + (isClosedDay ? ' day-closed' : '');
+    head.style.gridColumn = String(dayIdx + 2); head.style.gridRow = '1';
+    const badge = isClosedDay ? '<span class="cal-day-badge">Chiuso</span>' : '';
+    head.innerHTML = `<span class="cal-day-label">${DAY_LABELS[dayIdx]} ${fmtDay(day)}</span>${badge}`;
+    grid.appendChild(head);
   });
 }
 
