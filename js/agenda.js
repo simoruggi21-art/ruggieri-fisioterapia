@@ -218,6 +218,12 @@ export async function render() {
 
       if (entry.status === 'chiuso') {
         slotEl.className = 'slot chiuso';
+        // Un orario chiuso passato non ha senso riaprirlo: la riapertura
+        // resta possibile solo per chiusure future, cliccando la casella.
+        if (isAdmin() && entry.detailed && !movingApptId && start >= now) {
+          slotEl.classList.add('slot-clickable');
+          slotEl.onclick = () => reopenSlot(entry);
+        }
       } else {
         slotEl.className = 'slot ' + entry.status;
         const dot = el('div', 'slot-dot', '');
@@ -338,6 +344,41 @@ async function requestSlot(dt) {
 async function updateStatus(id, status) {
   const { error } = await supabase.from('appointments').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) showToast('Errore aggiornamento appuntamento.', 'error');
+  render();
+}
+
+// Chiude un singolo orario (1 ora, come la durata di un appuntamento) a
+// partire da data/ora scelte nel modale "nuova prenotazione": stesso modale
+// del click su una casella libera, con un bottone in più per chiudere invece
+// di prenotare. Da' cosi' allo staff il controllo diretto di aperture e
+// chiusure orario per orario, non solo "chiudi tutta la giornata di oggi".
+async function closeSlot() {
+  const dt = currentNewApptDt();
+  if (!dt) { showToast('Seleziona data e ora da chiudere.', 'error'); return; }
+  const confirmed = confirm(`Chiudere l'orario delle ${formatDateTime(dt.toISOString())} (1 ora)?`);
+  if (!confirmed) return;
+  const slotEnd = addApptDuration(dt);
+  const { error } = await supabase.from('appointments').insert({
+    patient_id: null,
+    slot_start: dt.toISOString(),
+    slot_end: slotEnd.toISOString(),
+    status: 'chiuso',
+  });
+  if (error) {
+    showToast(isSlotConflictError(error) ? 'Questo orario è già occupato o chiuso.' : 'Errore nella chiusura dell\'orario.', 'error');
+    return;
+  }
+  showToast('Orario chiuso.', 'ok');
+  closeNewApptModal();
+  render();
+}
+
+async function reopenSlot(entry) {
+  const confirmed = confirm(`Riaprire l'orario delle ${formatDateTime(entry.slot_start)}?`);
+  if (!confirmed) return;
+  const { error } = await supabase.from('appointments').delete().eq('id', entry.id);
+  if (error) { showToast('Errore nella riapertura dell\'orario.', 'error'); return; }
+  showToast('Orario riaperto.', 'ok');
   render();
 }
 
@@ -538,6 +579,7 @@ export function wireAppointmentModal() {
   qs('#newApptTimeInput').addEventListener('change', updateNewApptMetaPreview);
   qs('#newApptCloseBtn').onclick = closeNewApptModal;
   qs('#newApptConfirmBtn').onclick = createManualAppointment;
+  qs('#newApptCloseSlotBtn').onclick = closeSlot;
   qs('#newPatientToggleBtn').onclick = () => setNewPatientMode(!newPatientMode);
   qs('#apptDetailCloseBtn').onclick = closeApptDetail;
   qs('#apptMoveBtn').onclick = () => {

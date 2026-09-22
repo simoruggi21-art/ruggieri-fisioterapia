@@ -371,6 +371,8 @@ body.showing-settings #profilo{display:block !important;}
 .slot.confermato.slot-clickable{cursor:pointer;}
 .slot.confermato.slot-clickable:hover{background:rgba(122,155,118,0.2); transform:scale(1.04); box-shadow:var(--shadow-sm); z-index:2;}
 .slot.chiuso{background:repeating-linear-gradient(135deg, var(--bg-alt), var(--bg-alt) 6px, var(--surface) 6px, var(--surface) 12px); cursor:not-allowed;}
+.slot.chiuso.slot-clickable{cursor:pointer;}
+.slot.chiuso.slot-clickable:hover{opacity:.7; transform:scale(1.04); box-shadow:var(--shadow-sm); z-index:2;}
 .slot.past{
   background:repeating-linear-gradient(135deg, var(--bg-alt), var(--bg-alt) 5px, var(--surface) 5px, var(--surface) 10px);
   opacity:.4; cursor:not-allowed;
