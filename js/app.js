@@ -10,6 +10,7 @@ import * as finance from './finance.js';
 import * as notifications from './notifications.js';
 import * as checkin from './checkin.js';
 import * as blog from './blog.js';
+import * as aiAssistant from './aiAssistant.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { initTheme, wireThemeTrigger } from './theme.js';
 
@@ -48,6 +49,7 @@ async function boot(state) {
       await safeRun('agenda', () => agenda.render());
       await safeRun('chat', () => chat.render());
       if (isStaff()) await safeRun('pazienti', () => patients.render());
+      if (isStaff()) await safeRun('assistente ai', () => aiAssistant.render());
       if (!isStaff()) {
         await safeRun('il mio percorso', () => patients.renderOwnProtocol());
         await safeRun('i miei esercizi', () => patients.renderOwnExercises());
@@ -240,6 +242,17 @@ function wireStaticControls() {
   wireClick('deleteChatBtn', () => {
     if (confirm('Eliminare definitivamente questa conversazione? Non si può annullare.')) chat.deleteThread();
   });
+
+  wireClick('aiSendBtn', () => {
+    const input = qs('#aiInput');
+    aiAssistant.sendMessage(input.value);
+    input.value = '';
+  });
+  const aiInput = qs('#aiInput');
+  if (aiInput) aiInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); qs('#aiSendBtn')?.click(); }
+  });
+  wireClick('aiNewChatBtn', () => aiAssistant.newConversation());
 
   wireClick('weekPrevBtn', () => agenda.changeWeek(-1));
   wireClick('weekNextBtn', () => agenda.changeWeek(1));

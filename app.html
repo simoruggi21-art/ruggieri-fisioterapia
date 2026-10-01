@@ -20,6 +20,7 @@
         <a href="#miei-esercizi" class="patient-only">I miei esercizi</a>
         <a href="#messaggi" class="auth-only">Messaggi<span class="nav-dot" id="messagesBadge" style="display:none;"></span></a>
         <a href="#pazienti" class="staff-only">Pazienti</a>
+        <a href="#assistente-ai" class="staff-only">Assistente AI</a>
         <a href="#gestionale" class="admin-only">Gestionale</a>
         <a href="#situazione-annuale" class="admin-only">Situazione annuale</a>
         <div class="nav-dropdown admin-only" id="settingsDropdown">
@@ -169,6 +170,28 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ASSISTENTE AI (staff) -->
+<section class="section staff-only" id="assistente-ai">
+  <div class="container">
+    <p class="label">assistente ai</p>
+    <h2 class="heading-lg">Assistente AI</h2>
+    <p class="text-dim" style="margin-top:10px; max-width:640px;">Supporto clinico solo per te: interpretazione di casi, suggerimenti su protocolli ed esercizi da valutare, bozze di note. Le risposte sono generate da un'intelligenza artificiale: non sostituiscono la tua valutazione clinica e non vanno mai condivise direttamente con i pazienti.</p>
+    <div class="ai-shell" style="margin-top:30px;">
+      <div class="chat-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <span>Conversazione</span>
+        <button class="btn btn-ghost btn-small" id="aiNewChatBtn" style="font-size:12px; padding:6px 12px;">Nuova conversazione</button>
+      </div>
+      <div class="chat-messages" id="aiMessages"></div>
+      <div class="chat-input-row">
+        <textarea id="aiInput" rows="1" placeholder="Scrivi il caso, la domanda sull'esercizio o cosa ti serve per la nota..."></textarea>
+        <button class="icon-btn" id="aiSendBtn" title="Invia">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        </button>
       </div>
     </div>
   </div>
