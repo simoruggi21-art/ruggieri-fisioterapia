@@ -123,6 +123,7 @@
         <button class="btn btn-ghost btn-small" id="weekTodayBtn">Oggi</button>
         <button class="btn btn-ghost btn-small" id="weekNextBtn">Settimana succ. →</button>
         <button class="btn btn-ghost btn-small admin-only" id="closeTodayBtn">Chiudi giornata di oggi</button>
+        <button class="btn btn-ghost btn-small admin-only" id="shiftSyncOpenBtn">Carica turni (screenshot)</button>
       </div>
     </div>
     <div id="agendaSummary"></div>
@@ -587,6 +588,23 @@
       <button class="btn btn-primary btn-small" id="newApptConfirmBtn">Crea prenotazione</button>
       <button type="button" class="btn btn-ghost btn-small" id="newApptCloseSlotBtn">Chiudi questo orario</button>
     </div>
+  </div>
+</div>
+
+<!-- SINCRONIZZA TURNI DA SCREENSHOT (admin) -->
+<div class="modal-overlay" id="shiftSyncOverlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="shiftSyncCloseBtn" aria-label="Chiudi">✕</button>
+    <p class="label">turni federazione</p>
+    <h3 class="heading-lg" style="font-size:22px;">Carica screenshot del calendario turni</h3>
+    <p class="text-dim" style="margin-top:10px; font-size:13px;">Carica uno screenshot tuo del calendario mensile condiviso (mai il documento originale). Un'AI individua solo i tuoi turni/ferie e ti propone quali orari chiudere in agenda: li applico solo dopo la tua conferma.</p>
+
+    <input type="file" id="shiftSyncFileInput" accept="image/*" style="width:100%; margin-top:18px; margin-bottom:10px;">
+    <p class="text-dim" id="shiftSyncStatus" style="font-size:13px; min-height:18px;"></p>
+
+    <div id="shiftSyncPreview" style="margin:10px 0 18px; max-height:260px; overflow-y:auto;"></div>
+
+    <button class="btn btn-primary btn-small" id="shiftSyncConfirmBtn" style="display:none;">Conferma e chiudi questi orari</button>
   </div>
 </div>
 

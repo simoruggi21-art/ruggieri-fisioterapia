@@ -11,6 +11,7 @@ import * as notifications from './notifications.js';
 import * as checkin from './checkin.js';
 import * as blog from './blog.js';
 import * as aiAssistant from './aiAssistant.js';
+import * as shiftSync from './shiftSync.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { initTheme, wireThemeTrigger } from './theme.js';
 
@@ -258,6 +259,10 @@ function wireStaticControls() {
   wireClick('weekNextBtn', () => agenda.changeWeek(1));
   wireClick('weekTodayBtn', () => agenda.resetWeek());
   wireClick('closeTodayBtn', () => agenda.closeToday());
+  wireClick('shiftSyncOpenBtn', () => { qs('#shiftSyncOverlay').style.display = 'flex'; });
+  wireClick('shiftSyncCloseBtn', () => { qs('#shiftSyncOverlay').style.display = 'none'; });
+  wireChange('shiftSyncFileInput', (e) => { if (e.target.files[0]) shiftSync.analyzeShiftScreenshot(e.target.files[0]); });
+  wireClick('shiftSyncConfirmBtn', () => shiftSync.applyPendingClosures());
 
   wireClick('addServiceBtn', () => profileAdmin.addServiceRow());
   wireClick('saveProfileBtn', () => profileAdmin.saveProfile());
