@@ -187,14 +187,10 @@ export async function render() {
   const corner = el('div', 'cal-corner', '');
   corner.style.gridColumn = '1'; corner.style.gridRow = '1';
   grid.appendChild(corner);
-  days.forEach((d, i) => {
-    const head = el('div', 'cal-day-head', `${DAY_LABELS[i]} ${fmtDay(d)}`);
-    head.style.gridColumn = String(i + 2); head.style.gridRow = '1';
-    grid.appendChild(head);
-  });
 
   const now = new Date();
   const myId = session.user.id;
+  const today0 = new Date(now); today0.setHours(0, 0, 0, 0);
 
   for (let r = 0; r < TOTAL_ROWS; r++) {
     const label = rowTimeLabel(r);
@@ -206,6 +202,7 @@ export async function render() {
   days.forEach((day, dayIdx) => {
     const dayEntries = entries.filter((e) => sameDay(new Date(e.slot_start), day));
     const consumedRows = new Set();
+    let hasChiusoRow = false;
 
     dayEntries.forEach((entry) => {
       const start = new Date(entry.slot_start);
@@ -213,6 +210,7 @@ export async function render() {
       const startRow = rowIndexFor(start);
       const spanRows = Math.max(1, Math.round((end - start) / (SLOT_MIN * 60000)));
       for (let r = startRow; r < startRow + spanRows && r < TOTAL_ROWS; r++) consumedRows.add(r);
+      if (entry.status === 'chiuso') hasChiusoRow = true;
 
       const slotEl = document.createElement('div');
       slotEl.style.gridColumn = String(dayIdx + 2);
@@ -220,6 +218,12 @@ export async function render() {
 
       if (entry.status === 'chiuso') {
         slotEl.className = 'slot chiuso';
+        // Un orario chiuso passato non ha senso riaprirlo: la riapertura
+        // resta possibile solo per chiusure future, cliccando la casella.
+        if (isAdmin() && entry.detailed && !movingApptId && start >= now) {
+          slotEl.classList.add('slot-clickable');
+          slotEl.onclick = () => reopenSlot(entry);
+        }
       } else {
         slotEl.className = 'slot ' + entry.status;
         const dot = el('div', 'slot-dot', '');
@@ -250,6 +254,10 @@ export async function render() {
       grid.appendChild(slotEl);
     });
 
+    const isPastDay = day.getTime() < today0.getTime();
+    let hasLibero = false;
+    const spanRowsForNew = APPT_DURATION_MIN / SLOT_MIN;
+
     for (let r = 0; r < TOTAL_ROWS; r++) {
       if (consumedRows.has(r)) continue;
       const dt = dateForRow(day, r);
@@ -258,7 +266,6 @@ export async function render() {
       // APPT_DURATION_MIN, quindi tutte le righe che coprirebbe (es. anche
       // quella successiva, con durata 60 min e slot da 30) devono esserlo,
       // altrimenti si sovrapporrebbe a un appuntamento già esistente.
-      const spanRowsForNew = APPT_DURATION_MIN / SLOT_MIN;
       let rangeFree = true;
       for (let i = 0; i < spanRowsForNew; i++) {
         if (consumedRows.has(r + i)) { rangeFree = false; break; }
@@ -268,8 +275,14 @@ export async function render() {
       slotEl.style.gridColumn = String(dayIdx + 2);
       slotEl.style.gridRow = String(r + 2);
       slotEl.className = 'slot';
-      if (!isPast && canBook) {
+      if (isPast) {
+        // Slot nel passato: mai prenotabile, marcato visivamente come
+        // "sbarrato" cosi' non si crede per sbaglio che sia ancora libero
+        // (es. la mattina di oggi, o un giorno di settimane precedenti).
+        slotEl.classList.add('past');
+      } else if (canBook) {
         slotEl.classList.add('libero');
+        hasLibero = true;
         if (!isAdmin()) {
           slotEl.onclick = () => requestSlot(dt);
         } else {
@@ -278,6 +291,18 @@ export async function render() {
       }
       grid.appendChild(slotEl);
     }
+
+    // Un giorno e' "chiuso" quando l'admin ha esplicitamente chiuso tutti gli
+    // orari residui (hasChiusoRow) e non resta nessuno slot libero: lo
+    // distinguiamo da un giorno solo "pieno" di appuntamenti veri, che non
+    // e' una chiusura amministrativa e non va segnalato come tale.
+    const isClosedDay = !isPastDay && hasChiusoRow && !hasLibero;
+    const head = document.createElement('div');
+    head.className = 'cal-day-head' + (isPastDay ? ' day-past' : '') + (isClosedDay ? ' day-closed' : '');
+    head.style.gridColumn = String(dayIdx + 2); head.style.gridRow = '1';
+    const badge = isClosedDay ? '<span class="cal-day-badge">Chiuso</span>' : '';
+    head.innerHTML = `<span class="cal-day-label">${DAY_LABELS[dayIdx]} ${fmtDay(day)}</span>${badge}`;
+    grid.appendChild(head);
   });
 }
 
@@ -319,6 +344,41 @@ async function requestSlot(dt) {
 async function updateStatus(id, status) {
   const { error } = await supabase.from('appointments').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) showToast('Errore aggiornamento appuntamento.', 'error');
+  render();
+}
+
+// Chiude un singolo orario (1 ora, come la durata di un appuntamento) a
+// partire da data/ora scelte nel modale "nuova prenotazione": stesso modale
+// del click su una casella libera, con un bottone in più per chiudere invece
+// di prenotare. Da' cosi' allo staff il controllo diretto di aperture e
+// chiusure orario per orario, non solo "chiudi tutta la giornata di oggi".
+async function closeSlot() {
+  const dt = currentNewApptDt();
+  if (!dt) { showToast('Seleziona data e ora da chiudere.', 'error'); return; }
+  const confirmed = confirm(`Chiudere l'orario delle ${formatDateTime(dt.toISOString())} (1 ora)?`);
+  if (!confirmed) return;
+  const slotEnd = addApptDuration(dt);
+  const { error } = await supabase.from('appointments').insert({
+    patient_id: null,
+    slot_start: dt.toISOString(),
+    slot_end: slotEnd.toISOString(),
+    status: 'chiuso',
+  });
+  if (error) {
+    showToast(isSlotConflictError(error) ? 'Questo orario è già occupato o chiuso.' : 'Errore nella chiusura dell\'orario.', 'error');
+    return;
+  }
+  showToast('Orario chiuso.', 'ok');
+  closeNewApptModal();
+  render();
+}
+
+async function reopenSlot(entry) {
+  const confirmed = confirm(`Riaprire l'orario delle ${formatDateTime(entry.slot_start)}?`);
+  if (!confirmed) return;
+  const { error } = await supabase.from('appointments').delete().eq('id', entry.id);
+  if (error) { showToast('Errore nella riapertura dell\'orario.', 'error'); return; }
+  showToast('Orario riaperto.', 'ok');
   render();
 }
 
@@ -519,6 +579,7 @@ export function wireAppointmentModal() {
   qs('#newApptTimeInput').addEventListener('change', updateNewApptMetaPreview);
   qs('#newApptCloseBtn').onclick = closeNewApptModal;
   qs('#newApptConfirmBtn').onclick = createManualAppointment;
+  qs('#newApptCloseSlotBtn').onclick = closeSlot;
   qs('#newPatientToggleBtn').onclick = () => setNewPatientMode(!newPatientMode);
   qs('#apptDetailCloseBtn').onclick = closeApptDetail;
   qs('#apptMoveBtn').onclick = () => {
