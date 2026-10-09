@@ -58,6 +58,17 @@ function wireScrollReveal() {
   });
 }
 
+// Barra contatti fissa (solo mobile): compare quando i pulsanti dell'hero
+// escono dallo schermo, cosi' non duplica i pulsanti gia' visibili.
+function wireStickyContact() {
+  const bar = document.getElementById('stickyContact');
+  const heroCtas = document.querySelector('.hero-ctas');
+  if (!bar || !heroCtas || !('IntersectionObserver' in window)) return;
+  new IntersectionObserver(([entry]) => {
+    bar.classList.toggle('show', !entry.isIntersecting);
+  }).observe(heroCtas);
+}
+
 // Richiamata al primo caricamento e ogni volta che il visitatore cambia
 // lingua dal selettore: il testo statico si aggiorna subito (applyTranslations),
 // mentre bio/servizi/articoli — che vivono nel database con colonne per
@@ -84,6 +95,7 @@ async function renderLocalizedContent() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   wireOrbitBackground();
+  wireStickyContact();
   initTheme();
   wireThemeTrigger(() => ({ text: t('theme.text'), dark: t('theme.dark'), light: t('theme.light') }));
   initCookieBanner();
