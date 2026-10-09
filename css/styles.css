@@ -767,3 +767,31 @@ body:not(.authed) .guest-only{display:block;}
   .price-row .duration{grid-column:1 / -1; grid-row:2; font-size:13.5px;}
   .price-row h3{font-size:20px;}
 }
+
+/* NAV ADMIN: con tutti i link dell'amministratore la riga supera 1280px e
+   nome/Esci finivano fuori schermo. Sotto 1340px usa lo stesso layout a due
+   righe del mobile; sopra, allarga il contenitore. */
+body.role-admin .nav-inner{max-width:1400px;}
+@media(max-width:1340px){
+  body.role-admin .nav-inner{height:auto; flex-wrap:wrap; overflow:visible; padding:8px 24px 0; row-gap:0; align-items:center;}
+  body.role-admin .nav-inner > div:first-child{display:contents !important;}
+  body.role-admin .nav-inner .monogram{order:1; flex-shrink:0;}
+  body.role-admin .nav-inner > div:last-child{order:2; margin-left:auto; gap:12px !important; min-width:0;}
+  body.role-admin .nav-links{order:3; flex:0 0 100%; margin-top:8px; gap:26px; overflow-x:auto; scrollbar-width:none; border-top:1px solid var(--line);}
+  body.role-admin .nav-links::-webkit-scrollbar{display:none;}
+  body.role-admin .nav-links > a, body.role-admin .nav-links .nav-dropdown-trigger{padding:11px 0; flex-shrink:0;}
+}
+
+/* SCHEDE PAZIENTI MOBILE: lista compatta sopra, scheda a tutta larghezza sotto */
+@media(max-width:860px){
+  #patientList{max-height:230px !important;}
+  #pazienti .chat-shell{height:auto !important;}
+  #pazienti .chat-main{padding:18px 16px !important;}
+  #patientDetail{scroll-margin-top:120px;}
+}
+@media(max-width:560px){
+  .milestone-track{margin:24px 8px 8px;}
+  .milestone-labels{margin:0 2px; gap:2px;}
+  .milestone-label{font-size:9.5px; overflow-wrap:anywhere; hyphens:auto;}
+  .milestone-controls .btn{flex:1;}
+}

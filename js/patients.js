@@ -221,7 +221,12 @@ function renderPatientList() {
     const item = el('div', 'patient-item' + (p.id === activePatientId ? ' active' : ''), '');
     const unreadBadge = cachedUnreadIds.has(p.id) ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : '';
     item.innerHTML = `${avatarHtml(p.full_name || p.email)}<div class="p-info"><div class="p-name">${escapeHtml(p.full_name || p.email)}${unreadBadge}</div><div class="p-meta">${escapeHtml(p.gender || '—')} · ${age ?? '—'} anni</div></div>`;
-    item.onclick = () => { activePatientId = p.id; renderPatientList(); renderDetail(p, cachedUnreadIds.has(p.id)); };
+    item.onclick = async () => {
+      activePatientId = p.id; renderPatientList();
+      await renderDetail(p, cachedUnreadIds.has(p.id));
+      // Su schermi stretti lista e scheda sono impilate: porta la scheda in vista.
+      if (window.innerWidth <= 860) qs('#patientDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
     list.appendChild(item);
   });
 }

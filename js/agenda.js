@@ -304,6 +304,13 @@ export async function render() {
     head.innerHTML = `<span class="cal-day-label">${DAY_LABELS[dayIdx]} ${fmtDay(day)}</span>${badge}`;
     grid.appendChild(head);
   });
+
+  // Su schermi stretti la griglia scorre di lato: porta in vista il primo giorno non passato.
+  const wrap = grid.parentElement;
+  const firstActive = grid.querySelector('.cal-day-head:not(.day-past)');
+  if (wrap && firstActive && wrap.scrollWidth > wrap.clientWidth) {
+    wrap.scrollLeft = Math.max(0, firstActive.getBoundingClientRect().left - grid.getBoundingClientRect().left - 48);
+  }
 }
 
 // 23505 = violazione indice univoco (legacy), 23P01 = violazione vincolo
