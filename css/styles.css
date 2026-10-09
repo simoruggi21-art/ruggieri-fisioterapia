@@ -675,3 +675,20 @@ body:not(.authed) .guest-only{display:block;}
   .cookie-banner-actions{width:100%;}
   .cookie-banner-actions .btn{flex:1;}
 }
+
+/* GUIDE (pagine statiche) */
+.guide-home{margin-top:40px; margin-bottom:56px;}
+.guide-crumbs{font-size:13px; color:var(--text-dimmer); margin-bottom:18px;}
+.guide-crumbs a{color:var(--text-dim); border-bottom:1px solid var(--line);}
+.guide-meta{margin-top:14px; font-size:13px; color:var(--text-dimmer);}
+.guide-lead{margin-top:26px; font-size:18px; line-height:1.65; color:var(--text);}
+.guide h2{font-size:24px; margin:42px 0 12px;}
+.guide p, .guide li{color:var(--text-dim); line-height:1.75;}
+.guide p{margin-top:12px;}
+.guide ul, .guide ol{margin:12px 0 0 22px; padding:0; display:flex; flex-direction:column; gap:8px;}
+.guide li strong{color:var(--text); font-weight:500;}
+.guide a:not(.btn){color:var(--accent); border-bottom:1px solid var(--accent-deep);}
+.guide-cta{margin-top:54px; padding:30px; border:1px solid var(--line); border-radius:6px; background:var(--bg-alt);}
+.guide-cta h2{margin-top:0;}
+.guide-disclaimer{margin-top:26px; font-size:13px; font-style:italic; color:var(--text-dimmer);}
+.guide-related{list-style:none; margin:12px 0 0; padding:0;}
