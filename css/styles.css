@@ -795,3 +795,15 @@ body.role-admin .nav-inner{max-width:1400px;}
   .milestone-label{font-size:9.5px; overflow-wrap:anywhere; hyphens:auto;}
   .milestone-controls .btn{flex:1;}
 }
+
+/* FOTO STUDIO + SECONDA SEDE */
+.photo-slot-wide{aspect-ratio:3/2; margin-top:14px;}
+.address-secondary{margin-top:10px;}
+
+/* BANNER COOKIE COMPATTO SU TELEFONO: prima copriva circa il 40% dello schermo */
+@media(max-width:640px){
+  .cookie-banner{padding:12px 14px; gap:10px;}
+  .cookie-banner-text{font-size:12.5px; line-height:1.45;}
+  .cookie-banner-actions{gap:8px;}
+  .cookie-banner-actions .btn{padding:9px 8px; font-size:13px; min-height:40px;}
+}

@@ -40,6 +40,7 @@ export async function render() {
 
   setPreview(qs('#actionPhotoPreview'), content.photo_action_url);
   setPreview(qs('#detailPhotoPreview'), content.photo_detail_url);
+  setPreview(qs('#studioPhotoPreview'), content.photo_studio_url);
 
   renderServicesEditor();
 }
@@ -86,14 +87,41 @@ function readServicesFromEditor() {
   });
 }
 
+
+// Le foto da telefono pesano 3-8 MB: le riduciamo nel browser (lato lungo max
+// 1600px, JPEG) prima del caricamento, cosi' non serve ritoccarle a mano.
+async function compressImage(file, maxSide = 1600, quality = 0.85) {
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+    return blob || file;
+  } catch (err) {
+    return file;
+  }
+}
+
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+async function uploadToPublicAssets(file, prefix) {
+  const blob = await compressImage(file);
+  if (blob.size > MAX_UPLOAD_BYTES) { showToast('La foto e\' troppo pesante anche dopo la compressione.', 'error'); return null; }
+  const ext = blob.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop() || 'jpg');
+  const path = `${prefix}-${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('public-assets').upload(path, blob, { upsert: true, contentType: blob.type || file.type });
+  if (upErr) { showToast('Errore caricamento foto.', 'error'); return null; }
+  return supabase.storage.from('public-assets').getPublicUrl(path).data.publicUrl;
+}
+
 export async function uploadPhoto(file) {
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showToast('La foto supera i 2 MB.', 'error'); return; }
-  const path = `profile-${Date.now()}.${file.name.split('.').pop()}`;
-  const { error: upErr } = await supabase.storage.from('public-assets').upload(path, file, { upsert: true });
-  if (upErr) { showToast('Errore caricamento foto.', 'error'); return; }
-  const { data } = supabase.storage.from('public-assets').getPublicUrl(path);
-  await supabase.from('site_content').update({ photo_url: data.publicUrl }).eq('id', 1);
+  const url = await uploadToPublicAssets(file, 'profile');
+  if (!url) return;
+  await supabase.from('site_content').update({ photo_url: url }).eq('id', 1);
   await render();
   await renderPublicContent();
   showToast('Foto aggiornata.', 'ok');
@@ -107,12 +135,9 @@ export async function removePhoto() {
 
 async function uploadNamedPhoto(file, column, prefix) {
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showToast('La foto supera i 2 MB.', 'error'); return; }
-  const path = `${prefix}-${Date.now()}.${file.name.split('.').pop()}`;
-  const { error: upErr } = await supabase.storage.from('public-assets').upload(path, file, { upsert: true });
-  if (upErr) { showToast('Errore caricamento foto.', 'error'); return; }
-  const { data } = supabase.storage.from('public-assets').getPublicUrl(path);
-  await supabase.from('site_content').update({ [column]: data.publicUrl }).eq('id', 1);
+  const url = await uploadToPublicAssets(file, prefix);
+  if (!url) return;
+  await supabase.from('site_content').update({ [column]: url }).eq('id', 1);
   await render();
   await renderPublicContent();
   showToast('Foto aggiornata.', 'ok');
@@ -130,6 +155,16 @@ export async function removeActionPhoto() {
 
 export async function uploadDetailPhoto(file) {
   await uploadNamedPhoto(file, 'photo_detail_url', 'detail');
+}
+
+export async function uploadStudioPhoto(file) {
+  await uploadNamedPhoto(file, 'photo_studio_url', 'studio');
+}
+
+export async function removeStudioPhoto() {
+  await supabase.from('site_content').update({ photo_studio_url: null }).eq('id', 1);
+  await render();
+  await renderPublicContent();
 }
 
 export async function removeDetailPhoto() {

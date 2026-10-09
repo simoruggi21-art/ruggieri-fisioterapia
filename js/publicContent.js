@@ -156,6 +156,7 @@ function applyContentToDom(c) {
 
   setGalleryPhoto(qs('#actionPhotoSlot'), c.photo_action_url);
   setGalleryPhoto(qs('#detailPhotoSlot'), c.photo_detail_url);
+  setGalleryPhoto(qs('#studioPhotoSlot'), c.photo_studio_url);
   qs('#aboutGallery').style.display = (c.photo_action_url || c.photo_detail_url) ? '' : 'none';
 
   const block = qs('#addressBlock');
