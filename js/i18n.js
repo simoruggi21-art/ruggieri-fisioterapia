@@ -11,6 +11,8 @@ const dict = {
   it: {
     'nav.about': 'Chi sono', 'nav.services': 'Servizi', 'nav.blog': 'Blog', 'nav.faq': 'FAQ', 'nav.login': 'Accedi / Registrati',
     'hero.ctaRegister': 'Registrati e prenota', 'hero.ctaLogin': 'Accedi alla tua area',
+    'hero.ctaWhatsapp': "Scrivimi su WhatsApp", 'hero.ctaCall': "Chiama", 'hero.ctaBook': "Prenota online",
+    'hero.trust1': "Iscritto all'Albo TSRM PSTRP di Roma", 'hero.trust2': "Fisioterapista delle squadre nazionali FIJLKAM", 'hero.trust3': "In studio a Roma (Tre Pini) o a domicilio",
     'services.label': 'servizi', 'services.heading': 'Trattamenti e tariffe',
     'services.disclaimer': "Le tariffe indicate sono definite in conformità al tariffario professionale dei fisioterapisti e hanno valore indicativo: possono variare in base alla valutazione del singolo caso clinico e alle specifiche esigenze del paziente. Ogni eventuale variazione viene sempre comunicata in modo trasparente e concordata preventivamente prima dell'inizio del percorso.",
     'about.label': 'presentazione', 'about.openMaps': 'Apri in Google Maps',
@@ -61,6 +63,8 @@ const dict = {
   en: {
     'nav.about': 'About', 'nav.services': 'Services', 'nav.blog': 'Blog', 'nav.faq': 'FAQ', 'nav.login': 'Log in / Sign up',
     'hero.ctaRegister': 'Sign up and book', 'hero.ctaLogin': 'Log in to your account',
+    'hero.ctaWhatsapp': "Message me on WhatsApp", 'hero.ctaCall': "Call", 'hero.ctaBook': "Book online",
+    'hero.trust1': "Registered with the TSRM PSTRP Rome professional register", 'hero.trust2': "Physiotherapist of the FIJLKAM national teams", 'hero.trust3': "At the Rome clinic (Tre Pini) or at home",
     'services.label': 'services', 'services.heading': 'Treatments and rates',
     'services.disclaimer': "Rates shown are set in line with the professional physiotherapists' fee schedule and are indicative: they may vary based on the clinical case and the patient's specific needs. Any change is always communicated transparently and agreed in advance, before starting treatment.",
     'about.label': 'about', 'about.openMaps': 'Open in Google Maps',
@@ -111,6 +115,8 @@ const dict = {
   fr: {
     'nav.about': 'À propos', 'nav.services': 'Services', 'nav.blog': 'Blog', 'nav.faq': 'FAQ', 'nav.login': 'Connexion / Inscription',
     'hero.ctaRegister': "S'inscrire et réserver", 'hero.ctaLogin': 'Accéder à mon espace',
+    'hero.ctaWhatsapp': "Écrivez-moi sur WhatsApp", 'hero.ctaCall': "Appeler", 'hero.ctaBook': "Réserver en ligne",
+    'hero.trust1': "Inscrit à l'ordre professionnel TSRM PSTRP de Rome", 'hero.trust2': "Kinésithérapeute des équipes nationales FIJLKAM", 'hero.trust3': "Au cabinet à Rome (Tre Pini) ou à domicile",
     'services.label': 'services', 'services.heading': 'Prestations et tarifs',
     'services.disclaimer': "Les tarifs indiqués sont fixés conformément au barème professionnel des kinésithérapeutes et ont une valeur indicative : ils peuvent varier selon l'évaluation du cas clinique et les besoins spécifiques du patient. Toute variation est toujours communiquée de manière transparente et convenue au préalable, avant le début du parcours.",
     'about.label': 'présentation', 'about.openMaps': 'Ouvrir dans Google Maps',
@@ -161,6 +167,8 @@ const dict = {
   es: {
     'nav.about': 'Sobre mí', 'nav.services': 'Servicios', 'nav.blog': 'Blog', 'nav.faq': 'FAQ', 'nav.login': 'Acceder / Registrarse',
     'hero.ctaRegister': 'Regístrate y reserva', 'hero.ctaLogin': 'Accede a tu área',
+    'hero.ctaWhatsapp': "Escríbeme por WhatsApp", 'hero.ctaCall': "Llamar", 'hero.ctaBook': "Reservar en línea",
+    'hero.trust1': "Colegiado en el registro profesional TSRM PSTRP de Roma", 'hero.trust2': "Fisioterapeuta de los equipos nacionales de la FIJLKAM", 'hero.trust3': "En la consulta de Roma (Tre Pini) o a domicilio",
     'services.label': 'servicios', 'services.heading': 'Tratamientos y tarifas',
     'services.disclaimer': 'Las tarifas indicadas se establecen conforme al tarifario profesional de los fisioterapeutas y tienen carácter indicativo: pueden variar según la valoración del caso clínico y las necesidades específicas del paciente. Cualquier variación se comunica siempre de forma transparente y se acuerda previamente, antes de iniciar el proceso.',
     'about.label': 'presentación', 'about.openMaps': 'Abrir en Google Maps',
@@ -211,6 +219,8 @@ const dict = {
   de: {
     'nav.about': 'Über mich', 'nav.services': 'Leistungen', 'nav.blog': 'Blog', 'nav.faq': 'FAQ', 'nav.login': 'Anmelden / Registrieren',
     'hero.ctaRegister': 'Registrieren und buchen', 'hero.ctaLogin': 'Zu Ihrem Bereich',
+    'hero.ctaWhatsapp': "Schreiben Sie mir per WhatsApp", 'hero.ctaCall': "Anrufen", 'hero.ctaBook': "Online buchen",
+    'hero.trust1': "Eingetragen im Berufsregister TSRM PSTRP Rom", 'hero.trust2': "Physiotherapeut der Nationalteams der FIJLKAM", 'hero.trust3': "In der Praxis in Rom (Tre Pini) oder zu Hause",
     'services.label': 'leistungen', 'services.heading': 'Behandlungen und Preise',
     'services.disclaimer': 'Die angegebenen Preise entsprechen der Gebührenordnung für Physiotherapeuten und sind unverbindlich: Sie können je nach klinischem Fall und individuellem Bedarf des Patienten variieren. Jede Änderung wird stets transparent mitgeteilt und vor Beginn der Behandlung vereinbart.',
     'about.label': 'vorstellung', 'about.openMaps': 'In Google Maps öffnen',

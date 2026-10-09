@@ -256,9 +256,15 @@
       </h1>
       <p class="lede" id="heroLede">Fisioterapista specializzato in ambito muscoloscheletrico e sportivo, collaboro con la FIJLKAM al fianco degli atleti delle squadre nazionali di judo, lotta e karate. Seguo anche pazienti privati, con lo stesso approccio: valutazione precisa, piano su misura, ritorno al movimento senza dolore.</p>
       <div class="hero-ctas">
-        <a href="app.html#accesso" class="btn btn-primary" data-i18n="hero.ctaRegister">Registrati e prenota</a>
-        <a href="app.html" class="btn btn-ghost" data-i18n="hero.ctaLogin">Accedi alla tua area</a>
+        <a href="https://wa.me/393884080228" id="heroWhatsapp" class="btn btn-primary" target="_blank" rel="noopener" data-i18n="hero.ctaWhatsapp">Scrivimi su WhatsApp</a>
+        <a href="tel:+393884080228" id="heroCall" class="btn btn-ghost" data-i18n="hero.ctaCall">Chiama</a>
+        <a href="app.html#accesso" class="btn btn-ghost" data-i18n="hero.ctaBook">Prenota online</a>
       </div>
+      <ul class="hero-trust">
+        <li data-i18n="hero.trust1">Iscritto all'Albo TSRM PSTRP di Roma</li>
+        <li data-i18n="hero.trust2">Fisioterapista delle squadre nazionali FIJLKAM</li>
+        <li data-i18n="hero.trust3">In studio a Roma (Tre Pini) o a domicilio</li>
+      </ul>
     </div>
   </div>
 </section>
@@ -426,6 +432,13 @@
     <p class="fine">© <span id="footerYear"></span> — <span data-i18n="footer.gdpr">i dati clinici sono trattati in conformità al Regolamento (UE) 2016/679 (GDPR).</span> <a href="privacy.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.privacyLink">Informativa privacy</a> · <a href="#" id="cookiePreferencesLink" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.cookiePrefs">Preferenze cookie</a></p>
   </div>
 </footer>
+
+
+<!-- Barra contatti rapidi, solo su schermi piccoli -->
+<div class="sticky-contact" id="stickyContact">
+  <a href="tel:+393884080228" id="stickyCall" class="btn btn-ghost" data-i18n="hero.ctaCall">Chiama</a>
+  <a href="https://wa.me/393884080228" id="stickyWhatsapp" class="btn btn-primary" target="_blank" rel="noopener" data-i18n="hero.ctaWhatsapp">Scrivimi su WhatsApp</a>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="module" src="js/public.js"></script>

@@ -89,8 +89,19 @@ function renderRecap(c, services) {
   }
 }
 
+function applyContactLinks(phone) {
+  if (!phone || !phone.trim()) return;
+  const tel = 'tel:' + phone.replace(/[^+\d]/g, '');
+  let digits = phone.replace(/\D/g, '');
+  if (digits.length <= 10) digits = '39' + digits;
+  const wa = 'https://wa.me/' + digits;
+  ['#heroCall', '#stickyCall'].forEach((id) => { const a = qs(id); if (a) a.href = tel; });
+  ['#heroWhatsapp', '#stickyWhatsapp'].forEach((id) => { const a = qs(id); if (a) a.href = wa; });
+}
+
 function applyContentToDom(c) {
   if (!qs('#aboutName')) return; // pagina senza il markup pubblico (es. app.html)
+  applyContactLinks(c.phone);
   qs('#aboutName').textContent = c.name || '';
   qs('#heroEyebrow').textContent = tField(c, 'tagline');
   qs('#aboutBio').textContent = tField(c, 'bio');

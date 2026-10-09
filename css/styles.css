@@ -204,6 +204,21 @@ body.showing-settings #profilo{display:block !important;}
 .hero h1{font-size:64px; line-height:1.06; max-width:640px;}
 .hero .lede{margin-top:26px; font-size:17px; color:var(--text-dim); max-width:480px;}
 .hero-ctas{margin-top:40px; display:flex; gap:16px; flex-wrap:wrap;}
+.hero-trust{list-style:none; margin:28px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:8px 22px; font-size:13px; color:var(--text-dim);}
+.hero-trust li{display:flex; align-items:center; gap:8px;}
+.hero-trust li::before{content:''; width:5px; height:5px; border-radius:50%; background:var(--accent); flex-shrink:0;}
+.sticky-contact{display:none;}
+@media(max-width:720px){
+  .sticky-contact{
+    display:flex; gap:10px; position:fixed; left:0; right:0; bottom:0; z-index:400;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:var(--nav-bg);
+    backdrop-filter:blur(10px); border-top:1px solid var(--line);
+    transform:translateY(110%); transition:transform .3s var(--ease);
+  }
+  .sticky-contact.show{transform:translateY(0);}
+  .sticky-contact .btn{flex:1; min-height:44px; padding:10px 12px; font-size:14px;}
+  footer{padding-bottom:84px;}
+}
 .reveal-word{display:inline-block; opacity:0; transform:translateY(16px); animation:revealUp .7s cubic-bezier(.2,.7,.2,1) forwards;}
 @keyframes revealUp{to{opacity:1; transform:translateY(0);}}
 
