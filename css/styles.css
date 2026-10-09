@@ -719,7 +719,8 @@ body:not(.authed) .guest-only{display:block;}
 @media(max-width:860px){
   .nav-inner{height:auto; flex-wrap:wrap; overflow:visible; padding:8px 16px 0; row-gap:0; align-items:center;}
   .nav-inner > div:first-child{display:contents !important;}
-  .nav-inner .monogram{order:1; width:34px; height:34px; font-size:14px; flex-shrink:0;}
+  .nav-inner > div:first-child .monogram{order:1; flex-shrink:0;}
+  .nav-inner .monogram{width:34px; height:34px; font-size:14px;}
   .nav-inner > div:last-child{order:2; margin-left:auto; gap:8px !important; min-width:0;}
   .nav-links{order:3; flex:0 0 100%; margin-top:6px; gap:22px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; border-top:1px solid var(--line);}
   .nav-links::-webkit-scrollbar{display:none;}
@@ -775,7 +776,7 @@ body.role-admin .nav-inner{max-width:1400px;}
 @media(max-width:1340px){
   body.role-admin .nav-inner{height:auto; flex-wrap:wrap; overflow:visible; padding:8px 24px 0; row-gap:0; align-items:center;}
   body.role-admin .nav-inner > div:first-child{display:contents !important;}
-  body.role-admin .nav-inner .monogram{order:1; flex-shrink:0;}
+  body.role-admin .nav-inner > div:first-child .monogram{order:1; flex-shrink:0;}
   body.role-admin .nav-inner > div:last-child{order:2; margin-left:auto; gap:12px !important; min-width:0;}
   body.role-admin .nav-links{order:3; flex:0 0 100%; margin-top:8px; gap:26px; overflow-x:auto; scrollbar-width:none; border-top:1px solid var(--line);}
   body.role-admin .nav-links::-webkit-scrollbar{display:none;}
