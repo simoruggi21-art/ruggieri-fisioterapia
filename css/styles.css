@@ -692,3 +692,23 @@ body:not(.authed) .guest-only{display:block;}
 .guide-cta h2{margin-top:0;}
 .guide-disclaimer{margin-top:26px; font-size:13px; font-style:italic; color:var(--text-dimmer);}
 .guide-related{list-style:none; margin:12px 0 0; padding:0;}
+=======
+/* RICHIESTA DI CONTATTO (sito pubblico) */
+.contact-form{margin-top:28px; display:flex; flex-direction:column;}
+.contact-form textarea{width:100%; box-sizing:border-box; resize:vertical; min-height:84px;}
+.cf-hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;}
+.contact-status{margin-top:14px; font-size:14px; min-height:20px;}
+.contact-status.ok{color:var(--ok);}
+.contact-status.err{color:var(--danger);}
+.hero-callback{margin-top:16px; font-size:13.5px;}
+.hero-callback a{color:var(--accent); border-bottom:1px solid var(--accent-deep);}
+.request-row{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:18px 0; border-top:1px solid var(--line);}
+.request-row:last-child{border-bottom:1px solid var(--line);}
+.request-row .rq-main{flex:1; min-width:240px;}
+.request-row .rq-name{font-weight:500; font-size:15px;}
+.request-row .rq-meta{font-size:13px; color:var(--text-dim); margin-top:3px;}
+.request-row .rq-msg{font-size:13.5px; margin-top:8px; white-space:pre-wrap; word-break:break-word;}
+.request-row .rq-actions{display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap;}
+.request-row.done{opacity:.55;}
+.rq-badge{display:inline-block; font-size:11px; border:1px solid var(--accent-deep); color:var(--accent); border-radius:20px; padding:1px 8px; margin-left:8px; vertical-align:2px;}
+>>>>>>> origin/main

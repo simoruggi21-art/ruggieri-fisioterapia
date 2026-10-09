@@ -260,6 +260,7 @@
         <a href="tel:+393884080228" id="heroCall" class="btn btn-ghost" data-i18n="hero.ctaCall">Chiama</a>
         <a href="app.html#accesso" class="btn btn-ghost" data-i18n="hero.ctaBook">Prenota online</a>
       </div>
+      <p class="hero-callback"><a href="#richiedi" data-i18n="contact.heroLink">Preferisci essere richiamato? Lascia i tuoi dati</a></p>
       <ul class="hero-trust">
         <li data-i18n="hero.trust1">Iscritto all'Albo TSRM PSTRP di Roma</li>
         <li data-i18n="hero.trust2">Fisioterapista delle squadre nazionali FIJLKAM</li>
@@ -397,6 +398,25 @@
         <p class="text-dim">Ricevo presso Fisiomas Tre Pini, in Largo Filippo Juvara 13, 00128 Roma. Puoi prenotare online dalla tua area riservata, oppure chiamarmi o scrivermi su WhatsApp: trovi i recapiti in fondo alla pagina.</p>
       </details>
     </div>
+  </div>
+</section>
+
+<!-- RICHIESTA DI CONTATTO (senza registrazione) -->
+<section class="section" id="richiedi">
+  <div class="container" style="max-width:640px;">
+    <p class="label" data-i18n="contact.label">richiedi un appuntamento</p>
+    <h2 class="heading-lg" data-i18n="contact.heading">Preferisci essere richiamato?</h2>
+    <p class="text-dim" style="margin-top:14px;" data-i18n="contact.intro">Lasciami nome e recapito: ti ricontatto per fissare la prima visita. Nessuna registrazione necessaria.</p>
+    <form id="contactForm" class="contact-form" novalidate>
+      <div class="auth-field"><label for="cfName" data-i18n="contact.name">Nome e cognome</label><input type="text" id="cfName" name="name" maxlength="120" autocomplete="name" required></div>
+      <div class="auth-field"><label for="cfContact" data-i18n="contact.contact">Telefono o email</label><input type="text" id="cfContact" name="contact" maxlength="160" autocomplete="tel" required></div>
+      <div class="auth-field"><label for="cfTime" data-i18n="contact.time">Quando preferisci essere contattato (facoltativo)</label><input type="text" id="cfTime" name="time" maxlength="120" data-i18n-placeholder="contact.timePlaceholder" placeholder="Es. mattina, dopo le 17"></div>
+      <div class="auth-field"><label for="cfMessage" data-i18n="contact.message">Messaggio (facoltativo)</label><textarea id="cfMessage" name="message" rows="3" maxlength="1000"></textarea><span class="text-dim" style="font-size:12px;" data-i18n="contact.messageHint">Non serve descrivere il problema nel dettaglio: ne parliamo al telefono o in visita.</span></div>
+      <div class="cf-hp" aria-hidden="true"><label>Sito web<input type="text" id="cfWebsite" name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="consent-label"><input type="checkbox" id="cfConsent" required><span><span data-i18n="contact.consent">Ho letto l'</span><a href="privacy.html" target="_blank" rel="noopener" data-i18n="contact.consentLink">informativa sulla privacy</a><span data-i18n="contact.consentEnd"> e acconsento al trattamento dei miei dati per essere ricontattato.</span></span></label>
+      <button type="submit" class="btn btn-primary" id="cfSubmit" data-i18n="contact.send">Invia richiesta</button>
+      <p class="contact-status" id="cfStatus" role="status" aria-live="polite"></p>
+    </form>
   </div>
 </section>
 
