@@ -111,13 +111,12 @@ export async function renderPublicList() {
 
 // FAQ: contenuto statico e tradotto (vedi i18n.js), non dal database — piu'
 // semplice da mantenere per un numero ridotto di domande che cambiano di rado.
+const FAQ_COUNT = 8;
+
 export function renderFaq() {
   const target = qs('#faqList');
   if (!target) return;
-  const items = [
-    { q: t('faq.q1'), a: t('faq.a1') },
-    { q: t('faq.q2'), a: t('faq.a2') },
-  ];
+  const items = Array.from({ length: FAQ_COUNT }, (_, i) => ({ q: t(`faq.q${i + 1}`), a: t(`faq.a${i + 1}`) }));
   target.innerHTML = items.map((item, i) => `
     <details class="faq-item" ${i === 0 ? 'open' : ''}>
       <summary>${escapeHtml(item.q)}</summary>

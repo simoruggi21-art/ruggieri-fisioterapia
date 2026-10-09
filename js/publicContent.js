@@ -128,8 +128,6 @@ function applyContentToDom(c) {
     reviewLink.style.display = 'none';
   }
 
-  updateStructuredData(c);
-
   const initials = (c.name || 'SR').split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   const photoSlot = qs('#photoSlot');
   const initialsEl = qs('#photoInitials');
@@ -170,26 +168,6 @@ function setGalleryPhoto(slot, url) {
     slot.style.backgroundImage = '';
     slot.style.display = 'none';
   }
-}
-
-function updateStructuredData(c) {
-  let script = document.getElementById('ld-json-business');
-  if (!script) {
-    script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.id = 'ld-json-business';
-    document.head.appendChild(script);
-  }
-  const data = {
-    '@context': 'https://schema.org',
-    '@type': 'PhysicalTherapy',
-    name: c.name || 'Simone Ruggieri',
-    description: c.bio || c.tagline || '',
-    url: window.location.origin,
-    ...(c.address ? { address: { '@type': 'PostalAddress', streetAddress: c.address } } : {}),
-    ...(c.ig_handle ? { sameAs: ['https://instagram.com/' + c.ig_handle] } : {}),
-  };
-  script.textContent = JSON.stringify(data);
 }
 
 function renderPriceList(services) {
