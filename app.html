@@ -355,7 +355,7 @@
           <button class="btn btn-ghost btn-small" id="uploadPhotoBtn">Carica foto</button>
           <button class="btn btn-ghost btn-small" id="removePhotoBtn">Rimuovi foto</button>
         </div>
-        <p class="disclaimer">Consigliata una foto verticale, sotto i 2 MB.</p>
+        <p class="disclaimer">Consigliata una foto verticale. Le foto vengono ridimensionate in automatico: puoi caricare direttamente quelle del telefono.</p>
 
         <div style="margin-top:28px;">
           <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:8px;">Foto "in seduta" (facoltativa)</label>
@@ -374,6 +374,16 @@
           <div style="display:flex; gap:10px; margin-top:12px;">
             <button class="btn btn-ghost btn-small" id="uploadDetailPhotoBtn">Carica foto</button>
             <button class="btn btn-ghost btn-small" id="removeDetailPhotoBtn">Rimuovi</button>
+          </div>
+        </div>
+
+        <div style="margin-top:28px;">
+          <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:8px;">Foto "studio" (facoltativa, orizzontale)</label>
+          <div class="photo-slot photo-slot-wide" id="studioPhotoPreview" style="max-width:280px;"></div>
+          <input type="file" id="studioPhotoInput" accept="image/*" style="display:none">
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn btn-ghost btn-small" id="uploadStudioPhotoBtn">Carica foto</button>
+            <button class="btn btn-ghost btn-small" id="removeStudioPhotoBtn">Rimuovi</button>
           </div>
         </div>
       </div>

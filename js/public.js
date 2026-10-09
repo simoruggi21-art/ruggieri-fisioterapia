@@ -64,10 +64,17 @@ function wireScrollReveal() {
 function wireStickyContact() {
   const bar = document.getElementById('stickyContact');
   const heroCtas = document.querySelector('.hero-ctas');
+  const form = document.getElementById('richiedi');
   if (!bar || !heroCtas || !('IntersectionObserver' in window)) return;
-  new IntersectionObserver(([entry]) => {
-    bar.classList.toggle('show', !entry.isIntersecting);
-  }).observe(heroCtas);
+  // La barra Chiama/WhatsApp compare solo quando i pulsanti della hero e il
+  // modulo di richiamo sono fuori vista (sul modulo copriva il tasto Invia).
+  const visible = new Set();
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+    bar.classList.toggle('show', visible.size === 0);
+  });
+  obs.observe(heroCtas);
+  if (form) obs.observe(form);
 }
 
 // Richiamata al primo caricamento e ogni volta che il visitatore cambia

@@ -280,6 +280,10 @@ function wireStaticControls() {
   wireChange('detailPhotoInput', (e) => { if (e.target.files[0]) profileAdmin.uploadDetailPhoto(e.target.files[0]); e.target.value = ''; });
   wireClick('removeDetailPhotoBtn', () => profileAdmin.removeDetailPhoto());
 
+  wireClick('uploadStudioPhotoBtn', () => qs('#studioPhotoInput')?.click());
+  wireChange('studioPhotoInput', (e) => { if (e.target.files[0]) profileAdmin.uploadStudioPhoto(e.target.files[0]); e.target.value = ''; });
+  wireClick('removeStudioPhotoBtn', () => profileAdmin.removeStudioPhoto());
+
   wireClick('btnForfettario', () => finance.setRegime('forfettario'));
   wireClick('btnOrdinario', () => finance.setRegime('ordinario'));
   ['annualRevenue', 'coeffRedd', 'aliquotaSostitutiva', 'deductExpenses', 'addRegCom', 'inpsRate'].forEach((id) => {
