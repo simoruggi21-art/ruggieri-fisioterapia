@@ -12,6 +12,7 @@ import * as checkin from './checkin.js';
 import * as blog from './blog.js';
 import * as aiAssistant from './aiAssistant.js';
 import * as shiftSync from './shiftSync.js';
+import * as contactRequests from './contactRequests.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { initTheme, wireThemeTrigger } from './theme.js';
 
@@ -50,6 +51,7 @@ async function boot(state) {
       await safeRun('agenda', () => agenda.render());
       await safeRun('chat', () => chat.render());
       if (isStaff()) await safeRun('pazienti', () => patients.render());
+      if (isStaff()) await safeRun('richieste', () => contactRequests.render());
       if (isStaff()) await safeRun('assistente ai', () => aiAssistant.render());
       if (!isStaff()) {
         await safeRun('il mio percorso', () => patients.renderOwnProtocol());
