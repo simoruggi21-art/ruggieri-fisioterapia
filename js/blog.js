@@ -111,7 +111,7 @@ export async function renderPublicList() {
 
 // FAQ: contenuto statico e tradotto (vedi i18n.js), non dal database — piu'
 // semplice da mantenere per un numero ridotto di domande che cambiano di rado.
-const FAQ_COUNT = 8;
+const FAQ_COUNT = 12;
 
 export function renderFaq() {
   const target = qs('#faqList');
