@@ -309,7 +309,7 @@ export async function render() {
   const wrap = grid.parentElement;
   const firstActive = grid.querySelector('.cal-day-head:not(.day-past)');
   if (wrap && firstActive && wrap.scrollWidth > wrap.clientWidth) {
-    wrap.scrollLeft = Math.max(0, firstActive.offsetLeft - 48);
+    wrap.scrollLeft = Math.max(0, firstActive.getBoundingClientRect().left - grid.getBoundingClientRect().left - 48);
   }
 }
 
