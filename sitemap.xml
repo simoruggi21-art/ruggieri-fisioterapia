@@ -12,4 +12,29 @@
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
+  <url>
+    <loc>https://ruggierifisio.it/guide/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ruggierifisio.it/guide/mal-di-schiena-fisioterapia-roma/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ruggierifisio.it/guide/fisioterapia-a-domicilio-roma/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ruggierifisio.it/guide/ritorno-allo-sport-dopo-infortunio/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ruggierifisio.it/guide/fisioterapista-judo-lotta-karate-infortuni/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>
