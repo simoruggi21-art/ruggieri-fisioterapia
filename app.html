@@ -130,6 +130,11 @@
 <!-- AGENDA -->
 <section class="section auth-only" id="agenda" style="padding-top:160px;">
   <div class="container">
+    <div class="reminder-prompt patient-only" id="reminderPrompt" style="display:none;">
+      <strong>Vuoi dei promemoria via email?</strong>
+      <p class="text-dim" style="margin:6px 0 0;">Un check-up settimanale, il ricordo degli esercizi e, a fine percorso, un invito a lasciare una recensione (facoltativa). Le email non contengono dati sulla salute e le disattivi quando vuoi.</p>
+      <div class="invite-actions"><button class="btn btn-primary btn-small" id="reminderYes">Sì, attivali</button><button class="btn btn-ghost btn-small" id="reminderNo">No, grazie</button></div>
+    </div>
     <div class="booking-head">
       <div>
         <p class="label">agenda</p>
@@ -247,6 +252,19 @@
 </section>
 
 <!-- I MIEI ESERCIZI (paziente) -->
+<section class="section patient-only" id="preferenze">
+  <div class="container">
+    <p class="label">le mie preferenze</p>
+    <h2 class="heading-lg">Le mie preferenze</h2>
+    <p class="text-dim" style="margin-top:10px;">Scegli quali promemoria ricevere via email. Non contengono mai dati sulla salute.</p>
+    <div class="pref-list">
+      <label class="pref-row"><input type="checkbox" id="prefCheckup"><span><strong>Check-up settimanale</strong><br><span class="text-dim">Una email a settimana per dirmi come stai.</span></span></label>
+      <label class="pref-row"><input type="checkbox" id="prefExercises"><span><strong>Promemoria esercizi</strong><br><span class="text-dim">Ogni giorno, solo se sei in trattamento e non li hai ancora fatti.</span></span></label>
+      <label class="pref-row"><input type="checkbox" id="prefReview"><span><strong>Recensione a fine percorso</strong><br><span class="text-dim">Una sola email, due giorni dopo la conclusione. Facoltativa.</span></span></label>
+    </div>
+  </div>
+</section>
+
 <section class="section patient-only" id="miei-esercizi">
   <div class="container">
     <p class="label">i miei esercizi</p>
@@ -269,6 +287,13 @@
     </div>
     <div class="patient-search">
       <input type="text" id="patientSearchInput" placeholder="Cerca per nome o email...">
+    </div>
+    <div class="status-filter" id="patientStatusFilter" role="group" aria-label="Filtra per stato">
+      <button type="button" class="chip active" data-status="">Tutti</button>
+      <button type="button" class="chip" data-status="in_trattamento">In trattamento</button>
+      <button type="button" class="chip" data-status="in_valutazione">In valutazione</button>
+      <button type="button" class="chip" data-status="in_pausa">In pausa</button>
+      <button type="button" class="chip" data-status="terminato">Conclusi</button>
     </div>
     <div class="chat-shell" style="height:auto;">
       <div class="thread-list" id="patientList" style="max-height:560px;"></div>
