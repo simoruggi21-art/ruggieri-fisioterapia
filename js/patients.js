@@ -3,7 +3,8 @@ import { getState, isAdmin, isManager } from './state.js';
 import { showInviteResult } from './invite.js';
 import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime, avatarHtml } from './ui.js';
 import { protocolLibrary } from './protocolLibrary.js';
-import { exerciseLibrary, exercisePhases, phaseLabel } from './exerciseLibrary.js';
+import { exerciseLibrary, exercisePhases, phaseLabel, exerciseVideoUrl } from './exerciseLibrary.js';
+import { progressionLibrary } from './progressionLibrary.js';
 import { milestonesForCategory } from './milestoneLibrary.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
@@ -296,6 +297,18 @@ async function renderDetail(p, hasUnread) {
       <div id="milestoneTimeline"></div>
     </div>
 
+    <div class="record-block" id="guidedPath">
+      <div class="rb-title">Percorso guidato per fasi</div>
+      <p class="rb-sub">Per il quadro clinico scelto vedi le fasi (acuta, subacuta, rinforzo, ritorno all'attività) con obiettivi, esercizi e criteri per avanzare. Aggiungi alla scheda gli esercizi della fase in cui si trova il paziente.</p>
+      <select id="guidedProtocolSelect" style="width:100%; margin-bottom:14px;">
+        <option value="">— scegli un quadro clinico —</option>
+        ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
+          `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}" ${pl.id === protocol?.protocol_library_id ? 'selected' : ''}>${pl.label}</option>`).join('')}</optgroup>`
+        ).join('')}
+      </select>
+      <div id="guidedPhases"></div>
+    </div>
+
     <div class="record-block public">
       <div class="rb-title">Protocollo ed esercizi <span class="visibility-tag">visibile al paziente</span></div>
       <p class="rb-sub">Puoi incollare un link (es. un video YouTube che spiega l'esercizio): diventerà cliccabile per il paziente.</p>
@@ -408,6 +421,9 @@ async function renderDetail(p, hasUnread) {
     selectedProtocolLibraryId = item.id;
   };
 
+  drawGuidedPath(p.id, qs('#guidedProtocolSelect').value, exercises);
+  qs('#guidedProtocolSelect').addEventListener('change', (e) => drawGuidedPath(p.id, e.target.value, exercises));
+
   renderMilestoneBlock(qs('#milestoneTimeline'), {
     category: protocolLibrary.find((pl) => pl.id === protocol?.protocol_library_id)?.category || null,
     milestoneIndex: protocol?.milestone_index || 0,
@@ -491,6 +507,64 @@ async function deletePatient(p) {
 // Un esercizio da libreria ha solo "description" (testo unico gia' pronto);
 // uno compilato a mano ha invece serie/ripetizioni/note separati: mostriamo
 // la versione strutturata quando c'e', altrimenti il testo unico.
+// Percorso guidato: per ogni fase mostra obiettivo, esercizi (selezionabili) e criterio
+// di avanzamento; "Aggiungi" copia nella scheda del paziente gli esercizi spuntati,
+// con la fase del percorso, saltando quelli gia' assegnati (stesso nome).
+export function drawGuidedPath(patientId, protocolId, assigned) {
+  const box = qs('#guidedPhases');
+  if (!box) return;
+  const prog = progressionLibrary[protocolId];
+  if (!protocolId || !prog) {
+    box.innerHTML = '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico per vedere il percorso a fasi.</p>';
+    return;
+  }
+  const have = new Set(assigned.map((a) => a.name));
+  box.innerHTML = prog.map((ph, i) => {
+    const meta = exercisePhases.find((x) => x.id === ph.phase);
+    const items = ph.exercises.map((id) => exerciseLibrary.find((e) => e.id === id)).filter(Boolean);
+    return `
+    <details class="guided-phase" ${i === 0 ? 'open' : ''}>
+      <summary><strong>${escapeHtml(meta.label)}</strong> <span class="text-dim">· ${items.length} esercizi</span></summary>
+      <p class="guided-goal"><strong>Obiettivo:</strong> ${escapeHtml(ph.goal)}</p>
+      <ul class="guided-list">
+        ${items.map((ex) => {
+          const done = have.has(ex.name);
+          return `<li>
+            <label><input type="checkbox" data-guided-ex="${ex.id}" ${done ? 'disabled' : 'checked'}> ${escapeHtml(ex.name)}</label>
+            ${done ? '<span class="guided-have">già assegnato</span>' : ''}
+            <a class="video-link" href="${exerciseVideoUrl(ex.name)}" target="_blank" rel="noopener noreferrer">▶ video</a>
+            <div class="text-dim guided-desc">${escapeHtml(ex.description)}</div>
+          </li>`;
+        }).join('')}
+      </ul>
+      <p class="guided-crit"><strong>Per passare alla fase successiva:</strong> ${escapeHtml(ph.criterion)}</p>
+      <button type="button" class="btn btn-ghost btn-small" data-guided-add="${ph.phase}">Aggiungi alla scheda gli esercizi selezionati</button>
+    </details>`;
+  }).join('');
+  box.querySelectorAll('[data-guided-add]').forEach((btn) => {
+    btn.onclick = () => addGuidedPhase(patientId, btn.dataset.guidedAdd, btn.closest('details'), assigned);
+  });
+}
+
+async function addGuidedPhase(patientId, phase, detailsEl, assigned) {
+  const ids = [...detailsEl.querySelectorAll('[data-guided-ex]:checked')].map((c) => c.dataset.guidedEx);
+  const items = ids.map((id) => exerciseLibrary.find((e) => e.id === id)).filter((e) => e && !assigned.some((a) => a.name === e.name));
+  if (!items.length) { showToast('Nessun nuovo esercizio selezionato.', 'error'); return; }
+  const { session } = getState();
+  const rows = items.map((item, i) => ({
+    patient_id: patientId,
+    name: item.name,
+    description: item.description,
+    phase,
+    sort_order: assigned.length + i,
+    updated_by: session.user.id,
+  }));
+  const { error } = await supabase.from('patient_exercises').insert(rows);
+  if (error) { showToast('Errore nell\'aggiunta degli esercizi.', 'error'); return; }
+  showToast(items.length > 1 ? `${items.length} esercizi aggiunti.` : 'Esercizio aggiunto.', 'ok');
+  await render();
+}
+
 // Raggruppa gli esercizi per fase (nell'ordine del percorso); quelli senza fase vanno in coda.
 function groupExercisesByPhase(exercises) {
   const groups = exercisePhases.map((ph) => ({ ...ph, items: exercises.filter((ex) => ex.phase === ph.id) }));
@@ -507,6 +581,11 @@ function exerciseDetailHtml(ex) {
   if (structured.length) lines.push(structured.join(' · '));
   if (ex.notes) lines.push(linkifyHtml(ex.notes));
   if (!lines.length && ex.description) lines.push(linkifyHtml(ex.description));
+  // Se nelle note c'e' gia' un link (es. un video scelto da te) non aggiungiamo quello automatico.
+  const hasOwnLink = /https?:\/\//.test(`${ex.notes || ''} ${ex.description || ''}`);
+  if (ex.name && !hasOwnLink) {
+    lines.push(`<a class="video-link" href="${exerciseVideoUrl(ex.name)}" target="_blank" rel="noopener noreferrer">▶ Guarda un video</a>`);
+  }
   return lines.join('<br>');
 }
 

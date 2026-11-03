@@ -822,3 +822,18 @@ body.role-admin .nav-inner{max-width:1400px;}
 .exercise-phase-head:first-child{margin-top:0;}
 .exercise-phase-head span{color:var(--text-dimmer); letter-spacing:0;}
 .exercise-phase-head small{font-size:12.5px; letter-spacing:0; text-transform:none; color:var(--text-dim);}
+
+/* PERCORSO GUIDATO E VIDEO */
+.video-link{font-size:12.5px; color:var(--accent); border-bottom:1px solid var(--accent-deep); white-space:nowrap;}
+.guided-phase{border:1px solid var(--line); border-radius:4px; margin-top:10px; padding:0 14px; background:var(--bg);}
+.guided-phase summary{cursor:pointer; padding:12px 0; min-height:44px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.guided-phase[open] summary{border-bottom:1px solid var(--line);}
+.guided-goal, .guided-crit{font-size:13.5px; margin-top:12px; line-height:1.6;}
+.guided-crit{color:var(--text-dim);}
+.guided-list{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:10px;}
+.guided-list li{font-size:13.5px;}
+.guided-list label{display:inline-flex; gap:8px; align-items:flex-start; font-weight:500;}
+.guided-list input[type=checkbox]{margin-top:4px;}
+.guided-desc{font-size:12.5px; margin:3px 0 0 26px; line-height:1.5;}
+.guided-have{font-size:11.5px; color:var(--ok); margin-left:8px;}
+.guided-phase button{margin:14px 0 14px;}
