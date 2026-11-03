@@ -15,6 +15,7 @@ import * as shiftSync from './shiftSync.js';
 import * as contactRequests from './contactRequests.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { initTheme, wireThemeTrigger, promptThemeIfUnset } from './theme.js';
+import * as preferences from './preferences.js';
 
 const ROLE_LABELS = { admin: 'Amministratore', technician: 'Tecnico', operator: 'Operatore', patient: 'Paziente' };
 
@@ -54,6 +55,7 @@ async function boot(state) {
       if (isStaff()) await safeRun('richieste', () => contactRequests.render());
       if (isStaff()) await safeRun('assistente ai', () => aiAssistant.render());
       if (!isStaff()) {
+        await safeRun('preferenze', async () => preferences.render());
         await safeRun('il mio percorso', () => patients.renderOwnProtocol());
         await safeRun('i miei esercizi', () => patients.renderOwnExercises());
       }
@@ -345,6 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   agenda.wireAppointmentModal();
   patients.wireRegisterPatientModal();
   operators.wireStaffModal();
+  preferences.wire();
   wirePasswordRecovery();
   blog.wireAdmin();
   await auth.init(boot, () => { qs('#passwordRecoveryOverlay').style.display = 'flex'; });

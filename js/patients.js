@@ -107,6 +107,13 @@ async function registerNewPatient() {
 
 export function wireRegisterPatientModal() {
   qs('#patientSearchInput')?.addEventListener('input', renderPatientList);
+  qs('#patientStatusFilter')?.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-status]');
+    if (!b) return;
+    statusFilter = b.dataset.status;
+    qs('#patientStatusFilter').querySelectorAll('.chip').forEach((c) => c.classList.toggle('active', c === b));
+    renderPatientList();
+  });
   qs('#registerPatientBtn')?.addEventListener('click', openRegisterPatientModal);
   qs('#registerPatientCloseBtn')?.addEventListener('click', closeRegisterPatientModal);
   qs('#registerPatientConfirmBtn')?.addEventListener('click', registerNewPatient);
@@ -182,6 +189,14 @@ async function updateMilestoneIndex(patientId, newIndex) {
   if (error) showToast('Errore nell\'aggiornamento del traguardo.', 'error');
 }
 
+const CARE_STATUS = [
+  { id: 'in_valutazione', label: 'In valutazione' },
+  { id: 'in_trattamento', label: 'In trattamento' },
+  { id: 'in_pausa', label: 'In pausa' },
+  { id: 'terminato', label: 'Concluso' },
+];
+let statusFilter = '';
+
 let cachedPatients = [];
 let cachedUnreadIds = new Set();
 
@@ -215,6 +230,7 @@ function renderPatientList() {
   // Array.prototype.sort e' stabile: i pazienti arrivano gia' ordinati per
   // nome da fetchPatients(), quindi qui si preserva l'alfabetico all'interno
   // dei due gruppi (non letti prima, poi il resto).
+  if (statusFilter) patients = patients.filter((p) => (p.care_status || 'in_valutazione') === statusFilter);
   patients = [...patients].sort((a, b) => (cachedUnreadIds.has(a.id) ? 0 : 1) - (cachedUnreadIds.has(b.id) ? 0 : 1));
 
   list.innerHTML = '';
@@ -225,7 +241,7 @@ function renderPatientList() {
     const age = computeAge(p.birth_date);
     const item = el('div', 'patient-item' + (p.id === activePatientId ? ' active' : ''), '');
     const unreadBadge = cachedUnreadIds.has(p.id) ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : '';
-    item.innerHTML = `${avatarHtml(p.full_name || p.email)}<div class="p-info"><div class="p-name">${escapeHtml(p.full_name || p.email)}${unreadBadge}</div><div class="p-meta">${escapeHtml(p.gender || '—')} · ${age ?? '—'} anni</div></div>`;
+    item.innerHTML = `${avatarHtml(p.full_name || p.email)}<div class="p-info"><div class="p-name">${escapeHtml(p.full_name || p.email)}${unreadBadge}</div><div class="p-meta">${escapeHtml(p.gender || '—')} · ${age ?? '—'} anni${p.sessions_per_week ? ' · ' + p.sessions_per_week + '/sett.' : ''}</div></div><span class="care-chip care-${p.care_status || 'in_valutazione'}">${CARE_STATUS.find((c) => c.id === (p.care_status || 'in_valutazione'))?.label || ''}</span>`;
     item.onclick = async () => {
       activePatientId = p.id; renderPatientList();
       await renderDetail(p, cachedUnreadIds.has(p.id));
@@ -271,6 +287,19 @@ export async function renderDetail(p, hasUnread) {
         </select>
         <button class="btn btn-danger-ghost btn-small" id="deletePatientBtn" style="margin-top:10px; width:100%;">Elimina paziente</button>
       </div>` : ''}
+    </div>
+
+    <div class="record-block" id="carePlan">
+      <div class="rb-title">Piano di cura</div>
+      <div class="care-grid">
+        <label>Stato
+          <select id="careStatusSelect">${CARE_STATUS.map((c) => `<option value="${c.id}" ${(p.care_status || 'in_valutazione') === c.id ? 'selected' : ''}>${c.label}</option>`).join('')}</select>
+        </label>
+        <label>Sedute a settimana
+          <span class="rx-step"><button type="button" id="careSessMinus" aria-label="Meno sedute">−</button><input id="careSessionsInput" inputmode="numeric" value="${p.sessions_per_week ?? ''}" placeholder="es. 2"><button type="button" id="careSessPlus" aria-label="Più sedute">+</button></span>
+        </label>
+      </div>
+      <p class="text-dim care-meta" id="careMeta">${careMetaText(p)}</p>
     </div>
 
     <div class="record-block suggest">
@@ -431,6 +460,7 @@ export async function renderDetail(p, hasUnread) {
     selectedProtocolLibraryId = item.id;
   };
 
+  wireCarePlan(p);
   drawGuidedPath(p.id, qs('#guidedProtocolSelect').value, exercises);
   qs('#guidedProtocolSelect').addEventListener('change', (e) => drawGuidedPath(p.id, e.target.value, exercises));
 
@@ -538,6 +568,44 @@ async function deletePatient(p) {
 // Percorso guidato: per ogni fase mostra obiettivo, esercizi (selezionabili) e criterio
 // di avanzamento; "Aggiungi" copia nella scheda del paziente gli esercizi spuntati,
 // con la fase del percorso, saltando quelli gia' assegnati (stesso nome).
+function careMetaText(p) {
+  const bits = [];
+  if (p.care_started_at) bits.push('Preso in carico il ' + new Date(p.care_started_at).toLocaleDateString('it-IT'));
+  if (p.care_status === 'terminato' && p.care_ended_at) bits.push('concluso il ' + new Date(p.care_ended_at).toLocaleDateString('it-IT'));
+  if (p.review_requested_at) bits.push('richiesta di recensione inviata il ' + new Date(p.review_requested_at).toLocaleDateString('it-IT'));
+  else if (p.care_status === 'terminato') bits.push(p.notify_review ? 'la richiesta di recensione parte 2 giorni dopo la conclusione' : 'il paziente non ha attivato la richiesta di recensione');
+  const consents = [p.notify_checkup && 'check-up', p.notify_exercises && 'esercizi', p.notify_review && 'recensione'].filter(Boolean);
+  bits.push(consents.length ? 'promemoria attivi: ' + consents.join(', ') : 'promemoria email non attivati dal paziente');
+  return bits.join(' · ');
+}
+
+// Piano di cura: stato e sedute a settimana si salvano da soli. In trattamento registra la
+// data di presa in carico; concluso registra la fine (da cui parte la richiesta di recensione).
+function wireCarePlan(p) {
+  const status = qs('#careStatusSelect');
+  const sess = qs('#careSessionsInput');
+  if (!status || !sess) return;
+  const save = async (extra = {}) => {
+    const v = sess.value.trim();
+    const sessions = v === '' ? null : Math.max(0, Math.min(14, parseInt(v, 10) || 0));
+    const patch = { care_status: status.value, sessions_per_week: sessions, ...extra };
+    if (status.value === 'in_trattamento' && !p.care_started_at) patch.care_started_at = new Date().toISOString();
+    if (status.value === 'terminato' && !p.care_ended_at) patch.care_ended_at = new Date().toISOString();
+    if (status.value !== 'terminato' && p.care_ended_at) { patch.care_ended_at = null; }
+    const { error } = await supabase.from('profiles').update(patch).eq('id', p.id);
+    if (error) { showToast('Errore nel salvataggio del piano di cura.', 'error'); return; }
+    Object.assign(p, patch);
+    const cached = cachedPatients.find((x) => x.id === p.id); if (cached) Object.assign(cached, patch);
+    qs('#careMeta').textContent = careMetaText(p);
+    renderPatientList();
+    showToast('Piano di cura aggiornato.', 'ok');
+  };
+  status.addEventListener('change', () => save());
+  sess.addEventListener('change', () => save());
+  qs('#careSessPlus').onclick = () => { sess.value = String(Math.min(14, (parseInt(sess.value, 10) || 0) + 1)); save(); };
+  qs('#careSessMinus').onclick = () => { sess.value = String(Math.max(0, (parseInt(sess.value, 10) || 0) - 1)); save(); };
+}
+
 function doseLabel(ex) {
   const d = exerciseDose(ex);
   const parts = [];

@@ -108,7 +108,7 @@ async function fetchDetailed(fromISO, toISO) {
 async function renderTodaySummary() {
   const el = qs('#agendaSummary');
   if (!el) return;
-  if (!isStaff()) { el.innerHTML = ''; return; }
+  if (!isStaff()) { await renderPatientPlan(el); return; }
 
   const nowIso = new Date().toISOString();
   const [{ data: nextAppt }, { count: pendingCount }] = await Promise.all([
@@ -128,6 +128,38 @@ async function renderTodaySummary() {
       <div class="stat-value">${pendingCount || 0}</div>
     </div>
   `;
+}
+
+// Scheda del paziente: quante sedute a settimana ha indicato il fisioterapista e quante
+// ne ha gia' fra richieste e prenotazioni della settimana in corso.
+const CARE_LABELS = { in_valutazione: 'In valutazione', in_trattamento: 'In trattamento', in_pausa: 'In pausa', terminato: 'Percorso concluso' };
+
+async function renderPatientPlan(el) {
+  const { session, profile } = getState();
+  if (!session || !profile) { el.innerHTML = ''; return; }
+  const perWeek = profile.sessions_per_week;
+  if (!perWeek || profile.care_status === 'terminato') {
+    el.className = 'agenda-summary';
+    el.innerHTML = profile.care_status === 'terminato'
+      ? '<div class="stat-card"><div class="stat-label">Il tuo percorso</div><div class="stat-value">Concluso <span class="stat-sub">— grazie per la fiducia</span></div></div>'
+      : '';
+    return;
+  }
+  const monday = currentWeekMonday();
+  const nextMonday = new Date(monday); nextMonday.setDate(nextMonday.getDate() + 7);
+  const { data } = await supabase.from('appointments').select('id')
+    .eq('patient_id', session.user.id).in('status', ['richiesto', 'confermato'])
+    .gte('slot_start', monday.toISOString()).lt('slot_start', nextMonday.toISOString());
+  const booked = (data || []).length;
+  const left = Math.max(0, perWeek - booked);
+  el.className = 'agenda-summary';
+  el.innerHTML = `
+    <div class="stat-card plan-card">
+      <div class="stat-label">Il tuo piano · ${CARE_LABELS[profile.care_status] || ''}</div>
+      <div class="stat-value">${perWeek} ${perWeek === 1 ? 'seduta' : 'sedute'} a settimana</div>
+      <div class="plan-dots" aria-hidden="true">${Array.from({ length: perWeek }, (_, i) => `<span class="${i < booked ? 'on' : ''}"></span>`).join('')}</div>
+      <div class="stat-sub" style="margin-top:8px;">${left === 0 ? 'Questa settimana sei a posto: ' + booked + ' su ' + perWeek + ' prenotate.' : 'Questa settimana ne hai prenotate ' + booked + ' su ' + perWeek + (left === 1 ? ': ne manca 1.' : ': ne mancano ' + left + '.')}</div>
+    </div>`;
 }
 
 async function renderPatientHistory() {
