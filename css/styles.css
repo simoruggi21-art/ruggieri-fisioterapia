@@ -905,3 +905,41 @@ html.light-theme ::placeholder{color:#5B6A72; opacity:1;}
 .pref-list{margin-top:24px; display:flex; flex-direction:column; gap:14px; max-width:620px;}
 .pref-row{display:flex; gap:14px; align-items:flex-start; padding:16px 18px; border:1px solid var(--line); border-radius:6px; cursor:pointer; font-size:14.5px; line-height:1.5;}
 .pref-row input{margin-top:4px; width:20px; height:20px; accent-color:var(--accent); flex-shrink:0;}
+
+/* ===== Home: panoramica del giorno (paziente e staff) ===== */
+.home-now{margin:26px 0 8px; padding:18px 22px; border:1px solid var(--accent); border-radius:4px; background:var(--surface);}
+.home-now-title{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px;}
+.home-todo{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;}
+.home-todo li{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;}
+.home-todo li span{font-size:16px;}
+.home-allgood{margin:0; font-size:16px; color:var(--ok);}
+.home-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; margin-top:22px;}
+.home-card{border:1px solid var(--line); border-radius:4px; padding:18px 22px; background:var(--surface); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:8px; min-width:0;}
+.home-card.wide{grid-column:1 / -1;}
+.home-card.attention{border-color:var(--warn);}
+.home-card h3{margin:0; font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--text-dim);}
+.home-big{font-family:'Fraunces', serif; font-size:30px; line-height:1.15; overflow-wrap:anywhere;}
+.home-of{font-family:'IBM Plex Sans', sans-serif; font-size:15px; color:var(--text-dim);}
+.home-sub{font-size:13px; color:var(--text-dim);}
+.home-link{margin-top:auto; padding-top:6px; font-size:14px; color:var(--accent);}
+.home-link:hover{text-decoration:underline;}
+.home-foot{margin-top:22px; font-size:13px;}
+.home-foot a{color:var(--text-dim); text-decoration:underline;}
+.home-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column;}
+.home-list li{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:9px 0; border-bottom:1px solid var(--line);}
+.home-list li:last-child{border-bottom:none;}
+.home-time{font-variant-numeric:tabular-nums; min-width:48px; color:var(--text-dim);}
+.home-patient{background:none; border:none; padding:0; font:inherit; font-weight:500; color:var(--text); cursor:pointer; text-align:left; text-decoration:underline; text-decoration-color:var(--line);}
+.home-patient:hover{color:var(--accent);}
+.home-tag{font-size:12px; padding:2px 8px; border-radius:10px; border:1px solid var(--line); color:var(--text-dim);}
+.home-tag.confermato{color:var(--ok); border-color:var(--ok);}
+.home-tag.richiesto{color:var(--warn); border-color:var(--warn);}
+.home-tag.high{color:var(--danger, #b3261e); border-color:var(--danger, #b3261e);}
+.home-custom{margin:16px 0 0; padding:14px 18px; border:1px dashed var(--line); border-radius:4px;}
+.home-custom[hidden]{display:none;}
+.home-custom-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0;}
+.home-custom-row label{display:flex; align-items:center; gap:8px; font-size:14px;}
+@media (max-width:600px){
+  .home-big{font-size:26px;}
+  .home-todo li{align-items:flex-start; flex-direction:column; gap:8px;}
+}

@@ -252,6 +252,13 @@ function renderPatientList() {
   });
 }
 
+// Apre la scheda di un paziente da fuori dell'elenco (es. dalla Home dello staff).
+export async function openPatient(id) {
+  activePatientId = id;
+  await render();
+  document.getElementById('pazienti')?.scrollIntoView({ behavior: 'smooth' });
+}
+
 export async function renderDetail(p, hasUnread) {
   const detail = qs('#patientDetail');
   if (!p) { detail.innerHTML = '<p class="text-dim">Seleziona un paziente dalla lista.</p>'; return; }

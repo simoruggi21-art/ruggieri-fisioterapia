@@ -16,6 +16,7 @@ import * as contactRequests from './contactRequests.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { initTheme, wireThemeTrigger, promptThemeIfUnset } from './theme.js';
 import * as preferences from './preferences.js';
+import * as home from './home.js';
 
 const ROLE_LABELS = { admin: 'Amministratore', technician: 'Tecnico', operator: 'Operatore', patient: 'Paziente' };
 
@@ -50,6 +51,7 @@ async function boot(state) {
         notifications.startPolling();
       });
       await safeRun('agenda', () => agenda.render());
+      await safeRun('home', () => home.render());
       await safeRun('chat', () => chat.render());
       if (isStaff()) await safeRun('pazienti', () => patients.render());
       if (isStaff()) await safeRun('richieste', () => contactRequests.render());
@@ -111,6 +113,15 @@ function wireSettingsDropdown() {
     document.body.classList.add('showing-settings');
     menu.classList.remove('open');
   };
+  // Gli altri link della tendina portano a una sezione normale: chiudono il menu
+  // e, se era aperta la schermata Impostazioni, la richiudono.
+  menu.querySelectorAll('a').forEach((a) => {
+    if (a.id === 'settingsNavLink') return;
+    a.addEventListener('click', () => {
+      document.body.classList.remove('showing-settings');
+      menu.classList.remove('open');
+    });
+  });
   qs('#navLinks').querySelectorAll('a').forEach((a) => {
     if (a.id !== 'settingsNavLink') a.addEventListener('click', () => document.body.classList.remove('showing-settings'));
   });
