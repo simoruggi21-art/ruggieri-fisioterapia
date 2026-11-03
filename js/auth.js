@@ -41,11 +41,11 @@ export async function init(onChange, onRecovery) {
   });
 }
 
-export async function signUp({ email, password, fullName, phone, gender, birthDate }) {
+export async function signUp({ email, password, fullName, phone, gender, birthDate, reminders }) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: { data: { full_name: fullName, accepted_terms: true, notify_checkup: !!reminders, notify_exercises: !!reminders, notify_review: !!reminders } },
   });
   if (error) return { error };
 

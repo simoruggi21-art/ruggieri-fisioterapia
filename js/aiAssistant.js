@@ -55,9 +55,18 @@ async function callAssistant(message) {
   return data.reply;
 }
 
+// Avviso se il testo sembra contenere dati identificativi (email, telefono, codice fiscale):
+// l'assistente e' un servizio esterno e non deve ricevere dati dei pazienti.
+function looksIdentifying(text) {
+  return /[\w.+-]+@[\w-]+\.[\w.-]+/.test(text)
+    || /(?:\+?\d[\s./-]?){9,}/.test(text)
+    || /\b[A-Za-z]{6}\d{2}[A-Za-z]\d{2}[A-Za-z]\d{3}[A-Za-z]\b/.test(text);
+}
+
 export async function sendMessage(text) {
   const trimmed = (text || '').trim();
   if (!trimmed || sending) return;
+  if (looksIdentifying(trimmed) && !confirm('Il messaggio sembra contenere dati personali (email, telefono o codice fiscale). L\'assistente è un servizio esterno: vuoi davvero inviarlo? Meglio togliere i dati identificativi.')) return;
   sending = true;
   appendBubble('user', trimmed);
   const thinking = appendBubble('model', 'Sto pensando…', 'ai-thinking');

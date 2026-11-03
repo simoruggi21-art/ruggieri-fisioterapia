@@ -867,3 +867,18 @@ html.light-theme .btn-primary:hover, body.light-theme .btn-primary:hover{backgro
 html.light-theme .btn-ghost, body.light-theme .btn-ghost{border-color:#9AA5A0; color:var(--text);}
 html.light-theme .btn-ghost:hover, body.light-theme .btn-ghost:hover{border-color:var(--accent); color:var(--accent);}
 html.light-theme ::placeholder{color:#5B6A72; opacity:1;}
+
+/* MAPPA CON CONSENSO: carica Google Maps solo dopo il clic */
+.map-consent{margin-top:16px; padding:18px; border:1px dashed var(--line); border-radius:4px; display:flex; flex-direction:column; gap:12px; align-items:flex-start; font-size:13.5px;}
+.map-consent .address-map{width:100%;}
+
+/* PAGINE LEGALI */
+.legal-body{margin-top:34px; display:flex; flex-direction:column; gap:30px;}
+.legal-body h2{font-size:20px; margin-bottom:10px;}
+.legal-body p, .legal-body li{color:var(--text-dim); line-height:1.75; font-size:15px;}
+.legal-body ul{margin:10px 0 0 22px; padding:0; display:flex; flex-direction:column; gap:8px;}
+.legal-body a, .legal-links a{color:var(--accent); border-bottom:1px solid var(--accent-deep);}
+.legal-body strong{color:var(--text); font-weight:500;}
+.legal-links{margin-top:14px; font-size:13.5px; color:var(--text-dimmer);}
+
+.notice-emergency{margin:14px 0 0; padding:12px 16px; border-left:3px solid var(--danger); background:var(--accent-soft); font-size:13.5px; color:var(--text); border-radius:3px; max-width:620px;}

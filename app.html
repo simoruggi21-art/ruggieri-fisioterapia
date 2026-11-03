@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Area riservata — Simone Ruggieri Fisioterapista</title>
 <meta name="robots" content="noindex, nofollow">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/css/fonts.css">
 <script>try{if(localStorage.getItem("appTheme")!=="dark")document.documentElement.classList.add("light-theme")}catch(e){document.documentElement.classList.add("light-theme")}</script>
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -110,7 +108,15 @@
       <div class="auth-field"><label>Data di nascita</label><input type="date" id="signupBirthDate"></div>
       <label class="consent-label">
         <input type="checkbox" id="consentCheckbox" required>
-        <span>Ho letto l'<a href="privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">informativa sulla privacy</a> e acconsento al trattamento dei miei dati, inclusi i dati sanitari, per finalità di cura.</span>
+        <span>Ho letto l'<a href="privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">informativa sulla privacy</a> e acconsento al trattamento dei miei dati, inclusi i dati sanitari, per l'uso dell'area riservata e per finalità di cura.</span>
+      </label>
+      <label class="consent-label">
+        <input type="checkbox" id="termsCheckbox" required>
+        <span>Sono maggiorenne (oppure mi registro con il consenso di chi esercita la responsabilità genitoriale) e accetto le <a href="condizioni.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">condizioni d'uso</a>. So che la chat non è per le urgenze: in emergenza chiamo il 112.</span>
+      </label>
+      <label class="consent-label">
+        <input type="checkbox" id="remindersCheckbox">
+        <span><strong>Facoltativo:</strong> voglio ricevere via email i promemoria dello studio (check-up settimanale, esercizi, richiesta di recensione a fine percorso). Le email non contengono dati sulla salute e posso disattivarle quando voglio.</span>
       </label>
       <button type="submit" class="btn btn-primary">Crea account</button>
     </form>
@@ -167,6 +173,7 @@
   <div class="container">
     <p class="label">messaggi</p>
     <h2 class="heading-lg">Messaggi</h2>
+    <p class="notice-emergency patient-only">La chat non è per le urgenze. In caso di emergenza chiama il <strong>112</strong>. Ti rispondiamo negli orari di attività dello studio.</p>
     <div class="chat-shell">
       <div class="thread-list" id="threadList"></div>
       <div class="chat-main">
@@ -206,6 +213,7 @@
     <p class="label">assistente ai</p>
     <h2 class="heading-lg">Assistente AI</h2>
     <p class="text-dim" style="margin-top:10px; max-width:640px;">Supporto clinico solo per te: interpretazione di casi, suggerimenti su protocolli ed esercizi da valutare, bozze di note. Le risposte sono generate da un'intelligenza artificiale: non sostituiscono la tua valutazione clinica e non vanno mai condivise direttamente con i pazienti.</p>
+    <p class="notice-emergency"><strong>Privacy:</strong> il servizio è esterno (Google). Non scrivere nome, cognome, data di nascita, recapiti o altri dati che identificano il paziente: descrivi solo il quadro clinico in forma anonima.</p>
     <div class="ai-shell" style="margin-top:30px;">
       <div class="chat-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
         <span>Conversazione</span>
@@ -244,6 +252,7 @@
     <p class="label">i miei esercizi</p>
     <h2 class="heading-lg">Esercizi assegnati</h2>
     <p class="text-dim" style="margin-top:10px;">Gli esercizi che il tuo fisioterapista ha scelto per te.</p>
+    <p class="notice-emergency">Se durante un esercizio compaiono dolore forte, vertigini, formicolii che peggiorano o altri sintomi nuovi, <strong>interrompi e contatta lo studio</strong>. In caso di urgenza chiama il <strong>112</strong>. I video collegati sono ricerche su YouTube (contenuti di terzi): prevale sempre ciò che ti ha mostrato il fisioterapista.</p>
     <div id="myExercisesList" style="margin-top:30px; display:flex; flex-direction:column; gap:14px;"></div>
   </div>
 </section>
@@ -527,7 +536,7 @@
 <footer>
   <div class="container">
     <p class="text-dim" style="font-size:13.5px;"><a href="index.html" style="color:var(--accent); border-bottom:1px solid var(--accent-deep);">← Torna al sito pubblico</a></p>
-    <p class="fine">© <span id="footerYear"></span> Simone Ruggieri — area riservata. <a href="privacy.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Informativa privacy</a> · <a href="#" id="cookiePreferencesLink" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Preferenze cookie</a></p>
+    <p class="fine">© <span id="footerYear"></span> Simone Ruggieri — area riservata. <a href="privacy.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Informativa privacy</a> · <a href="/note-legali.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Note legali</a> · <a href="/condizioni.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Condizioni d'uso</a> · <a href="#" id="cookiePreferencesLink" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Preferenze cookie</a></p>
   </div>
 </footer>
 
@@ -710,7 +719,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/vendor/supabase.js"></script>
 <script type="module" src="js/app.js"></script>
 <script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
 </body>

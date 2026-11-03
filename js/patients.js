@@ -510,7 +510,7 @@ export async function renderDetail(p, hasUnread) {
 }
 
 async function deletePatient(p) {
-  const confirmed = confirm(`Eliminare definitivamente ${p.full_name || p.email}? Verranno cancellati per sempre il suo account, le prenotazioni, i messaggi e le schede cliniche. Non si può annullare.`);
+  const confirmed = confirm(`Eliminare definitivamente ${p.full_name || p.email}? Verranno cancellati per sempre il suo account, le prenotazioni, i messaggi e le schede cliniche. Non si può annullare.\n\nAttenzione: la documentazione sanitaria va di norma conservata per 10 anni dalla conclusione del percorso. Elimina solo se sei sicuro che non ci siano obblighi di conservazione (es. richiesta di cancellazione già valutata o dati inseriti per errore).`);
   if (!confirmed) return;
   const { session } = getState();
   const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-patient`, {
