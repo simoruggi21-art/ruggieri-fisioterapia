@@ -24,9 +24,7 @@
 <meta name="twitter:description" content="Terapia manuale, riabilitazione sportiva e fisioterapia a domicilio.">
 <meta name="twitter:image" content="https://ruggierifisio.it/og-image.png">
 <script>if(/type=recovery/.test(location.hash)){location.replace("/app"+location.hash);}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/css/fonts.css">
 <!-- Dati strutturati statici (leggibili anche da crawler che non eseguono JS).
      Se cambiano telefono, indirizzo o tariffe nel pannello, vanno aggiornati anche qui. -->
 <script type="application/ld+json" id="ld-json-business">
@@ -211,7 +209,7 @@
      "name": "Ti occupi solo di sportivi?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "No. Seguo atleti agonisti, anche delle squadre nazionali FIJLKAM, e chiunque abbia un dolore muscolo-scheletrico che limita la vita di tutti i giorni, come schiena, collo, spalla o ginocchio. L'approccio è lo stesso: valutazione precisa, piano su misura, ritorno al movimento senza dolore."
+      "text": "No. Seguo atleti agonisti, anche delle squadre nazionali FIJLKAM, e chiunque abbia un dolore muscolo-scheletrico che limita la vita di tutti i giorni, come schiena, collo, spalla o ginocchio. L'approccio è lo stesso: valutazione precisa, piano su misura, ritorno al movimento in sicurezza."
      }
     },
     {
@@ -311,7 +309,7 @@
         <span id="heroLine2">si recupera</span><br>
         <span id="heroLine3">con metodo.</span>
       </h1>
-      <p class="lede" id="heroLede">Fisioterapista specializzato in ambito muscoloscheletrico e sportivo, collaboro con la FIJLKAM al fianco degli atleti delle squadre nazionali di judo, lotta e karate. Seguo anche pazienti privati, con lo stesso approccio: valutazione precisa, piano su misura, ritorno al movimento senza dolore.</p>
+      <p class="lede" id="heroLede">Fisioterapista con formazione ed esperienza in ambito muscoloscheletrico e sportivo, collaboro con la FIJLKAM al fianco degli atleti delle squadre nazionali di judo, lotta e karate. Seguo anche pazienti privati, con lo stesso approccio: valutazione precisa, piano su misura, ritorno al movimento in sicurezza.</p>
       <div class="hero-ctas">
         <a href="https://wa.me/393884080228" id="heroWhatsapp" class="btn btn-primary" target="_blank" rel="noopener" data-i18n="hero.ctaWhatsapp">Scrivimi su WhatsApp</a>
         <a href="tel:+393884080228" id="heroCall" class="btn btn-ghost" data-i18n="hero.ctaCall">Chiama</a>
@@ -347,7 +345,7 @@
       <p class="text-dim" style="margin-top:22px; max-width:520px;" id="aboutBio">Ho conseguito il diploma di Laurea in Fisioterapia presso l&#x27;Università UniCamillus di Roma nel mese di aprile 2025, dopo aver svolto un tirocinio clinico di 1500 ore presso il CTO, il Policlinico Luigi Di Liegro ed altre strutture ospedaliere romane, e un&#x27;esperienza formativa internazionale presso la European School of Physiotherapy di Amsterdam (Amsterdam UMC). Attualmente sto conseguendo il Master di Fisioterapia Sportiva del Consorzio Humanitas. Dal mese di agosto 2025 collaboro con la FIJLKAM (Federazione Italiana Judo Lotta Karate e Arti Marziali) come fisioterapista delle squadre nazionali, seguendo gli atleti prima, durante e dopo gare e raduni — un percorso che mi ha portato a seguire atleti in competizioni quali i Campionati Europei U21 di Karate a Limassol, il Grand Prix di Lima e il Grand Slam di Judo di Ulaanbaatar. Il mio approccio unisce ragionamento clinico, terapia manuale ed esercizio terapeutico, con particolare attenzione al pieno ritorno all&#x27;attività sportiva. Il focus del percorso riabilitativo, così come lo intendo, è unicamente il paziente, che si tratti di un atleta agonista o di chi desidera tornare a muoversi senza dolore.</p>
       <div class="credentials">
         <div class="credential-row"><span data-i18n="credentials.formazione">Formazione</span><span id="credFormazione">Laurea in Fisioterapia — Università UniCamillus, Roma (2025); European School of Physiotherapy, Amsterdam UAS (2019–2021)</span></div>
-        <div class="credential-row"><span data-i18n="credentials.specializzazione">Specializzazione</span><span id="credSpecializzazione">Fisioterapia muscoloscheletrica e sportiva, Return to Sport — Master in Fisioterapia Sportiva in corso (Consorzio Humanitas)</span></div>
+        <div class="credential-row"><span data-i18n="credentials.specializzazione">Ambiti e formazione</span><span id="credSpecializzazione">Fisioterapia muscoloscheletrica e sportiva, Return to Sport — Master in Fisioterapia Sportiva in corso (Consorzio Humanitas)</span></div>
         <div class="credential-row"><span data-i18n="credentials.albo">Albo professionale</span><span id="credAlbo">Albo TSRM PSTRP di Roma, n. 10887</span></div>
       </div>
       <div class="fijlkam-note" id="fijlkamNote">Collabora con la FIJLKAM come fisioterapista delle squadre nazionali di Judo, Lotta e Karate, con esperienze internazionali come i Campionati Europei U21 di Karate (Limassol), il Grand Prix di Lima e il Grand Slam di Judo (Ulaanbaatar).</div>
@@ -362,7 +360,10 @@
           <span><span data-i18n="about.secondSite">Seconda sede</span>: Via Giovanni Legrenzi 40, 00124 Roma RM</span>
           <a href="https://www.google.com/maps/search/?api=1&query=Via%20Giovanni%20Legrenzi%2040%2C%2000124%20Roma%20RM" target="_blank" rel="noopener" data-i18n="about.openMaps">Apri in Google Maps</a>
         </div>
-        <iframe id="addressMapEmbed" class="address-map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div id="addressMapBox" class="map-consent">
+          <p class="text-dim" data-i18n="about.mapNotice">La mappa è fornita da Google: caricandola, Google riceve il tuo indirizzo IP e può usare cookie.</p>
+          <button type="button" class="btn btn-ghost btn-small" id="addressMapBtn" data-i18n="about.showMap">Mostra la mappa</button>
+        </div>
       </div>
     </div>
   </div>
@@ -455,7 +456,7 @@
       </details>
       <details class="faq-item">
         <summary>Ti occupi solo di sportivi?</summary>
-        <p class="text-dim">No. Seguo atleti agonisti, anche delle squadre nazionali FIJLKAM, e chiunque abbia un dolore muscolo-scheletrico che limita la vita di tutti i giorni, come schiena, collo, spalla o ginocchio. L&#x27;approccio è lo stesso: valutazione precisa, piano su misura, ritorno al movimento senza dolore.</p>
+        <p class="text-dim">No. Seguo atleti agonisti, anche delle squadre nazionali FIJLKAM, e chiunque abbia un dolore muscolo-scheletrico che limita la vita di tutti i giorni, come schiena, collo, spalla o ginocchio. L&#x27;approccio è lo stesso: valutazione precisa, piano su misura, ritorno al movimento in sicurezza.</p>
       </details>
       <details class="faq-item">
         <summary>Dove si trova lo studio e come prenoto?</summary>
@@ -487,6 +488,7 @@
     <p class="label" data-i18n="contact.label">richiedi un appuntamento</p>
     <h2 class="heading-lg" data-i18n="contact.heading">Preferisci essere richiamato?</h2>
     <p class="text-dim" style="margin-top:14px;" data-i18n="contact.intro">Lasciami nome e recapito: ti ricontatto per fissare la prima visita. Nessuna registrazione necessaria.</p>
+    <p class="notice-emergency" data-i18n="contact.urgent">Per urgenze o emergenze non usare questo modulo: chiama il 112.</p>
     <form id="contactForm" class="contact-form" novalidate>
       <div class="auth-field"><label for="cfName" data-i18n="contact.name">Nome e cognome</label><input type="text" id="cfName" name="name" maxlength="120" autocomplete="name" required></div>
       <div class="auth-field"><label for="cfContact" data-i18n="contact.contact">Telefono o email</label><input type="text" id="cfContact" name="contact" maxlength="160" autocomplete="tel" required></div>
@@ -538,7 +540,7 @@
     <p class="text-dim" style="font-size:14px;" id="footerContactLine"></p>
     <a href="#" id="googleReviewLink" target="_blank" rel="noopener" class="btn btn-primary btn-small" style="display:none; margin-top:16px;" data-i18n="recap.reviewCta">★ Lasciami una recensione su Google</a>
     <p class="fine" id="footerPiva" data-i18n="footer.piva">Simone Ruggieri — P.IVA 18105221008</p>
-    <p class="fine">© <span id="footerYear"></span> — <span data-i18n="footer.gdpr">i dati clinici sono trattati in conformità al Regolamento (UE) 2016/679 (GDPR).</span> <a href="privacy.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.privacyLink">Informativa privacy</a> · <a href="#" id="cookiePreferencesLink" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.cookiePrefs">Preferenze cookie</a></p>
+    <p class="fine">© <span id="footerYear"></span> — <span data-i18n="footer.gdpr">i dati clinici sono trattati in conformità al Regolamento (UE) 2016/679 (GDPR).</span> <a href="privacy.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.privacyLink">Informativa privacy</a> · <a href="/note-legali.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Note legali</a> · <a href="/condizioni.html" style="color:var(--text-dim); border-bottom:1px solid var(--line);">Condizioni d'uso</a> · <a href="#" id="cookiePreferencesLink" style="color:var(--text-dim); border-bottom:1px solid var(--line);" data-i18n="footer.cookiePrefs">Preferenze cookie</a></p>
   </div>
 </footer>
 
@@ -549,7 +551,7 @@
   <a href="https://wa.me/393884080228" id="stickyWhatsapp" class="btn btn-primary" target="_blank" rel="noopener" data-i18n="hero.ctaWhatsapp">Scrivimi su WhatsApp</a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/vendor/supabase.js"></script>
 <script type="module" src="js/public.js"></script>
 <script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
 </body>

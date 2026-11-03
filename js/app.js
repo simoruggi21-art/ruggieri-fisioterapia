@@ -200,6 +200,7 @@ function wireAuthForms() {
       phone: qs('#signupPhone').value.trim(),
       gender: qs('#signupGender').value,
       birthDate: qs('#signupBirthDate').value || null,
+      reminders: qs('#remindersCheckbox').checked,
     });
     if (error) { errEl.textContent = 'Registrazione non riuscita: ' + error.message; return; }
     if (data?.session) {

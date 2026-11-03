@@ -165,7 +165,26 @@ function applyContentToDom(c) {
     const encoded = encodeURIComponent(c.address);
     qs('#addressText').textContent = c.address;
     qs('#addressMapsLink').href = 'https://www.google.com/maps/search/?api=1&query=' + encoded;
-    qs('#addressMapEmbed').src = 'https://www.google.com/maps?q=' + encoded + '&output=embed';
+    // La mappa di Google non parte da sola: solo dopo il clic (nessun dato a terzi prima).
+    const box = qs('#addressMapBox');
+    const btn = qs('#addressMapBtn');
+    box.dataset.src = 'https://www.google.com/maps?q=' + encoded + '&output=embed';
+    if (box.dataset.loaded === '1') {
+      const f = box.querySelector('iframe');
+      if (f) f.src = box.dataset.src;
+    } else if (!btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', () => {
+        box.innerHTML = '';
+        const f = document.createElement('iframe');
+        f.className = 'address-map';
+        f.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        f.title = 'Mappa';
+        f.src = box.dataset.src;
+        box.appendChild(f);
+        box.dataset.loaded = '1';
+      });
+    }
   } else {
     block.style.display = 'none';
   }
