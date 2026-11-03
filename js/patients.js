@@ -3,7 +3,8 @@ import { getState, isAdmin, isManager } from './state.js';
 import { showInviteResult } from './invite.js';
 import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime, avatarHtml } from './ui.js';
 import { protocolLibrary } from './protocolLibrary.js';
-import { exerciseLibrary, exercisePhases, phaseLabel, exerciseVideoUrl } from './exerciseLibrary.js';
+import { exerciseLibrary, exercisePhases, phaseLabel, exerciseVideoUrl, exerciseDose, bumpDose } from './exerciseLibrary.js';
+import { evidenceByRegion, regionByProtocol, regionPrinciples, regionLabels } from './evidenceLibrary.js';
 import { progressionLibrary } from './progressionLibrary.js';
 import { milestonesForCategory } from './milestoneLibrary.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
@@ -235,7 +236,7 @@ function renderPatientList() {
   });
 }
 
-async function renderDetail(p, hasUnread) {
+export async function renderDetail(p, hasUnread) {
   const detail = qs('#patientDetail');
   if (!p) { detail.innerHTML = '<p class="text-dim">Seleziona un paziente dalla lista.</p>'; return; }
 
@@ -363,17 +364,26 @@ async function renderDetail(p, hasUnread) {
           : groupExercisesByPhase(exercises).map((g) => `
             <div class="exercise-phase-head">${escapeHtml(g.label)} <span>${g.items.length}</span></div>
             ${g.items.map((ex) => `
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; border:1px solid var(--line); border-radius:4px; padding:10px 14px;">
-              <div>
-                <div style="font-weight:500; font-size:13.5px;">${escapeHtml(ex.name)}</div>
-                <div class="text-dim" style="font-size:12.5px; margin-top:3px;">${exerciseDetailHtml(ex)}</div>
+            <div class="rx-card">
+              <div class="rx-head">
+                <div style="min-width:0;">
+                  <div style="font-weight:500; font-size:13.5px;">${escapeHtml(ex.name)}</div>
+                  <div class="text-dim" style="font-size:12.5px; margin-top:3px;">${exerciseHowHtml(ex)}</div>
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">
+                  <select data-phase-exercise="${ex.id}" aria-label="Fase" style="font-size:12px; padding:3px 6px; max-width:120px;">
+                    <option value="">Senza fase</option>
+                    ${exercisePhases.map((ph) => `<option value="${ph.id}" ${ex.phase === ph.id ? 'selected' : ''}>${ph.label}</option>`).join('')}
+                  </select>
+                  <button class="btn btn-ghost btn-small" data-remove-exercise="${ex.id}" style="padding:4px 9px; font-size:12px;" aria-label="Rimuovi">✕</button>
+                </div>
               </div>
-              <div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">
-                <select data-phase-exercise="${ex.id}" aria-label="Fase" style="font-size:12px; padding:3px 6px; max-width:120px;">
-                  <option value="">Senza fase</option>
-                  ${exercisePhases.map((ph) => `<option value="${ph.id}" ${ex.phase === ph.id ? 'selected' : ''}>${ph.label}</option>`).join('')}
-                </select>
-                <button class="btn btn-ghost btn-small" data-remove-exercise="${ex.id}" style="padding:4px 9px; font-size:12px;">✕</button>
+              <div class="rx-grid" data-rx="${ex.id}">
+                <label>Serie <span class="rx-step"><input data-rx-field="sets" value="${escapeHtml(ex.sets || '')}" inputmode="numeric"><button type="button" data-rx-bump="sets" aria-label="Più serie">+</button></span></label>
+                <label>Ripetizioni <span class="rx-step"><input data-rx-field="reps" value="${escapeHtml(ex.reps || '')}"><button type="button" data-rx-bump="reps" aria-label="Più ripetizioni">+</button></span></label>
+                <label>Carico / tenuta <input data-rx-field="load" value="${escapeHtml(ex.load || '')}" placeholder="es. 2 kg, tenuta 10 s"></label>
+                <label>Frequenza <input data-rx-field="frequency" value="${escapeHtml(ex.frequency || '')}" placeholder="es. 3 volte a settimana"></label>
+                <label class="rx-wide">Note per il paziente <input data-rx-field="notes" value="${escapeHtml(ex.notes || '')}" placeholder="Indicazioni, oppure incolla un link video"></label>
               </div>
             </div>`).join('')}
           `).join('')}
@@ -456,6 +466,24 @@ async function renderDetail(p, hasUnread) {
   qs('#exercisePhaseFilter').addEventListener('change', () => populateExerciseSelect());
   qs('#addLibraryExerciseBtn').onclick = () => addLibraryExercise(p.id, exercises.length);
   qs('#addCustomExerciseBtn').onclick = () => addCustomExercise(p.id, exercises.length);
+  detail.querySelectorAll('[data-rx]').forEach((grid) => {
+    const id = grid.dataset.rx;
+    const save = async () => {
+      const row = {};
+      grid.querySelectorAll('[data-rx-field]').forEach((inp) => { row[inp.dataset.rxField] = inp.value.trim() || null; });
+      const { error } = await supabase.from('patient_exercises').update({ ...row, updated_by: getState().session.user.id }).eq('id', id);
+      if (error) { showToast('Errore nel salvataggio della prescrizione.', 'error'); return; }
+      showToast('Prescrizione aggiornata.', 'ok');
+    };
+    grid.querySelectorAll('input').forEach((inp) => inp.addEventListener('change', save));
+    grid.querySelectorAll('[data-rx-bump]').forEach((btn) => {
+      btn.onclick = () => {
+        const inp = grid.querySelector(`[data-rx-field="${btn.dataset.rxBump}"]`);
+        inp.value = bumpDose(inp.value || '0', 1);
+        save();
+      };
+    });
+  });
   detail.querySelectorAll('[data-phase-exercise]').forEach((sel) => {
     sel.onchange = async () => {
       const { error } = await supabase.from('patient_exercises').update({ phase: sel.value || null }).eq('id', sel.dataset.phaseExercise);
@@ -510,6 +538,34 @@ async function deletePatient(p) {
 // Percorso guidato: per ogni fase mostra obiettivo, esercizi (selezionabili) e criterio
 // di avanzamento; "Aggiungi" copia nella scheda del paziente gli esercizi spuntati,
 // con la fase del percorso, saltando quelli gia' assegnati (stesso nome).
+function doseLabel(ex) {
+  const d = exerciseDose(ex);
+  const parts = [];
+  if (d.sets && d.reps) parts.push(`${escapeHtml(d.sets)} × ${escapeHtml(d.reps)}`);
+  else if (d.reps) parts.push(`${escapeHtml(d.reps)} rip.`);
+  if (d.load) parts.push(escapeHtml(d.load));
+  if (d.frequency) parts.push(escapeHtml(d.frequency));
+  return parts.join(' · ');
+}
+
+// Principi di prescrizione e fonti PubMed del distretto (solo per le patologie dei distretti principali).
+function evidenceHtml(protocolId) {
+  const region = regionByProtocol[protocolId];
+  if (!region) return '';
+  const refs = evidenceByRegion[region] || [];
+  return `
+    <div class="guided-evidence">
+      <p class="guided-principles"><strong>${escapeHtml(regionLabels[region])} — principi dalla letteratura:</strong> ${escapeHtml(regionPrinciples[region])}</p>
+      <details class="guided-sources">
+        <summary>Fonti PubMed (${refs.length})</summary>
+        <ul>
+          ${refs.map((r) => `<li><a href="https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/" target="_blank" rel="noopener noreferrer">${escapeHtml(r.title)}</a> <span class="text-dim">(${escapeHtml(r.journal)}, ${r.year})</span><br><span class="text-dim">${escapeHtml(r.note)}</span></li>`).join('')}
+        </ul>
+        <p class="text-dim" style="font-size:12px;">Ricerca del 3 novembre 2026. Sintesi in parole nostre: fasi e dosi sono un punto di partenza da adattare al paziente.</p>
+      </details>
+    </div>`;
+}
+
 export function drawGuidedPath(patientId, protocolId, assigned) {
   const box = qs('#guidedPhases');
   if (!box) return;
@@ -519,7 +575,7 @@ export function drawGuidedPath(patientId, protocolId, assigned) {
     return;
   }
   const have = new Set(assigned.map((a) => a.name));
-  box.innerHTML = prog.map((ph, i) => {
+  box.innerHTML = evidenceHtml(protocolId) + prog.map((ph, i) => {
     const meta = exercisePhases.find((x) => x.id === ph.phase);
     const items = ph.exercises.map((id) => exerciseLibrary.find((e) => e.id === id)).filter(Boolean);
     return `
@@ -533,6 +589,7 @@ export function drawGuidedPath(patientId, protocolId, assigned) {
             <label><input type="checkbox" data-guided-ex="${ex.id}" ${done ? 'disabled' : 'checked'}> ${escapeHtml(ex.name)}</label>
             ${done ? '<span class="guided-have">già assegnato</span>' : ''}
             <a class="video-link" href="${exerciseVideoUrl(ex.name)}" target="_blank" rel="noopener noreferrer">▶ video</a>
+            ${doseLabel(ex) ? `<div class="guided-dose">Dose di partenza: ${doseLabel(ex)}</div>` : ''}
             <div class="text-dim guided-desc">${escapeHtml(ex.description)}</div>
           </li>`;
         }).join('')}
@@ -556,6 +613,7 @@ async function addGuidedPhase(patientId, phase, detailsEl, assigned) {
     name: item.name,
     description: item.description,
     phase,
+    ...doseColumns(item),
     sort_order: assigned.length + i,
     updated_by: session.user.id,
   }));
@@ -563,6 +621,12 @@ async function addGuidedPhase(patientId, phase, detailsEl, assigned) {
   if (error) { showToast('Errore nell\'aggiunta degli esercizi.', 'error'); return; }
   showToast(items.length > 1 ? `${items.length} esercizi aggiunti.` : 'Esercizio aggiunto.', 'ok');
   await render();
+}
+
+// Colonne di prescrizione (serie, ripetizioni, carico/tenuta, frequenza) con la dose di partenza.
+function doseColumns(item) {
+  const d = exerciseDose(item);
+  return { sets: d.sets || null, reps: d.reps || null, load: d.load || null, frequency: d.frequency || null };
 }
 
 // Raggruppa gli esercizi per fase (nell'ordine del percorso); quelli senza fase vanno in coda.
@@ -573,19 +637,36 @@ function groupExercisesByPhase(exercises) {
   return groups.filter((g) => g.items.length);
 }
 
-function exerciseDetailHtml(ex) {
-  const structured = [];
-  if (ex.sets) structured.push(`Serie: ${escapeHtml(ex.sets)}`);
-  if (ex.reps) structured.push(`Ripetizioni: ${escapeHtml(ex.reps)}`);
-  const lines = [];
-  if (structured.length) lines.push(structured.join(' · '));
-  if (ex.notes) lines.push(linkifyHtml(ex.notes));
-  if (!lines.length && ex.description) lines.push(linkifyHtml(ex.description));
-  // Se nelle note c'e' gia' un link (es. un video scelto da te) non aggiungiamo quello automatico.
+// Toglie dal testo le frasi che indicano la dose (es. "3 serie da 10 ripetizioni."):
+// quando esiste una prescrizione modificata, restano solo le istruzioni di esecuzione.
+function stripDoseSentences(text) {
+  const parts = String(text || '').split(/(?<=[.!?])\s+/);
+  const kept = parts.filter((p) => !/^(\d+(?:[-–]\d+)?)\s*(serie|ripetizion|volte|minut|secondi|passi|respiri|cicli|sedute|percorsi|saltelli|sessioni)/i.test(p.trim()));
+  return (kept.length ? kept : parts).join(' ');
+}
+
+// Istruzioni di esecuzione + link video (senza la dose, che sta nella prescrizione).
+function exerciseHowHtml(ex) {
+  const hasRx = !!(ex.sets || ex.reps || ex.load || ex.frequency);
+  const how = ex.description ? linkifyHtml(hasRx ? stripDoseSentences(ex.description) : ex.description) : '';
   const hasOwnLink = /https?:\/\//.test(`${ex.notes || ''} ${ex.description || ''}`);
-  if (ex.name && !hasOwnLink) {
-    lines.push(`<a class="video-link" href="${exerciseVideoUrl(ex.name)}" target="_blank" rel="noopener noreferrer">▶ Guarda un video</a>`);
-  }
+  const video = ex.name && !hasOwnLink
+    ? `<a class="video-link" href="${exerciseVideoUrl(ex.name)}" target="_blank" rel="noopener noreferrer">▶ Guarda un video</a>` : '';
+  return [how, video].filter(Boolean).join('<br>');
+}
+
+// Vista completa (paziente): prescrizione attuale, istruzioni, note e video.
+function exerciseDetailHtml(ex) {
+  const rx = [];
+  if (ex.sets) rx.push(`Serie: ${escapeHtml(ex.sets)}`);
+  if (ex.reps) rx.push(`Ripetizioni: ${escapeHtml(ex.reps)}`);
+  if (ex.load) rx.push(`Carico/tenuta: ${escapeHtml(ex.load)}`);
+  if (ex.frequency) rx.push(`Frequenza: ${escapeHtml(ex.frequency)}`);
+  const lines = [];
+  if (rx.length) lines.push(`<strong class="rx-line">${rx.join(' · ')}</strong>`);
+  if (ex.notes) lines.push(linkifyHtml(ex.notes));
+  const how = exerciseHowHtml(ex);
+  if (how) lines.push(how);
   return lines.join('<br>');
 }
 
@@ -619,6 +700,7 @@ async function addLibraryExercise(patientId, currentCount) {
     name: item.name,
     description: item.description,
     phase: item.phase || null,
+    ...doseColumns(item),
     sort_order: currentCount + i,
     updated_by: session.user.id,
   }));
