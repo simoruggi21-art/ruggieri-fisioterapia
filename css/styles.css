@@ -584,9 +584,12 @@ footer .ig{display:inline-flex; align-items:center; gap:10px; font-size:16px; co
 footer .fine{font-size:12.5px; color:var(--text-dimmer); margin-top:30px;}
 
 /* Visibilita' basata sul ruolo autenticato (impostate via JS su <body class="role-admin|role-operator|role-patient">) */
-.admin-only, .operator-only, .staff-only, .patient-only, .auth-only, .guest-only{display:none;}
+.admin-only, .owner-only, .operator-only, .staff-only, .patient-only, .auth-only, .guest-only{display:none;}
 body.role-admin .admin-only, body.role-admin .staff-only{display:block;}
+body.role-admin .owner-only{display:block;}
 body.role-admin .patient-only{display:none;}
+body.role-technician .admin-only, body.role-technician .staff-only{display:block;}
+body.role-technician .patient-only{display:none;}
 body.role-operator .operator-only, body.role-operator .staff-only{display:block;}
 body.role-operator .patient-only{display:none;}
 body.role-patient .patient-only{display:block;}
@@ -808,3 +811,14 @@ body.role-admin .nav-inner{max-width:1400px;}
   .cookie-banner-actions{gap:8px;}
   .cookie-banner-actions .btn{padding:9px 8px; font-size:13px; min-height:40px;}
 }
+
+/* LINK "primo accesso / password dimenticata" e modulo collegato */
+.auth-link{background:none; border:none; padding:0; margin:14px auto 0; font-size:13.5px; color:var(--text-dim); border-bottom:1px solid var(--line); cursor:pointer; align-self:center;}
+.auth-link:hover{color:var(--accent); border-color:var(--accent-deep);}
+.invite-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:22px;}
+
+/* ESERCIZI RAGGRUPPATI PER FASE */
+.exercise-phase-head{margin-top:14px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;}
+.exercise-phase-head:first-child{margin-top:0;}
+.exercise-phase-head span{color:var(--text-dimmer); letter-spacing:0;}
+.exercise-phase-head small{font-size:12.5px; letter-spacing:0; text-transform:none; color:var(--text-dim);}

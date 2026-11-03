@@ -1,5 +1,5 @@
 import * as auth from './auth.js';
-import { isAdmin, isStaff } from './state.js';
+import { isAdmin, isManager, isStaff } from './state.js';
 import { qs, showToast } from './ui.js';
 import * as agenda from './agenda.js';
 import * as chat from './chat.js';
@@ -16,7 +16,7 @@ import * as contactRequests from './contactRequests.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { initTheme, wireThemeTrigger } from './theme.js';
 
-const ROLE_LABELS = { admin: 'Amministratore', operator: 'Operatore', patient: 'Paziente' };
+const ROLE_LABELS = { admin: 'Amministratore', technician: 'Tecnico', operator: 'Operatore', patient: 'Paziente' };
 
 async function safeRun(label, fn) {
   try {
@@ -29,12 +29,12 @@ async function safeRun(label, fn) {
 async function boot(state) {
   const body = document.body;
   body.classList.toggle('authed', !!state.session);
-  body.classList.remove('role-admin', 'role-operator', 'role-patient');
+  body.classList.remove('role-admin', 'role-technician', 'role-operator', 'role-patient');
   if (state.profile) body.classList.add('role-' + state.profile.role);
   // "Impostazioni" esiste solo per l'admin: per chiunque altro (logout,
   // login di un paziente/operatore sullo stesso browser) non deve restare
   // agganciata da una sessione precedente.
-  if (!isAdmin()) body.classList.remove('showing-settings');
+  if (!isManager()) body.classList.remove('showing-settings');
 
   renderNavUser(state);
 
@@ -57,11 +57,13 @@ async function boot(state) {
         await safeRun('il mio percorso', () => patients.renderOwnProtocol());
         await safeRun('i miei esercizi', () => patients.renderOwnExercises());
       }
+      if (isManager()) {
+        await safeRun('impostazioni', () => profileAdmin.render());
+        await safeRun('blog', () => blog.renderAdmin());
+      }
       if (isAdmin()) {
         await safeRun('operatori', () => operators.render());
-        await safeRun('impostazioni', () => profileAdmin.render());
         await safeRun('gestionale', () => finance.render());
-        await safeRun('blog', () => blog.renderAdmin());
       }
       if (!isStaff()) await safeRun('check-in', () => checkin.maybeShowPopup());
     }
@@ -127,6 +129,23 @@ function renderNavUser(state) {
   }
 }
 
+function wirePasswordRecovery() {
+  qs('#passwordRecoveryForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const p1 = qs('#newPassword').value;
+    const p2 = qs('#newPassword2').value;
+    const err = qs('#passwordRecoveryError');
+    err.textContent = '';
+    if (p1.length < 8) { err.textContent = 'La password deve avere almeno 8 caratteri.'; return; }
+    if (p1 !== p2) { err.textContent = 'Le due password non coincidono.'; return; }
+    const { error } = await auth.setNewPassword(p1);
+    if (error) { err.textContent = 'Non sono riuscito a salvare la password: ' + error.message; return; }
+    qs('#passwordRecoveryOverlay').style.display = 'none';
+    qs('#newPassword').value = ''; qs('#newPassword2').value = '';
+    showToast('Password salvata. Ora sei dentro.', 'ok');
+  });
+}
+
 function wireAuthForms() {
   const tabLogin = qs('#authTabLogin');
   const tabSignup = qs('#authTabSignup');
@@ -141,6 +160,23 @@ function wireAuthForms() {
     tabSignup.classList.add('active'); tabLogin.classList.remove('active');
     signupForm.style.display = 'flex'; loginForm.style.display = 'none';
   };
+
+  // Primo accesso / password dimenticata: l'utente inserisce l'email e riceve il link.
+  const forgotForm = qs('#forgotForm');
+  qs('#forgotLink').onclick = () => {
+    loginForm.style.display = 'none'; forgotForm.style.display = 'flex';
+    qs('#forgotEmail').value = qs('#loginEmail').value;
+    qs('#authError').textContent = ''; qs('#authInfo').textContent = '';
+  };
+  qs('#forgotBackLink').onclick = () => {
+    forgotForm.style.display = 'none'; loginForm.style.display = 'flex';
+  };
+  forgotForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await auth.requestPasswordReset(qs('#forgotEmail').value.trim());
+    qs('#authError').textContent = '';
+    qs('#authInfo').textContent = 'Se l\'indirizzo \u00e8 registrato, ti abbiamo mandato un\'email con il link per scegliere la password. Controlla anche la cartella spam.';
+  });
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -307,6 +343,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   checkin.wireCheckinModal();
   agenda.wireAppointmentModal();
   patients.wireRegisterPatientModal();
+  operators.wireStaffModal();
+  wirePasswordRecovery();
   blog.wireAdmin();
-  await auth.init(boot);
+  await auth.init(boot, () => { qs('#passwordRecoveryOverlay').style.display = 'flex'; });
 });

@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js';
-import { getState, isAdmin, isStaff } from './state.js';
+import { getState, isManager, isStaff } from './state.js';
+import { showInviteResult } from './invite.js';
 import { qs, el, showToast, formatDateTime, escapeHtml } from './ui.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
@@ -220,7 +221,7 @@ export async function render() {
         slotEl.className = 'slot chiuso';
         // Un orario chiuso passato non ha senso riaprirlo: la riapertura
         // resta possibile solo per chiusure future, cliccando la casella.
-        if (isAdmin() && entry.detailed && !movingApptId && start >= now) {
+        if (isManager() && entry.detailed && !movingApptId && start >= now) {
           slotEl.classList.add('slot-clickable');
           slotEl.onclick = () => reopenSlot(entry);
         }
@@ -234,7 +235,7 @@ export async function render() {
             ? (entry.status === 'confermato' ? 'Confermato' : 'In attesa')
             : (entry.profiles?.full_name || 'Paziente');
           slotEl.appendChild(el('div', 'slot-name', label));
-          if (isAdmin() && entry.status === 'richiesto') {
+          if (isManager() && entry.status === 'richiesto') {
             const actions = el('div', 'slot-admin-actions', '');
             const acc = el('button', 'accept', '✓');
             acc.onclick = (e) => { e.stopPropagation(); updateStatus(entry.id, 'confermato'); };
@@ -243,7 +244,7 @@ export async function render() {
             actions.appendChild(acc); actions.appendChild(rej);
             slotEl.appendChild(actions);
           }
-          if (isAdmin() && (entry.status === 'confermato' || entry.status === 'richiesto') && !movingApptId) {
+          if (isManager() && (entry.status === 'confermato' || entry.status === 'richiesto') && !movingApptId) {
             slotEl.classList.add('slot-clickable');
             slotEl.onclick = () => openApptDetail(entry);
           }
@@ -283,7 +284,7 @@ export async function render() {
       } else if (canBook) {
         slotEl.classList.add('libero');
         hasLibero = true;
-        if (!isAdmin()) {
+        if (!isManager()) {
           slotEl.onclick = () => requestSlot(dt);
         } else {
           slotEl.onclick = movingApptId ? () => performMove(dt) : () => openNewApptModal(dt);
@@ -542,13 +543,14 @@ async function createPatientProfile() {
       'Authorization': `Bearer ${session.access_token}`,
       'apikey': SUPABASE_ANON_KEY,
     },
-    body: JSON.stringify({ full_name, email, phone, gender, birth_date }),
+    body: JSON.stringify({ full_name, email, phone, gender, birth_date, send_invite: true }),
   });
   const data = await res.json();
   if (!res.ok) {
     showToast(data.error || 'Errore nella creazione del paziente.', 'error');
     return null;
   }
+  showInviteResult({ name: full_name, phone, invite_sent: data.invite_sent, invite_link: data.invite_link });
   return data.id;
 }
 

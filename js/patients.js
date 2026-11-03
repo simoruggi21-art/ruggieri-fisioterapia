@@ -1,8 +1,9 @@
 import { supabase } from './supabaseClient.js';
-import { getState, isAdmin } from './state.js';
+import { getState, isAdmin, isManager } from './state.js';
+import { showInviteResult } from './invite.js';
 import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime, avatarHtml } from './ui.js';
 import { protocolLibrary } from './protocolLibrary.js';
-import { exerciseLibrary } from './exerciseLibrary.js';
+import { exerciseLibrary, exercisePhases, phaseLabel } from './exerciseLibrary.js';
 import { milestonesForCategory } from './milestoneLibrary.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
@@ -62,6 +63,7 @@ async function fetchCheckins(patientId) {
 function openRegisterPatientModal() {
   ['regPatientName', 'regPatientEmail', 'regPatientPhone', 'regPatientBirthDate'].forEach((id) => { qs('#' + id).value = ''; });
   qs('#regPatientGender').value = '';
+  qs('#regPatientInvite').checked = true;
   qs('#registerPatientOverlay').style.display = 'flex';
 }
 
@@ -87,7 +89,7 @@ async function registerNewPatient() {
       'Authorization': `Bearer ${session.access_token}`,
       'apikey': SUPABASE_ANON_KEY,
     },
-    body: JSON.stringify({ full_name, email, phone, gender, birth_date }),
+    body: JSON.stringify({ full_name, email, phone, gender, birth_date, send_invite: qs('#regPatientInvite').checked }),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -98,6 +100,7 @@ async function registerNewPatient() {
   closeRegisterPatientModal();
   activePatientId = data.id;
   await render();
+  if (qs('#regPatientInvite').checked) showInviteResult({ name: full_name, phone, invite_sent: data.invite_sent, invite_link: data.invite_link });
 }
 
 export function wireRegisterPatientModal() {
@@ -244,7 +247,7 @@ async function renderDetail(p, hasUnread) {
     <div class="patient-header">
       <div>
         <h3>${escapeHtml(p.full_name || p.email)}${hasUnread ? '<span class="unread-dot" title="Nuovo messaggio"></span>' : ''}</h3>
-        ${isAdmin() ? `
+        ${isManager() ? `
           <p class="meta-line" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             ${escapeHtml(p.gender || '—')} ·
             <span style="display:inline-flex; align-items:center; gap:6px;">
@@ -305,7 +308,13 @@ async function renderDetail(p, hasUnread) {
         <summary>Aggiungi dalla libreria o personalizzato</summary>
         <div class="library-toggle-body">
           <p class="rb-sub">Tieni premuto Cmd (Mac) o Ctrl (Windows) per selezionare più esercizi dalla libreria insieme, o compilane uno personalizzato: comparirà nella sezione "I miei esercizi" del paziente.</p>
-          <input type="text" id="exerciseSearchInput" placeholder="Cerca nella libreria (es. ginocchio, equilibrio...)" style="width:100%; margin-bottom:10px;">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+            <select id="exercisePhaseFilter" style="flex:1; min-width:160px;">
+              <option value="">Tutte le fasi</option>
+              ${exercisePhases.map((ph) => `<option value="${ph.id}">${ph.label}</option>`).join('')}
+            </select>
+            <input type="text" id="exerciseSearchInput" placeholder="Cerca (es. rotulea, equilibrio...)" style="flex:2; min-width:180px;">
+          </div>
           <select id="exerciseSuggestSelect" multiple size="8" style="width:100%; margin-bottom:10px;"></select>
           <div style="display:flex; justify-content:flex-end;">
             <button class="btn btn-ghost btn-small" id="addLibraryExerciseBtn">Aggiungi selezionati</button>
@@ -322,6 +331,10 @@ async function renderDetail(p, hasUnread) {
                 <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Ripetizioni</label>
                 <input type="text" id="customExerciseReps" style="width:100%;" placeholder="Es. 12">
               </div>
+              <div style="flex:1; min-width:130px;">
+                <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Fase</label>
+                <select id="customExercisePhase" style="width:100%;"><option value="">Nessuna</option>${exercisePhases.map((ph) => `<option value="${ph.id}">${ph.label}</option>`).join('')}</select>
+              </div>
               <div style="flex:3; min-width:200px;">
                 <label class="text-dim" style="font-size:12px; display:block; margin-bottom:5px;">Note</label>
                 <input type="text" id="customExerciseNotes" style="width:100%;" placeholder="Indicazioni aggiuntive...">
@@ -334,14 +347,22 @@ async function renderDetail(p, hasUnread) {
       <div id="exerciseList" style="display:flex; flex-direction:column; gap:10px; margin-top:18px;">
         ${exercises.length === 0
           ? '<p class="text-dim" style="font-size:13px;">Nessun esercizio assegnato finora.</p>'
-          : exercises.map((ex) => `
+          : groupExercisesByPhase(exercises).map((g) => `
+            <div class="exercise-phase-head">${escapeHtml(g.label)} <span>${g.items.length}</span></div>
+            ${g.items.map((ex) => `
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; border:1px solid var(--line); border-radius:4px; padding:10px 14px;">
               <div>
                 <div style="font-weight:500; font-size:13.5px;">${escapeHtml(ex.name)}</div>
                 <div class="text-dim" style="font-size:12.5px; margin-top:3px;">${exerciseDetailHtml(ex)}</div>
               </div>
-              <button class="btn btn-ghost btn-small" data-remove-exercise="${ex.id}" style="flex-shrink:0; padding:4px 9px; font-size:12px;">✕</button>
-            </div>
+              <div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">
+                <select data-phase-exercise="${ex.id}" aria-label="Fase" style="font-size:12px; padding:3px 6px; max-width:120px;">
+                  <option value="">Senza fase</option>
+                  ${exercisePhases.map((ph) => `<option value="${ph.id}" ${ex.phase === ph.id ? 'selected' : ''}>${ph.label}</option>`).join('')}
+                </select>
+                <button class="btn btn-ghost btn-small" data-remove-exercise="${ex.id}" style="padding:4px 9px; font-size:12px;">✕</button>
+              </div>
+            </div>`).join('')}
           `).join('')}
       </div>
     </div>
@@ -415,9 +436,17 @@ async function renderDetail(p, hasUnread) {
     });
   }
   populateExerciseSelect();
-  qs('#exerciseSearchInput').addEventListener('input', (e) => populateExerciseSelect(e.target.value));
+  qs('#exerciseSearchInput').addEventListener('input', () => populateExerciseSelect());
+  qs('#exercisePhaseFilter').addEventListener('change', () => populateExerciseSelect());
   qs('#addLibraryExerciseBtn').onclick = () => addLibraryExercise(p.id, exercises.length);
   qs('#addCustomExerciseBtn').onclick = () => addCustomExercise(p.id, exercises.length);
+  detail.querySelectorAll('[data-phase-exercise]').forEach((sel) => {
+    sel.onchange = async () => {
+      const { error } = await supabase.from('patient_exercises').update({ phase: sel.value || null }).eq('id', sel.dataset.phaseExercise);
+      if (error) { showToast('Errore nel cambio di fase.', 'error'); return; }
+      await render();
+    };
+  });
   detail.querySelectorAll('[data-remove-exercise]').forEach((btn) => {
     btn.onclick = () => removeExercise(btn.dataset.removeExercise);
   });
@@ -462,6 +491,14 @@ async function deletePatient(p) {
 // Un esercizio da libreria ha solo "description" (testo unico gia' pronto);
 // uno compilato a mano ha invece serie/ripetizioni/note separati: mostriamo
 // la versione strutturata quando c'e', altrimenti il testo unico.
+// Raggruppa gli esercizi per fase (nell'ordine del percorso); quelli senza fase vanno in coda.
+function groupExercisesByPhase(exercises) {
+  const groups = exercisePhases.map((ph) => ({ ...ph, items: exercises.filter((ex) => ex.phase === ph.id) }));
+  const rest = exercises.filter((ex) => !exercisePhases.some((ph) => ph.id === ex.phase));
+  if (rest.length) groups.push({ id: '', label: 'Altri esercizi', hint: '', items: rest });
+  return groups.filter((g) => g.items.length);
+}
+
 function exerciseDetailHtml(ex) {
   const structured = [];
   if (ex.sets) structured.push(`Serie: ${escapeHtml(ex.sets)}`);
@@ -476,17 +513,18 @@ function exerciseDetailHtml(ex) {
 // I 200 esercizi in un'unica tendina sono scomodi da scorrere: il campo di
 // ricerca ricostruisce le opzioni filtrando per nome o categoria man mano
 // che si digita, cosi' non serve un componente di autocomplete dedicato.
-function populateExerciseSelect(filterText = '') {
+function populateExerciseSelect() {
   const select = qs('#exerciseSuggestSelect');
   if (!select) return;
-  const f = filterText.trim().toLowerCase();
-  const filtered = f
-    ? exerciseLibrary.filter((ex) => ex.name.toLowerCase().includes(f) || ex.category.toLowerCase().includes(f))
-    : exerciseLibrary;
+  const f = (qs('#exerciseSearchInput')?.value || '').trim().toLowerCase();
+  const phase = qs('#exercisePhaseFilter')?.value || '';
+  const filtered = exerciseLibrary.filter((ex) =>
+    (!phase || ex.phase === phase)
+    && (!f || ex.name.toLowerCase().includes(f) || ex.category.toLowerCase().includes(f)));
   const categories = [...new Set(filtered.map((ex) => ex.category))];
   select.innerHTML = filtered.length
     ? categories.map((cat) =>
-        `<optgroup label="${cat}">${filtered.filter((ex) => ex.category === cat).map((ex) => `<option value="${ex.id}">${escapeHtml(ex.name)}</option>`).join('')}</optgroup>`
+        `<optgroup label="${cat}">${filtered.filter((ex) => ex.category === cat).map((ex) => `<option value="${ex.id}">${escapeHtml(ex.name)}${phase ? '' : ' · ' + (phaseLabel(ex.phase) || '')}</option>`).join('')}</optgroup>`
       ).join('')
     : '<option value="" disabled>Nessun esercizio trovato</option>';
 }
@@ -501,6 +539,7 @@ async function addLibraryExercise(patientId, currentCount) {
     patient_id: patientId,
     name: item.name,
     description: item.description,
+    phase: item.phase || null,
     sort_order: currentCount + i,
     updated_by: session.user.id,
   }));
@@ -515,6 +554,7 @@ async function addCustomExercise(patientId, currentCount) {
   const sets = qs('#customExerciseSets').value.trim();
   const reps = qs('#customExerciseReps').value.trim();
   const notes = qs('#customExerciseNotes').value.trim();
+  const phase = qs('#customExercisePhase').value || null;
   if (!name) { showToast('Inserisci il nome dell\'esercizio.', 'error'); return; }
   const { session } = getState();
   const { error } = await supabase.from('patient_exercises').insert({
@@ -523,6 +563,7 @@ async function addCustomExercise(patientId, currentCount) {
     sets: sets || null,
     reps: reps || null,
     notes: notes || null,
+    phase,
     sort_order: currentCount,
     updated_by: session.user.id,
   });
@@ -552,7 +593,9 @@ export async function renderOwnExercises() {
     return;
   }
   const now = new Date().toISOString();
-  target.innerHTML = exercises.map((ex) => {
+  target.innerHTML = groupExercisesByPhase(exercises).map((g) => `
+    <div class="exercise-phase-head">${escapeHtml(g.label)}${g.hint ? `<small>${escapeHtml(g.hint)}</small>` : ''}</div>
+    ${g.items.map((ex) => {
     const doneToday = ex.last_done_at && isSameDay(ex.last_done_at, now);
     return `
     <div class="record-block public">
@@ -565,9 +608,9 @@ export async function renderOwnExercises() {
           ? `<span style="color:var(--ok); font-size:13px; white-space:nowrap;">✓ Fatto oggi alle ${new Date(ex.last_done_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</span>`
           : `<button class="btn btn-ghost btn-small" data-mark-done="${ex.id}" style="white-space:nowrap; flex-shrink:0;">Segna come fatto oggi</button>`}
       </div>
-    </div>
-  `;
-  }).join('');
+    </div>`;
+  }).join('')}
+  `).join('');
   target.querySelectorAll('[data-mark-done]').forEach((btn) => {
     btn.onclick = () => markExerciseDone(btn.dataset.markDone);
   });
