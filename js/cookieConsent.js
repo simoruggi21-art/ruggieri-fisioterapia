@@ -22,7 +22,7 @@ function setConsent(choice) {
   } catch { /* storage non disponibile: la scelta vale solo per questa visita */ }
 }
 
-function buildBanner() {
+function buildBanner(onDecided) {
   const el = document.createElement('div');
   el.className = 'cookie-banner';
   el.id = 'cookieBanner';
@@ -40,14 +40,17 @@ function buildBanner() {
     btn.addEventListener('click', () => {
       setConsent(btn.dataset.choice);
       el.remove();
+      if (onDecided) onDecided();
     });
   });
   return el;
 }
 
-export function initCookieBanner() {
-  if (getConsent()) return;
-  document.body.appendChild(buildBanner());
+// onDecided parte quando la scelta sui cookie c'e' (appena fatta, o gia' presente
+// da una visita precedente): serve a far comparire dopo i cookie la scelta del tema.
+export function initCookieBanner(onDecided) {
+  if (getConsent()) { if (onDecided) onDecided(); return; }
+  document.body.appendChild(buildBanner(onDecided));
 }
 
 // Richiamata dal link "Preferenze cookie" nel footer per cambiare scelta in

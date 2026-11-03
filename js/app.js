@@ -14,7 +14,7 @@ import * as aiAssistant from './aiAssistant.js';
 import * as shiftSync from './shiftSync.js';
 import * as contactRequests from './contactRequests.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
-import { initTheme, wireThemeTrigger } from './theme.js';
+import { initTheme, wireThemeTrigger, promptThemeIfUnset } from './theme.js';
 
 const ROLE_LABELS = { admin: 'Amministratore', technician: 'Tecnico', operator: 'Operatore', patient: 'Paziente' };
 
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   wireOrbitBackground();
   initTheme();
   wireThemeTrigger(() => ({ text: 'Scegli l\'aspetto del sito: chiaro o scuro.', dark: 'Scura', light: 'Chiara' }));
-  initCookieBanner();
+  initCookieBanner(() => promptThemeIfUnset(() => ({ text: 'Scegli l\'aspetto del sito: chiaro o scuro.', dark: 'Scura', light: 'Chiara' })));
   qs('#cookiePreferencesLink')?.addEventListener('click', (e) => { e.preventDefault(); reopenCookieBanner(); });
   checkin.wireCheckinModal();
   agenda.wireAppointmentModal();
