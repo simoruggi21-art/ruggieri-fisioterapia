@@ -747,12 +747,12 @@ function populateExerciseSelect() {
   const f = (qs('#exerciseSearchInput')?.value || '').trim().toLowerCase();
   const phase = qs('#exercisePhaseFilter')?.value || '';
   const filtered = exerciseLibrary.filter((ex) =>
-    (!phase || ex.phase === phase)
+    (!phase || ex.phase === phase || ex.always)
     && (!f || ex.name.toLowerCase().includes(f) || ex.category.toLowerCase().includes(f)));
   const categories = [...new Set(filtered.map((ex) => ex.category))];
   select.innerHTML = filtered.length
     ? categories.map((cat) =>
-        `<optgroup label="${cat}">${filtered.filter((ex) => ex.category === cat).map((ex) => `<option value="${ex.id}">${escapeHtml(ex.name)}${phase ? '' : ' · ' + (phaseLabel(ex.phase) || '')}</option>`).join('')}</optgroup>`
+        `<optgroup label="${cat}">${filtered.filter((ex) => ex.category === cat).map((ex) => `<option value="${ex.id}">${escapeHtml(ex.name)}${phase && ex.phase === phase ? '' : ' · ' + (phaseLabel(ex.phase) || '')}</option>`).join('')}</optgroup>`
       ).join('')
     : '<option value="" disabled>Nessun esercizio trovato</option>';
 }
