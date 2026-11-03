@@ -15,14 +15,28 @@ function setSavedTheme(theme) {
 }
 
 function applyTheme(theme) {
-  document.body.classList.toggle('light-theme', theme === 'light');
+  const light = theme === 'light';
+  document.body.classList.toggle('light-theme', light);
+  document.documentElement.classList.toggle('light-theme', light);
 }
 
-// Applica subito la preferenza salvata (o il tema scuro di default). Va
-// chiamata il prima possibile all'avvio, sia su app.html che su index.html,
-// cosi' la pagina non lampeggia nel tema sbagliato prima del primo render.
+export function hasSavedTheme() {
+  const v = getSavedTheme();
+  return v === 'light' || v === 'dark';
+}
+
+// Applica subito la preferenza salvata; senza scelta il tema e' CHIARO. Uno
+// script nell'<head> di ogni pagina applica la stessa regola prima del primo
+// disegno, cosi' la pagina non lampeggia nel tema sbagliato.
 export function initTheme() {
-  applyTheme(getSavedTheme() === 'light' ? 'light' : 'dark');
+  applyTheme(getSavedTheme() === 'dark' ? 'dark' : 'light');
+}
+
+// Dopo la scelta sui cookie (o subito, se era gia' stata fatta) chiede quale
+// aspetto preferisce il visitatore, ma solo se non ha ancora scelto.
+export function promptThemeIfUnset(getStrings) {
+  if (hasSavedTheme()) return;
+  openThemeBanner(getStrings);
 }
 
 // Pannello di scelta del tema: stesso meccanismo/stile del banner cookie

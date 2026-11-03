@@ -2,7 +2,7 @@ import * as publicContent from './publicContent.js';
 import * as blog from './blog.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { applyTranslations, wireLanguageSwitcher, t } from './i18n.js';
-import { initTheme, wireThemeTrigger } from './theme.js';
+import { initTheme, wireThemeTrigger, promptThemeIfUnset } from './theme.js';
 import { wireContactForm } from './contactForm.js';
 
 // Sfondo decorativo fisso (vedi .bg-orbits in index.html/styles.css): i
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   wireContactForm();
   initTheme();
   wireThemeTrigger(() => ({ text: t('theme.text'), dark: t('theme.dark'), light: t('theme.light') }));
-  initCookieBanner();
+  initCookieBanner(() => promptThemeIfUnset(() => ({ text: t('theme.text'), dark: t('theme.dark'), light: t('theme.light') })));
   document.getElementById('cookiePreferencesLink')?.addEventListener('click', (e) => { e.preventDefault(); reopenCookieBanner(); });
   wireLanguageSwitcher(document.getElementById('langSwitcherMount'), renderLocalizedContent);
   await renderLocalizedContent();

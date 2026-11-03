@@ -1,8 +1,12 @@
 import { fetchPostBySlug } from './blog.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
-import { applyTranslations, wireLanguageSwitcher, tField, getLocale } from './i18n.js';
+import { applyTranslations, wireLanguageSwitcher, tField, getLocale, t } from './i18n.js';
+import { initTheme, wireThemeTrigger, promptThemeIfUnset } from './theme.js';
 
-initCookieBanner();
+initTheme();
+const themeStrings = () => ({ text: t('theme.text'), dark: t('theme.dark'), light: t('theme.light') });
+wireThemeTrigger(themeStrings);
+initCookieBanner(() => promptThemeIfUnset(themeStrings));
 document.getElementById('cookiePreferencesLink')?.addEventListener('click', (e) => { e.preventDefault(); reopenCookieBanner(); });
 
 // Supporta sia /blog/<slug> (URL reale del sito, servita da questo stesso
