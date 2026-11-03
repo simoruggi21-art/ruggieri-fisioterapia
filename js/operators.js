@@ -1,11 +1,15 @@
 import { supabase } from './supabaseClient.js';
 import { qs, el, escapeHtml, showToast } from './ui.js';
+import { getState } from './state.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
 async function fetchOperators() {
-  const { data, error } = await supabase.from('profiles').select('*').eq('role', 'operator').order('full_name');
+  const { data, error } = await supabase.from('profiles').select('*').in('role', ['operator', 'technician']).order('full_name');
   if (error) { console.error(error); return []; }
   return data;
 }
+
+const ROLE_NAMES = { technician: 'Tecnico', operator: 'Operatore' };
 
 async function fetchPatients() {
   const { data, error } = await supabase.from('profiles').select('*').eq('role', 'patient').order('full_name');
@@ -20,20 +24,20 @@ export async function render() {
 
   tbody.innerHTML = '';
   if (operators.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="padding:20px 18px; color:var(--text-dimmer); font-size:14px;">Nessun operatore ancora creato. Vedi le istruzioni sopra per aggiungerne uno.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" style="padding:20px 18px; color:var(--text-dimmer); font-size:14px;">Nessun tecnico o operatore ancora creato. Usa il pulsante qui sopra per aggiungerne uno.</td></tr>`;
   }
   operators.forEach((o) => {
-    const count = patients.filter((p) => p.operator_id === o.id).length;
+    const count = o.role === 'technician' ? 'tutti i' : patients.filter((p) => p.operator_id === o.id).length;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="padding:14px 18px; border-bottom:1px solid var(--line); font-size:14.5px;">${escapeHtml(o.full_name || '—')}</td>
+      <td style="padding:14px 18px; border-bottom:1px solid var(--line); font-size:14.5px;">${escapeHtml(o.full_name || '—')} <span class="rq-badge">${ROLE_NAMES[o.role] || ''}</span></td>
       <td style="padding:14px 18px; border-bottom:1px solid var(--line); font-size:14px; color:var(--text-dim);">${escapeHtml(o.email || '')}</td>
       <td style="padding:14px 18px; border-bottom:1px solid var(--line); font-size:14px; color:var(--text-dim);">${count} paziente${count === 1 ? '' : 'i'}</td>
     `;
     tbody.appendChild(tr);
   });
 
-  renderAssignmentTable(patients, operators);
+  renderAssignmentTable(patients, operators.filter((o) => o.role === 'operator'));
 }
 
 function renderAssignmentTable(patients, operators) {
@@ -58,5 +62,34 @@ function renderAssignmentTable(patients, operators) {
       if (error) showToast('Errore assegnazione.', 'error'); else showToast('Assegnazione aggiornata.', 'ok');
       render();
     };
+  });
+}
+
+// Creazione account del team (solo amministratore): tecnico = accesso operativo
+// completo; operatore = solo i pazienti assegnati. Riceve l'email per scegliere la password.
+export function wireStaffModal() {
+  qs('#addStaffBtn')?.addEventListener('click', () => {
+    ['staffName', 'staffEmail', 'staffPhone'].forEach((id) => { qs('#' + id).value = ''; });
+    qs('#staffRole').value = 'technician';
+    qs('#staffOverlay').style.display = 'flex';
+  });
+  qs('#staffCloseBtn')?.addEventListener('click', () => { qs('#staffOverlay').style.display = 'none'; });
+  qs('#staffConfirmBtn')?.addEventListener('click', async () => {
+    const { session } = getState();
+    const full_name = qs('#staffName').value.trim();
+    const email = qs('#staffEmail').value.trim();
+    const phone = qs('#staffPhone').value.trim() || null;
+    const role = qs('#staffRole').value;
+    if (!full_name || !email) { showToast('Nome ed email sono obbligatori.', 'error'); return; }
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-staff`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ full_name, email, phone, role }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Errore nella creazione dell\'account.', 'error'); return; }
+    qs('#staffOverlay').style.display = 'none';
+    showToast(data.invite_sent ? 'Account creato: ho inviato l\'email per scegliere la password.' : 'Account creato, ma l\'email non \u00e8 partita: la persona pu\u00f2 usare "Primo accesso" dalla pagina di accesso.', data.invite_sent ? 'ok' : 'error');
+    await render();
   });
 }

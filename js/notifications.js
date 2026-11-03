@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js';
-import { isAdmin, isStaff, getState } from './state.js';
+import { isManager, isStaff, getState } from './state.js';
 import { qs, showToast } from './ui.js';
 
 const POLL_MS = 15000;
@@ -68,7 +68,7 @@ export async function refresh() {
     setDot('messagesBadge', msgCount > 0);
 
     let apptCount = 0;
-    if (isAdmin()) {
+    if (isManager()) {
       apptCount = await countPendingAppointments();
       setBadge('agendaBadge', apptCount);
     }

@@ -25,8 +25,8 @@
         <a href="#pazienti" class="staff-only">Pazienti</a>
         <a href="#richieste" class="staff-only">Richieste<span class="nav-badge" id="requestsBadge" style="display:none;"></span></a>
         <a href="#assistente-ai" class="staff-only">Assistente AI</a>
-        <a href="#gestionale" class="admin-only">Gestionale</a>
-        <a href="#situazione-annuale" class="admin-only">Situazione annuale</a>
+        <a href="#gestionale" class="owner-only">Gestionale</a>
+        <a href="#situazione-annuale" class="owner-only">Situazione annuale</a>
         <div class="nav-dropdown admin-only" id="settingsDropdown">
           <button type="button" class="nav-dropdown-trigger" id="settingsDropdownTrigger">Impostazioni ▾</button>
           <div class="nav-dropdown-menu" id="settingsMenu">
@@ -80,6 +80,14 @@
         Ricordami su questo dispositivo
       </label>
       <button type="submit" class="btn btn-primary">Accedi</button>
+      <button type="button" class="auth-link" id="forgotLink">Primo accesso o password dimenticata?</button>
+    </form>
+
+    <form id="forgotForm" style="display:none; flex-direction:column;">
+      <p class="text-dim" style="font-size:14px; margin-bottom:18px;">Inserisci l'email con cui ti ha registrato lo studio (o con cui ti sei iscritto): ti mandiamo un link per scegliere la password.</p>
+      <div class="auth-field"><label>Email</label><input type="email" id="forgotEmail" autocomplete="username" required></div>
+      <button type="submit" class="btn btn-primary">Inviami il link</button>
+      <button type="button" class="auth-link" id="forgotBackLink">Torna all'accesso</button>
     </form>
 
     <form id="signupForm" style="display:none; flex-direction:column;" autocomplete="on">
@@ -127,7 +135,7 @@
         <button class="btn btn-ghost btn-small" id="weekTodayBtn">Oggi</button>
         <button class="btn btn-ghost btn-small" id="weekNextBtn">Settimana succ. →</button>
         <button class="btn btn-ghost btn-small admin-only" id="closeTodayBtn">Chiudi giornata di oggi</button>
-        <button class="btn btn-ghost btn-small admin-only" id="shiftSyncOpenBtn">Carica turni (screenshot)</button>
+        <button class="btn btn-ghost btn-small owner-only" id="shiftSyncOpenBtn">Carica turni (screenshot)</button>
       </div>
     </div>
     <div id="agendaSummary"></div>
@@ -262,7 +270,7 @@
 </section>
 
 <!-- GESTIONALE (admin) -->
-<section class="section admin-only" id="gestionale">
+<section class="section owner-only" id="gestionale">
   <div class="container">
     <p class="label">gestionale</p>
     <h2 class="heading-lg">Incasso e tasse</h2>
@@ -286,7 +294,7 @@
 </section>
 
 <!-- SITUAZIONE ANNUALE (admin) -->
-<section class="section admin-only" id="situazione-annuale">
+<section class="section owner-only" id="situazione-annuale">
   <div class="container">
     <p class="label">situazione annuale</p>
     <h2 class="heading-lg">Quanto pago davvero, in base al mio regime</h2>
@@ -475,14 +483,14 @@
     </div>
     <div id="blogAdminList" style="margin-top:24px; display:flex; flex-direction:column; gap:10px;"></div>
 
+    <div class="owner-only">
     <p class="label" style="margin-top:70px;">4</p>
-    <h2 class="heading-lg" style="font-size:26px;">Operatori</h2>
-    <p class="text-dim" style="margin-top:14px; max-width:560px;">
-      Per aggiungere un nuovo operatore: nel pannello Supabase vai su <strong>Authentication → Users → Invite user</strong>
-      e inserisci la sua email. Poi apri <strong>Table Editor → profiles</strong>, trova la riga appena creata
-      (verrà inizialmente inserita come "patient") e cambia il campo <code>role</code> in <code>operator</code>.
-      Da quel momento comparirà qui sotto e potrai assegnargli dei pazienti.
+    <h2 class="heading-lg" style="font-size:26px;">Team: tecnici e operatori</h2>
+    <p class="text-dim" style="margin-top:14px; max-width:600px;">
+      <strong>Tecnico</strong>: lavora su tutti i pazienti, agenda, messaggi, richieste, esercizi, Assistente AI e contenuti del sito. Non vede finanze e turni personali, non crea account e non elimina pazienti.
+      <strong>Operatore</strong>: vede solo i pazienti che gli assegni. Alla creazione la persona riceve un'email per scegliere la password.
     </p>
+    <button class="btn btn-primary btn-small" id="addStaffBtn" style="margin-top:20px;">+ Aggiungi tecnico o operatore</button>
     <div class="calendar" style="margin-top:30px;">
       <table style="width:100%; border-collapse:collapse;">
         <thead>
@@ -509,6 +517,8 @@
           <tbody id="assignmentTableBody"></tbody>
         </table>
       </div>
+    </div>
+  
     </div>
   </div>
 </section>
@@ -638,7 +648,7 @@
     <button class="modal-close" id="registerPatientCloseBtn" aria-label="Chiudi">✕</button>
     <p class="label">nuovo paziente</p>
     <h3 class="heading-lg" style="font-size:22px;">Registra nuovo paziente</h3>
-    <p class="text-dim" style="margin-top:8px; margin-bottom:22px; font-size:13px;">Crea un profilo paziente senza prenotare subito una seduta (nessuna email di invito verrà inviata).</p>
+    <p class="text-dim" style="margin-top:8px; margin-bottom:22px; font-size:13px;">Crea un profilo paziente senza prenotare subito una seduta. Se lasci attivo l'invito, il paziente riceve un'email per scegliere la password.</p>
 
     <div style="display:flex; flex-direction:column; gap:14px;">
       <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Nome e cognome *</label><input type="text" id="regPatientName" style="width:100%;"></div>
@@ -650,7 +660,52 @@
       <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Data di nascita</label><input type="date" id="regPatientBirthDate" style="width:100%;"></div>
     </div>
 
-    <button class="btn btn-primary btn-small" id="registerPatientConfirmBtn" style="margin-top:24px;">Crea paziente</button>
+    <label style="display:flex; gap:10px; align-items:center; font-size:13px; color:var(--text-dim); margin-top:20px;">
+      <input type="checkbox" id="regPatientInvite" checked>
+      Invia al paziente l'invito per scegliere la password
+    </label>
+    <button class="btn btn-primary btn-small" id="registerPatientConfirmBtn" style="margin-top:20px;">Crea paziente</button>
+  </div>
+</div>
+
+<!-- NUOVO ACCOUNT DEL TEAM -->
+<div class="modal-overlay" id="staffOverlay" style="display:none;">
+  <div class="modal-box">
+    <button class="modal-close" id="staffCloseBtn" aria-label="Chiudi">✕</button>
+    <p class="label">team</p>
+    <h3 class="heading-lg" style="font-size:22px;">Nuovo tecnico o operatore</h3>
+    <div style="display:flex; flex-direction:column; gap:14px; margin-top:20px;">
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Nome e cognome *</label><input type="text" id="staffName" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Email *</label><input type="email" id="staffEmail" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Telefono</label><input type="tel" id="staffPhone" style="width:100%;"></div>
+      <div><label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Ruolo</label>
+        <select id="staffRole" style="width:100%;"><option value="technician">Tecnico (accesso operativo completo)</option><option value="operator">Operatore (solo pazienti assegnati)</option></select>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-small" id="staffConfirmBtn" style="margin-top:24px;">Crea e invia invito</button>
+  </div>
+</div>
+
+<!-- ESITO INVITO PAZIENTE -->
+<div class="modal-overlay" id="inviteResultOverlay" style="display:none;">
+  <div class="modal-box">
+    <p class="label">invito</p>
+    <h3 class="heading-lg" style="font-size:22px;">Profilo creato</h3>
+    <div id="inviteResultBody"></div>
+  </div>
+</div>
+
+<!-- SCELTA PASSWORD (dopo il link ricevuto per email) -->
+<div class="modal-overlay" id="passwordRecoveryOverlay" style="display:none;">
+  <div class="modal-box">
+    <p class="label">password</p>
+    <h3 class="heading-lg" style="font-size:22px;">Scegli la tua password</h3>
+    <form id="passwordRecoveryForm" style="display:flex; flex-direction:column; gap:14px; margin-top:18px;">
+      <div class="auth-field"><label>Nuova password (almeno 8 caratteri)</label><input type="password" id="newPassword" autocomplete="new-password" minlength="8" required></div>
+      <div class="auth-field"><label>Ripeti la password</label><input type="password" id="newPassword2" autocomplete="new-password" minlength="8" required></div>
+      <p class="auth-error" id="passwordRecoveryError"></p>
+      <button type="submit" class="btn btn-primary">Salva password</button>
+    </form>
   </div>
 </div>
 

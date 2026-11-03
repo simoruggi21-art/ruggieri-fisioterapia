@@ -32,9 +32,15 @@ export function isAuthed() {
 }
 
 export function isStaff() {
-  return role() === 'admin' || role() === 'operator';
+  return role() === 'admin' || role() === 'technician' || role() === 'operator';
 }
 
 export function isAdmin() {
   return role() === 'admin';
+}
+
+// Amministratore o tecnico: gestiscono agenda, pazienti, contenuti del sito.
+// Finanze, ruoli e cancellazione pazienti restano solo dell'amministratore (isAdmin).
+export function isManager() {
+  return role() === 'admin' || role() === 'technician';
 }

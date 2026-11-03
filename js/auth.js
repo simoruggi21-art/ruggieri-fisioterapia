@@ -27,13 +27,14 @@ async function loadProfileOrSignOut(session) {
   return profile;
 }
 
-export async function init(onChange) {
+export async function init(onChange, onRecovery) {
   const { data: { session } } = await supabase.auth.getSession();
   const profile = await loadProfileOrSignOut(session);
   setState({ session: profile ? session : null, profile, ready: true });
   onChange(getState());
 
-  supabase.auth.onAuthStateChange(async (_event, session) => {
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY' && onRecovery) onRecovery();
     const profile = await loadProfileOrSignOut(session);
     setState({ session: profile ? session : null, profile, ready: true });
     onChange(getState());
@@ -86,5 +87,23 @@ export async function updateOwnProfile(fields) {
   const { session } = getState();
   if (!session) return { error: new Error('Non autenticato') };
   const { error } = await supabase.from('profiles').update(fields).eq('id', session.user.id);
+  return { error };
+}
+
+// "Primo accesso / password dimenticata": la funzione server risponde sempre ok,
+// esista o no l'account, e spedisce il link solo all'indirizzo registrato.
+export async function requestPasswordReset(email) {
+  const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('./config.js');
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/request-password-reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email }),
+    });
+  } catch (err) { /* risposta uniforme comunque */ }
+}
+
+export async function setNewPassword(password) {
+  const { error } = await supabase.auth.updateUser({ password });
   return { error };
 }
