@@ -252,6 +252,62 @@ function renderPatientList() {
   });
 }
 
+// La scheda e' lunga: i blocchi gia' costruiti si raggruppano in tre tab
+// (Panoramica, Esercizi, Note) senza toccare il resto del codice, che li
+// ritrova per id. "Salva scheda" resta fuori dai tab, sempre visibile.
+let activeDetailTab = 'overview';
+
+function groupDetailTabs(detail, exerciseCount) {
+  const tabOf = (block) => {
+    if (block.classList.contains('private')) return 'notes';
+    if (block.classList.contains('suggest') || block.classList.contains('public') || block.id === 'guidedPath') return 'exercises';
+    return 'overview';
+  };
+  const blocks = [...detail.querySelectorAll(':scope > .record-block')];
+  if (!blocks.length) return;
+  const tabs = [
+    { id: 'overview', label: 'Panoramica' },
+    { id: 'exercises', label: 'Esercizi', count: exerciseCount },
+    { id: 'notes', label: 'Note' },
+  ];
+  const bar = document.createElement('div');
+  bar.className = 'detail-tabs';
+  bar.setAttribute('role', 'tablist');
+  const panels = {};
+  tabs.forEach((t) => {
+    const panel = document.createElement('div');
+    panel.className = 'detail-panel';
+    panel.dataset.tab = t.id;
+    panels[t.id] = panel;
+  });
+  blocks.forEach((b) => panels[tabOf(b)].appendChild(b));
+  const saveBtn = detail.querySelector('#saveRecordBtn');
+  const anchor = saveBtn || null;
+  tabs.forEach((t) => detail.insertBefore(panels[t.id], anchor));
+  const header = detail.querySelector('.patient-header');
+  detail.insertBefore(bar, header ? header.nextSibling : detail.firstChild);
+
+  const show = (id) => {
+    activeDetailTab = id;
+    bar.querySelectorAll('button').forEach((b) => {
+      const on = b.dataset.tab === id;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    Object.entries(panels).forEach(([k, el]) => { el.hidden = k !== id; });
+  };
+  tabs.forEach((t) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.dataset.tab = t.id;
+    b.innerHTML = `${t.label}${t.count ? ` <span class="detail-tab-count">${t.count}</span>` : ''}`;
+    b.onclick = () => show(t.id);
+    bar.appendChild(b);
+  });
+  show(tabs.some((t) => t.id === activeDetailTab) ? activeDetailTab : 'overview');
+}
+
 // Apre la scheda di un paziente da fuori dell'elenco (es. dalla Home dello staff).
 export async function openPatient(id) {
   activePatientId = id;
@@ -448,6 +504,7 @@ export async function renderDetail(p, hasUnread) {
           `).join('')}</div>`}
     </div>
   `;
+  groupDetailTabs(detail, exercises.length);
 
   // Ricorda quale voce della libreria e' stata usata per l'ultimo
   // suggerimento applicato: individua la categoria (quindi la sequenza di

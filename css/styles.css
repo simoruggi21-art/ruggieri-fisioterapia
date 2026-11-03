@@ -943,3 +943,13 @@ html.light-theme ::placeholder{color:#5B6A72; opacity:1;}
   .home-big{font-size:26px;}
   .home-todo li{align-items:flex-start; flex-direction:column; gap:8px;}
 }
+
+/* ===== Scheda paziente a tab (staff) ===== */
+.detail-tabs{display:flex; gap:6px; margin:18px 0 20px; border-bottom:1px solid var(--line); overflow-x:auto;}
+.detail-tabs button{background:none; border:none; border-bottom:2px solid transparent; padding:10px 14px; font:inherit; font-size:14.5px; color:var(--text-dim); cursor:pointer; white-space:nowrap; margin-bottom:-1px;}
+.detail-tabs button:hover{color:var(--text);}
+.detail-tabs button.active{color:var(--text); border-bottom-color:var(--accent); font-weight:500;}
+.detail-tab-count{font-size:11.5px; padding:1px 7px; border-radius:10px; background:var(--bg-alt); color:var(--text-dim);}
+.detail-panel[hidden]{display:none;}
+#saveRecordBtn{margin-top:6px;}
+.patient-header + .detail-tabs{margin-top:-6px;}
