@@ -183,22 +183,28 @@ export async function applyPendingClosures() {
   const btn = qs('#shiftSyncConfirmBtn');
   btn.disabled = true;
   setStatus('loading', 'Sto chiudendo gli orari in agenda…');
+  // L'agenda non accetta orari che si sovrappongono: un blocco lungo (es. 9-13) verrebbe
+  // rifiutato per intero se anche una sola ora e' gia' chiusa. Si chiude quindi ora per ora
+  // (come "Chiudi questo orario") e si saltano solo le ore gia' occupate o chiuse.
+  const HOUR = 60 * 60 * 1000;
   let ok = 0, skipped = 0;
   for (const c of checked) {
-    const { error } = await supabase.from('appointments').insert({
-      patient_id: null,
-      slot_start: c.start.toISOString(),
-      slot_end: c.end.toISOString(),
-      status: 'chiuso',
-    });
-    if (error) skipped++; else ok++;
+    for (let t = c.start.getTime(); t < c.end.getTime(); t += HOUR) {
+      const { error } = await supabase.from('appointments').insert({
+        patient_id: null,
+        slot_start: new Date(t).toISOString(),
+        slot_end: new Date(Math.min(t + HOUR, c.end.getTime())).toISOString(),
+        status: 'chiuso',
+      });
+      if (error) skipped++; else ok++;
+    }
   }
   pendingClosures = [];
   box.innerHTML = '';
   setStep('done');
   setStatus(ok ? 'ok' : 'error', ok
-    ? `Fatto: ${ok} ${ok === 1 ? 'orario chiuso' : 'orari chiusi'} in agenda${skipped ? `; ${skipped} saltati perché già occupati o già chiusi` : ''}.`
-    : `Nessun orario chiuso: ${skipped} erano già occupati o già chiusi.`);
-  showToast(ok ? `${ok} orari chiusi.` : 'Nessun orario chiuso.', ok ? 'ok' : 'error');
+    ? `Fatto: ${ok} ${ok === 1 ? 'ora chiusa' : 'ore chiuse'} in agenda${skipped ? `; ${skipped} saltate perché già occupate o già chiuse` : ''}.`
+    : `Nessuna ora chiusa: ${skipped} erano già occupate o già chiuse.`);
+  showToast(ok ? `${ok} ore chiuse.` : 'Nessuna ora chiusa.', ok ? 'ok' : 'error');
   renderAgenda();
 }
