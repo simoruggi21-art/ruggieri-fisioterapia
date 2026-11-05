@@ -311,8 +311,10 @@ function wireStaticControls() {
   wireClick('weekNextBtn', () => agenda.changeWeek(1));
   wireClick('weekTodayBtn', () => agenda.resetWeek());
   wireClick('closeTodayBtn', () => agenda.closeToday());
-  wireClick('shiftSyncOpenBtn', () => { qs('#shiftSyncOverlay').style.display = 'flex'; });
+  wireClick('shiftSyncOpenBtn', () => { shiftSync.resetShiftSync(); qs('#shiftSyncOverlay').style.display = 'flex'; });
   wireClick('shiftSyncCloseBtn', () => { qs('#shiftSyncOverlay').style.display = 'none'; });
+  wireClick('shiftSyncDoneBtn', () => { qs('#shiftSyncOverlay').style.display = 'none'; });
+  wireClick('shiftSyncCancelBtn', () => shiftSync.resetShiftSync());
   wireChange('shiftSyncFileInput', (e) => { if (e.target.files[0]) shiftSync.analyzeShiftScreenshot(e.target.files[0]); });
   wireClick('shiftSyncConfirmBtn', () => shiftSync.applyPendingClosures());
 

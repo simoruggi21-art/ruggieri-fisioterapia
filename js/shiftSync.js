@@ -60,30 +60,92 @@ function expandResult(data) {
   return closures;
 }
 
+// Stato visibile nella finestra (non solo un toast, che resta dietro al modale):
+// 'loading' = lettura in corso, 'ok' = esito positivo, 'error' = qualcosa e' andato storto.
+function setStatus(kind, text) {
+  const el = qs('#shiftSyncStatus');
+  if (!el) return;
+  el.className = 'shift-status' + (kind ? ' ' + kind : '');
+  el.innerHTML = '';
+  if (!kind) return;
+  if (kind === 'loading') el.insertAdjacentHTML('beforeend', '<span class="shift-spinner" aria-hidden="true"></span>');
+  if (kind === 'ok') el.insertAdjacentHTML('beforeend', '<span class="shift-icon" aria-hidden="true">✓</span>');
+  if (kind === 'error') el.insertAdjacentHTML('beforeend', '<span class="shift-icon" aria-hidden="true">!</span>');
+  const span = document.createElement('span');
+  span.textContent = text;
+  el.appendChild(span);
+  el.setAttribute('role', 'status');
+}
+
+function setStep(step) {
+  // step: 'pick' (scelta file) | 'review' (controlla e conferma) | 'done' (esito)
+  qs('#shiftSyncPickStep').style.display = step === 'review' ? 'none' : '';
+  qs('#shiftSyncReviewActions').style.display = step === 'review' ? '' : 'none';
+  qs('#shiftSyncDoneBtn').style.display = step === 'done' ? '' : 'none';
+}
+
+function updateSelectedCount() {
+  const box = qs('#shiftSyncPreview');
+  const n = box.querySelectorAll('input[type=checkbox][data-idx]:checked').length;
+  const btn = qs('#shiftSyncConfirmBtn');
+  btn.disabled = n === 0;
+  btn.textContent = n ? `Conferma: chiudi ${n} ${n === 1 ? 'orario' : 'orari'} in agenda` : 'Seleziona almeno un orario';
+}
+
 function renderPreview() {
   const box = qs('#shiftSyncPreview');
   if (!box) return;
   if (pendingClosures.length === 0) {
-    box.innerHTML = '<p class="text-dim" style="font-size:13px;">Nessun turno o ferie di Ruggieri trovato nello screenshot.</p>';
-    qs('#shiftSyncConfirmBtn').style.display = 'none';
+    box.innerHTML = '';
+    setStep('pick');
     return;
   }
-  box.innerHTML = pendingClosures.map((c, i) => `
-    <label style="display:flex; align-items:center; gap:10px; padding:8px 0; font-size:13.5px;">
+  box.innerHTML = `
+    <div class="shift-all"><label><input type="checkbox" id="shiftSyncAll" checked> Seleziona tutti</label></div>
+    ${pendingClosures.map((c, i) => `
+    <label class="shift-row">
       <input type="checkbox" data-idx="${i}" checked>
-      ${c.label}
-    </label>
-  `).join('');
-  qs('#shiftSyncConfirmBtn').style.display = '';
+      <span>${c.label}</span>
+    </label>`).join('')}`;
+  box.querySelectorAll('input[data-idx]').forEach((cb) => { cb.onchange = updateSelectedCount; });
+  qs('#shiftSyncAll').onchange = (e) => {
+    box.querySelectorAll('input[data-idx]').forEach((cb) => { cb.checked = e.target.checked; });
+    updateSelectedCount();
+  };
+  updateSelectedCount();
+  setStep('review');
+}
+
+// Riporta la finestra allo stato iniziale (chiamata anche all'apertura).
+export function resetShiftSync() {
+  pendingClosures = [];
+  const input = qs('#shiftSyncFileInput');
+  if (input) input.value = '';
+  const thumb = qs('#shiftSyncThumb');
+  if (thumb) { thumb.removeAttribute('src'); thumb.style.display = 'none'; }
+  const box = qs('#shiftSyncPreview');
+  if (box) box.innerHTML = '';
+  setStatus('', '');
+  setStep('pick');
+  qs('#shiftSyncDoneBtn').style.display = 'none';
 }
 
 export async function analyzeShiftScreenshot(file) {
-  const statusEl = qs('#shiftSyncStatus');
-  const preview = qs('#shiftSyncPreview');
-  if (statusEl) statusEl.textContent = 'Sto leggendo lo screenshot…';
-  if (preview) preview.innerHTML = '';
-  qs('#shiftSyncConfirmBtn').style.display = 'none';
+  const input = qs('#shiftSyncFileInput');
   pendingClosures = [];
+  qs('#shiftSyncPreview').innerHTML = '';
+  const thumb = qs('#shiftSyncThumb');
+  if (thumb) { thumb.src = URL.createObjectURL(file); thumb.style.display = 'block'; }
+  if (!file.type.startsWith('image/')) {
+    setStatus('error', 'Il file non è un\'immagine. Carica uno screenshot (PNG o JPG).');
+    return;
+  }
+  if (file.size > 8 * 1024 * 1024) {
+    setStatus('error', 'L\'immagine è troppo grande (massimo 8 MB). Riduci lo screenshot e riprova.');
+    return;
+  }
+  input.disabled = true;
+  setStatus('loading', `Caricato «${file.name}». Sto leggendo i turni, di solito servono 5-15 secondi…`);
   try {
     const base64 = await fileToBase64(file);
     const { session } = getState();
@@ -99,20 +161,28 @@ export async function analyzeShiftScreenshot(file) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Errore nella lettura dello screenshot.');
     pendingClosures = expandResult(data);
-    if (statusEl) statusEl.textContent = pendingClosures.length
-      ? `Trovati ${pendingClosures.length} blocchi da chiudere. Controlla e conferma.`
-      : 'Analisi completata.';
+    if (pendingClosures.length) {
+      setStatus('ok', `Screenshot letto: ho trovato ${pendingClosures.length} ${pendingClosures.length === 1 ? 'blocco' : 'blocchi'} per Ruggieri. Controlla l'elenco: non è stato ancora chiuso nulla in agenda.`);
+    } else {
+      setStatus('error', 'Ho letto lo screenshot ma non ho trovato turni o ferie di Ruggieri. Controlla che il nome sia leggibile e riprova.');
+    }
     renderPreview();
   } catch (err) {
-    if (statusEl) statusEl.textContent = '';
-    showToast(err.message, 'error');
+    setStatus('error', err.message || 'Qualcosa è andato storto. Riprova.');
+  } finally {
+    input.disabled = false;
+    input.value = '';
   }
 }
 
 export async function applyPendingClosures() {
   const box = qs('#shiftSyncPreview');
-  const checked = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map((cb) => pendingClosures[Number(cb.dataset.idx)]);
-  if (checked.length === 0) { showToast('Nessun blocco selezionato.', 'error'); return; }
+  const checked = Array.from(box.querySelectorAll('input[data-idx]:checked')).map((cb) => pendingClosures[Number(cb.dataset.idx)]);
+  if (checked.length === 0) { setStatus('error', 'Nessun orario selezionato.'); return; }
+  if (!confirm(`Chiudere ${checked.length} ${checked.length === 1 ? 'orario' : 'orari'} in agenda?\n\nI pazienti non potranno più prenotare in quegli orari.`)) return;
+  const btn = qs('#shiftSyncConfirmBtn');
+  btn.disabled = true;
+  setStatus('loading', 'Sto chiudendo gli orari in agenda…');
   let ok = 0, skipped = 0;
   for (const c of checked) {
     const { error } = await supabase.from('appointments').insert({
@@ -123,9 +193,12 @@ export async function applyPendingClosures() {
     });
     if (error) skipped++; else ok++;
   }
-  showToast(`${ok} orari chiusi${skipped ? `, ${skipped} già occupati/esistenti saltati` : ''}.`, 'ok');
   pendingClosures = [];
-  renderPreview();
-  qs('#shiftSyncStatus').textContent = '';
+  box.innerHTML = '';
+  setStep('done');
+  setStatus(ok ? 'ok' : 'error', ok
+    ? `Fatto: ${ok} ${ok === 1 ? 'orario chiuso' : 'orari chiusi'} in agenda${skipped ? `; ${skipped} saltati perché già occupati o già chiusi` : ''}.`
+    : `Nessun orario chiuso: ${skipped} erano già occupati o già chiusi.`);
+  showToast(ok ? `${ok} orari chiusi.` : 'Nessun orario chiuso.', ok ? 'ok' : 'error');
   renderAgenda();
 }

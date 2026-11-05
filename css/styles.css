@@ -953,3 +953,22 @@ html.light-theme ::placeholder{color:#5B6A72; opacity:1;}
 .detail-panel[hidden]{display:none;}
 #saveRecordBtn{margin-top:6px;}
 .patient-header + .detail-tabs{margin-top:-6px;}
+
+/* ===== Caricamento turni da screenshot: stati ben visibili ===== */
+#shiftSyncThumb{display:none; max-width:100%; max-height:160px; margin:6px 0 12px; border:1px solid var(--line); border-radius:4px; object-fit:contain;}
+.shift-status{display:flex; align-items:flex-start; gap:10px; margin:10px 0; font-size:14px; line-height:1.45; color:var(--text-dim); min-height:20px;}
+.shift-status:empty{display:none;}
+.shift-status.loading, .shift-status.ok, .shift-status.error{padding:12px 14px; border:1px solid var(--line); border-radius:4px;}
+.shift-status.ok{border-color:var(--ok); color:var(--ok);}
+.shift-status.error{border-color:var(--danger); color:var(--danger);}
+.shift-status.loading{color:var(--text);}
+.shift-icon{flex:none; width:20px; height:20px; border-radius:50%; border:1.5px solid currentColor; font-size:12px; line-height:17px; text-align:center; font-weight:700;}
+.shift-spinner{flex:none; width:18px; height:18px; border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:shiftspin .8s linear infinite;}
+@keyframes shiftspin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){.shift-spinner{animation:none;}}
+.shift-preview{margin:6px 0 14px; max-height:260px; overflow-y:auto;}
+.shift-preview:empty{display:none;}
+.shift-all{padding:6px 0 8px; border-bottom:1px solid var(--line); font-size:13.5px;}
+.shift-row{display:flex; align-items:center; gap:10px; padding:8px 0; font-size:13.5px; border-bottom:1px solid var(--line);}
+.shift-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+.shift-actions .btn[disabled]{opacity:.5; cursor:not-allowed;}
