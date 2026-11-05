@@ -17,19 +17,21 @@
       <a href="index.html" class="monogram" style="text-decoration:none;">SR</a>
       <div class="nav-links" id="navLinks">
         <a href="index.html" style="display:flex; align-items:center; gap:6px;">← Sito pubblico</a>
-        <a href="#agenda" class="auth-only">Agenda<span class="nav-badge" id="agendaBadge" style="display:none;"></span></a>
+        <a href="#home" class="auth-only">Home</a>
+        <a href="#agenda" class="staff-only">Agenda<span class="nav-badge" id="agendaBadge" style="display:none;"></span></a>
+        <a href="#agenda" class="patient-only">Appuntamenti</a>
+        <a href="#miei-esercizi" class="patient-only">Esercizi</a>
         <a href="#mio-percorso" class="patient-only">Il mio percorso</a>
-        <a href="#miei-esercizi" class="patient-only">I miei esercizi</a>
-        <a href="#messaggi" class="auth-only">Messaggi<span class="nav-dot" id="messagesBadge" style="display:none;"></span></a>
         <a href="#pazienti" class="staff-only">Pazienti</a>
+        <a href="#messaggi" class="auth-only">Messaggi<span class="nav-dot" id="messagesBadge" style="display:none;"></span></a>
         <a href="#richieste" class="staff-only">Richieste<span class="nav-badge" id="requestsBadge" style="display:none;"></span></a>
-        <a href="#assistente-ai" class="staff-only">Assistente AI</a>
-        <a href="#gestionale" class="owner-only">Gestionale</a>
-        <a href="#situazione-annuale" class="owner-only">Situazione annuale</a>
-        <div class="nav-dropdown admin-only" id="settingsDropdown">
-          <button type="button" class="nav-dropdown-trigger" id="settingsDropdownTrigger">Impostazioni ▾</button>
+        <div class="nav-dropdown staff-only" id="settingsDropdown">
+          <button type="button" class="nav-dropdown-trigger" id="settingsDropdownTrigger">Altro ▾</button>
           <div class="nav-dropdown-menu" id="settingsMenu">
-            <a href="#profilo" id="settingsNavLink">Impostazioni</a>
+            <a href="#assistente-ai" class="staff-only">Assistente AI</a>
+            <a href="#gestionale" class="owner-only">Gestionale</a>
+            <a href="#situazione-annuale" class="owner-only">Situazione annuale</a>
+            <a href="#profilo" id="settingsNavLink" class="admin-only">Impostazioni</a>
           </div>
         </div>
       </div>
@@ -127,14 +129,21 @@
   </div>
 </section>
 
-<!-- AGENDA -->
-<section class="section auth-only" id="agenda" style="padding-top:160px;">
+<!-- HOME: panoramica del giorno (paziente: cosa fare adesso; staff: Oggi in studio) -->
+<section class="section auth-only" id="home" style="padding-top:160px;">
   <div class="container">
     <div class="reminder-prompt patient-only" id="reminderPrompt" style="display:none;">
       <strong>Vuoi dei promemoria via email?</strong>
       <p class="text-dim" style="margin:6px 0 0;">Un check-up settimanale, il ricordo degli esercizi e, a fine percorso, un invito a lasciare una recensione (facoltativa). Le email non contengono dati sulla salute e le disattivi quando vuoi.</p>
       <div class="invite-actions"><button class="btn btn-primary btn-small" id="reminderYes">Sì, attivali</button><button class="btn btn-ghost btn-small" id="reminderNo">No, grazie</button></div>
     </div>
+    <div id="homeContent"></div>
+  </div>
+</section>
+
+<!-- AGENDA -->
+<section class="section auth-only" id="agenda">
+  <div class="container">
     <div class="booking-head">
       <div>
         <p class="label">agenda</p>
@@ -169,6 +178,61 @@
       <p class="label">storico</p>
       <h3 class="heading-lg" style="font-size:22px;">Le mie sedute passate</h3>
       <div id="apptHistoryList" style="margin-top:20px;"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section patient-only" id="miei-esercizi">
+  <div class="container">
+    <p class="label">i miei esercizi</p>
+    <h2 class="heading-lg">Esercizi assegnati</h2>
+    <p class="text-dim" style="margin-top:10px;">Gli esercizi che il tuo fisioterapista ha scelto per te.</p>
+    <p class="notice-emergency">Se durante un esercizio compaiono dolore forte, vertigini, formicolii che peggiorano o altri sintomi nuovi, <strong>interrompi e contatta lo studio</strong>. In caso di urgenza chiama il <strong>112</strong>. I video collegati sono ricerche su YouTube (contenuti di terzi): prevale sempre ciò che ti ha mostrato il fisioterapista.</p>
+    <div id="myExercisesList" style="margin-top:30px; display:flex; flex-direction:column; gap:14px;"></div>
+  </div>
+</section>
+
+<!-- IL MIO PERCORSO (paziente) -->
+<section class="section patient-only" id="mio-percorso">
+  <div class="container">
+    <p class="label">il mio percorso</p>
+    <h2 class="heading-lg">Protocollo ed esercizi</h2>
+    <p class="text-dim" style="margin-top:10px;">Il piano che lo studio ha preparato per te. Le eventuali note cliniche interne non sono mostrate qui.</p>
+    <div class="record-block" style="margin-top:30px;">
+      <div class="rb-title">Il tuo percorso</div>
+      <div id="myMilestoneTimeline"></div>
+    </div>
+    <div class="record-block public" style="margin-top:20px;">
+      <p id="myProtocolText" class="text-dim" style="white-space:pre-line; line-height:1.7;"></p>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEDE PAZIENTI (staff) -->
+<section class="section staff-only" id="pazienti">
+  <div class="container">
+    <div class="booking-head">
+      <div>
+        <p class="label">pazienti</p>
+        <h2 class="heading-lg">Schede pazienti</h2>
+      </div>
+      <button class="btn btn-primary btn-small admin-only" id="registerPatientBtn">+ Registra nuovo paziente</button>
+    </div>
+    <div class="patient-search">
+      <input type="text" id="patientSearchInput" placeholder="Cerca per nome o email...">
+    </div>
+    <div class="status-filter" id="patientStatusFilter" role="group" aria-label="Filtra per stato">
+      <button type="button" class="chip active" data-status="">Tutti</button>
+      <button type="button" class="chip" data-status="in_trattamento">In trattamento</button>
+      <button type="button" class="chip" data-status="in_valutazione">In valutazione</button>
+      <button type="button" class="chip" data-status="in_pausa">In pausa</button>
+      <button type="button" class="chip" data-status="terminato">Conclusi</button>
+    </div>
+    <div class="chat-shell" style="height:auto;">
+      <div class="thread-list" id="patientList" style="max-height:560px;"></div>
+      <div class="chat-main" style="padding:26px 30px;">
+        <div id="patientDetail"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -235,22 +299,6 @@
   </div>
 </section>
 
-<!-- IL MIO PERCORSO (paziente) -->
-<section class="section patient-only" id="mio-percorso">
-  <div class="container">
-    <p class="label">il mio percorso</p>
-    <h2 class="heading-lg">Protocollo ed esercizi</h2>
-    <p class="text-dim" style="margin-top:10px;">Il piano che lo studio ha preparato per te. Le eventuali note cliniche interne non sono mostrate qui.</p>
-    <div class="record-block" style="margin-top:30px;">
-      <div class="rb-title">Il tuo percorso</div>
-      <div id="myMilestoneTimeline"></div>
-    </div>
-    <div class="record-block public" style="margin-top:20px;">
-      <p id="myProtocolText" class="text-dim" style="white-space:pre-line; line-height:1.7;"></p>
-    </div>
-  </div>
-</section>
-
 <!-- I MIEI ESERCIZI (paziente) -->
 <section class="section patient-only" id="preferenze">
   <div class="container">
@@ -265,44 +313,14 @@
   </div>
 </section>
 
-<section class="section patient-only" id="miei-esercizi">
-  <div class="container">
-    <p class="label">i miei esercizi</p>
-    <h2 class="heading-lg">Esercizi assegnati</h2>
-    <p class="text-dim" style="margin-top:10px;">Gli esercizi che il tuo fisioterapista ha scelto per te.</p>
-    <p class="notice-emergency">Se durante un esercizio compaiono dolore forte, vertigini, formicolii che peggiorano o altri sintomi nuovi, <strong>interrompi e contatta lo studio</strong>. In caso di urgenza chiama il <strong>112</strong>. I video collegati sono ricerche su YouTube (contenuti di terzi): prevale sempre ciò che ti ha mostrato il fisioterapista.</p>
-    <div id="myExercisesList" style="margin-top:30px; display:flex; flex-direction:column; gap:14px;"></div>
-  </div>
-</section>
 
-<!-- SCHEDE PAZIENTI (staff) -->
-<section class="section staff-only" id="pazienti">
-  <div class="container">
-    <div class="booking-head">
-      <div>
-        <p class="label">pazienti</p>
-        <h2 class="heading-lg">Schede pazienti</h2>
-      </div>
-      <button class="btn btn-primary btn-small admin-only" id="registerPatientBtn">+ Registra nuovo paziente</button>
-    </div>
-    <div class="patient-search">
-      <input type="text" id="patientSearchInput" placeholder="Cerca per nome o email...">
-    </div>
-    <div class="status-filter" id="patientStatusFilter" role="group" aria-label="Filtra per stato">
-      <button type="button" class="chip active" data-status="">Tutti</button>
-      <button type="button" class="chip" data-status="in_trattamento">In trattamento</button>
-      <button type="button" class="chip" data-status="in_valutazione">In valutazione</button>
-      <button type="button" class="chip" data-status="in_pausa">In pausa</button>
-      <button type="button" class="chip" data-status="terminato">Conclusi</button>
-    </div>
-    <div class="chat-shell" style="height:auto;">
-      <div class="thread-list" id="patientList" style="max-height:560px;"></div>
-      <div class="chat-main" style="padding:26px 30px;">
-        <div id="patientDetail"></div>
-      </div>
-    </div>
-  </div>
-</section>
+
+
+
+
+
+
+
 
 <!-- GESTIONALE (admin) -->
 <section class="section owner-only" id="gestionale">
@@ -668,12 +686,19 @@
     <h3 class="heading-lg" style="font-size:22px;">Carica screenshot del calendario turni</h3>
     <p class="text-dim" style="margin-top:10px; font-size:13px;">Carica uno screenshot tuo del calendario mensile condiviso (mai il documento originale). Un'AI individua solo i tuoi turni/ferie e ti propone quali orari chiudere in agenda: li applico solo dopo la tua conferma.</p>
 
-    <input type="file" id="shiftSyncFileInput" accept="image/*" style="width:100%; margin-top:18px; margin-bottom:10px;">
-    <p class="text-dim" id="shiftSyncStatus" style="font-size:13px; min-height:18px;"></p>
+    <div id="shiftSyncPickStep">
+      <input type="file" id="shiftSyncFileInput" accept="image/*" style="width:100%; margin-top:18px; margin-bottom:10px;">
+    </div>
+    <img id="shiftSyncThumb" alt="Anteprima dello screenshot caricato" style="display:none;">
+    <p class="shift-status" id="shiftSyncStatus"></p>
 
-    <div id="shiftSyncPreview" style="margin:10px 0 18px; max-height:260px; overflow-y:auto;"></div>
+    <div id="shiftSyncPreview" class="shift-preview"></div>
 
-    <button class="btn btn-primary btn-small" id="shiftSyncConfirmBtn" style="display:none;">Conferma e chiudi questi orari</button>
+    <div id="shiftSyncReviewActions" class="shift-actions" style="display:none;">
+      <button class="btn btn-primary btn-small" id="shiftSyncConfirmBtn">Conferma</button>
+      <button class="btn btn-ghost btn-small" id="shiftSyncCancelBtn">Annulla e carica un altro screenshot</button>
+    </div>
+    <button class="btn btn-primary btn-small" id="shiftSyncDoneBtn" style="display:none;">Chiudi</button>
   </div>
 </div>
 
@@ -731,6 +756,18 @@
 </div>
 
 <!-- SCELTA PASSWORD (dopo il link ricevuto per email) -->
+<!-- Conferma del link di invito: il link nella email non consuma nulla da solo (i filtri antivirus e anti-spam
+     lo aprono per controllarlo); l'accesso parte solo da questo pulsante. -->
+<div class="modal-overlay" id="inviteContinueOverlay" style="display:none;">
+  <div class="modal-box">
+    <p class="label">benvenuto</p>
+    <h3 class="heading-lg" style="font-size:22px;">Attiva il tuo profilo</h3>
+    <p class="text-dim" style="margin-top:10px;">Premi il pulsante per scegliere la tua password e accedere all'area riservata.</p>
+    <p class="auth-error" id="inviteContinueError" style="margin-top:12px;"></p>
+    <button type="button" class="btn btn-primary" id="inviteContinueBtn" style="margin-top:16px;">Continua</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="passwordRecoveryOverlay" style="display:none;">
   <div class="modal-box">
     <p class="label">password</p>

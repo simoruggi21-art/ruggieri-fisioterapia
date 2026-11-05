@@ -16,6 +16,8 @@ import * as contactRequests from './contactRequests.js';
 import { initCookieBanner, reopenCookieBanner } from './cookieConsent.js';
 import { initTheme, wireThemeTrigger, promptThemeIfUnset } from './theme.js';
 import * as preferences from './preferences.js';
+import * as home from './home.js';
+import { supabase } from './supabaseClient.js';
 
 const ROLE_LABELS = { admin: 'Amministratore', technician: 'Tecnico', operator: 'Operatore', patient: 'Paziente' };
 
@@ -50,6 +52,7 @@ async function boot(state) {
         notifications.startPolling();
       });
       await safeRun('agenda', () => agenda.render());
+      await safeRun('home', () => home.render());
       await safeRun('chat', () => chat.render());
       if (isStaff()) await safeRun('pazienti', () => patients.render());
       if (isStaff()) await safeRun('richieste', () => contactRequests.render());
@@ -111,6 +114,15 @@ function wireSettingsDropdown() {
     document.body.classList.add('showing-settings');
     menu.classList.remove('open');
   };
+  // Gli altri link della tendina portano a una sezione normale: chiudono il menu
+  // e, se era aperta la schermata Impostazioni, la richiudono.
+  menu.querySelectorAll('a').forEach((a) => {
+    if (a.id === 'settingsNavLink') return;
+    a.addEventListener('click', () => {
+      document.body.classList.remove('showing-settings');
+      menu.classList.remove('open');
+    });
+  });
   qs('#navLinks').querySelectorAll('a').forEach((a) => {
     if (a.id !== 'settingsNavLink') a.addEventListener('click', () => document.body.classList.remove('showing-settings'));
   });
@@ -129,6 +141,48 @@ function renderNavUser(state) {
   } else {
     area.innerHTML = `<a href="#accesso" class="btn btn-ghost btn-small">Accedi / Registrati</a>`;
   }
+}
+
+// Link ricevuti per email. Due casi:
+// - "#error_code=otp_expired" (link scaduto o gia' usato, spesso aperto in anticipo da un
+//   antivirus o dall'app di posta): spiega cosa e' successo e apre il modulo per riceverne uno nuovo;
+// - "?invite=<codice>": il link di invito/reimpostazione. Il codice si usa solo quando la
+//   persona preme "Continua", cosi' un controllo automatico del link non lo consuma.
+function showExpiredLinkHelp(info) {
+  const loginForm = qs('#loginForm');
+  const forgotForm = qs('#forgotForm');
+  if (loginForm && forgotForm) { loginForm.style.display = 'none'; forgotForm.style.display = 'flex'; }
+  qs('#authInfo').textContent = '';
+  qs('#authError').textContent = info || 'Il link che hai aperto è scaduto o è già stato usato. Scrivi qui sotto la tua email: ti mandiamo subito un link nuovo.';
+  qs('#accesso')?.scrollIntoView();
+}
+
+function handleLinkParams() {
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (hash.get('error_code') || hash.get('error') === 'access_denied') {
+    history.replaceState(null, '', location.pathname);
+    showExpiredLinkHelp();
+    return;
+  }
+  const token = new URLSearchParams(location.search).get('invite');
+  if (!token) return;
+  const overlay = qs('#inviteContinueOverlay');
+  overlay.style.display = 'flex';
+  qs('#inviteContinueBtn').onclick = async () => {
+    const btn = qs('#inviteContinueBtn');
+    btn.disabled = true;
+    const { error } = await supabase.auth.verifyOtp({ token_hash: token, type: 'recovery' });
+    btn.disabled = false;
+    if (error) {
+      overlay.style.display = 'none';
+      history.replaceState(null, '', location.pathname);
+      showExpiredLinkHelp();
+      return;
+    }
+    history.replaceState(null, '', location.pathname);
+    overlay.style.display = 'none';
+    qs('#passwordRecoveryOverlay').style.display = 'flex';
+  };
 }
 
 function wirePasswordRecovery() {
@@ -300,8 +354,10 @@ function wireStaticControls() {
   wireClick('weekNextBtn', () => agenda.changeWeek(1));
   wireClick('weekTodayBtn', () => agenda.resetWeek());
   wireClick('closeTodayBtn', () => agenda.closeToday());
-  wireClick('shiftSyncOpenBtn', () => { qs('#shiftSyncOverlay').style.display = 'flex'; });
+  wireClick('shiftSyncOpenBtn', () => { shiftSync.resetShiftSync(); qs('#shiftSyncOverlay').style.display = 'flex'; });
   wireClick('shiftSyncCloseBtn', () => { qs('#shiftSyncOverlay').style.display = 'none'; });
+  wireClick('shiftSyncDoneBtn', () => { qs('#shiftSyncOverlay').style.display = 'none'; });
+  wireClick('shiftSyncCancelBtn', () => shiftSync.resetShiftSync());
   wireChange('shiftSyncFileInput', (e) => { if (e.target.files[0]) shiftSync.analyzeShiftScreenshot(e.target.files[0]); });
   wireClick('shiftSyncConfirmBtn', () => shiftSync.applyPendingClosures());
 
@@ -350,5 +406,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   preferences.wire();
   wirePasswordRecovery();
   blog.wireAdmin();
+  handleLinkParams();
   await auth.init(boot, () => { qs('#passwordRecoveryOverlay').style.display = 'flex'; });
 });
