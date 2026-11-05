@@ -756,6 +756,18 @@
 </div>
 
 <!-- SCELTA PASSWORD (dopo il link ricevuto per email) -->
+<!-- Conferma del link di invito: il link nella email non consuma nulla da solo (i filtri antivirus e anti-spam
+     lo aprono per controllarlo); l'accesso parte solo da questo pulsante. -->
+<div class="modal-overlay" id="inviteContinueOverlay" style="display:none;">
+  <div class="modal-box">
+    <p class="label">benvenuto</p>
+    <h3 class="heading-lg" style="font-size:22px;">Attiva il tuo profilo</h3>
+    <p class="text-dim" style="margin-top:10px;">Premi il pulsante per scegliere la tua password e accedere all'area riservata.</p>
+    <p class="auth-error" id="inviteContinueError" style="margin-top:12px;"></p>
+    <button type="button" class="btn btn-primary" id="inviteContinueBtn" style="margin-top:16px;">Continua</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="passwordRecoveryOverlay" style="display:none;">
   <div class="modal-box">
     <p class="label">password</p>
