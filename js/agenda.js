@@ -521,7 +521,7 @@ function currentNewApptDt() {
 function updateNewApptMetaPreview() {
   const dt = currentNewApptDt();
   qs('#newApptMeta').textContent = dt
-    ? `Appuntamento: ${formatDateTime(dt.toISOString())} · durata 1 ora`
+    ? `Appuntamento: ${formatDateTime(dt.toISOString())} · durata 1 ora${isManager() ? ' · se l\'orario è chiuso ti chiedo se aprirlo' : ''}`
     : 'Seleziona data e ora.';
 }
 
@@ -598,13 +598,30 @@ async function createManualAppointment() {
   const slotEnd = addApptDuration(dt);
   const priceRaw = qs('#newApptPrice').value.trim();
   const price = priceRaw === '' ? null : Number(priceRaw);
-  const { error } = await supabase.from('appointments').insert({
+  let { error } = await supabase.from('appointments').insert({
     patient_id: patientId,
     slot_start: dt.toISOString(),
     slot_end: slotEnd.toISOString(),
     status: 'confermato',
     price,
   });
+  // L'orario e' chiuso (turno, giorno libero...): lo staff puo' aprirlo solo per questa seduta.
+  // L'apertura e' parziale: le parti vicine restano chiuse (es. 13:30-14:30 dentro 13:00-15:00).
+  if (error && isSlotConflictError(error) && isManager()) {
+    const ok = confirm(`L'orario ${formatDateTime(dt.toISOString())} è chiuso o occupato in parte da una chiusura.\n\nVuoi aprirlo solo per questa seduta? Il resto del periodo chiuso resta chiuso.`);
+    if (!ok) return;
+    const res = await supabase.rpc('book_over_closed', {
+      p_patient: patientId,
+      p_start: dt.toISOString(),
+      p_end: slotEnd.toISOString(),
+      p_price: price,
+    });
+    error = res.error;
+    if (error) {
+      showToast(isSlotConflictError(error) ? 'Qui c\'è già un appuntamento o una seduta segnata: scegli un altro orario.' : 'Errore nell\'apertura dell\'orario.', 'error');
+      return;
+    }
+  }
   if (error) {
     showToast(isSlotConflictError(error) ? 'Questo orario è già occupato.' : 'Errore nella creazione della prenotazione.', 'error');
     return;
