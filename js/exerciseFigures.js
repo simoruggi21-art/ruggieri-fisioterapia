@@ -49,15 +49,47 @@ function body(p) {
   j.handN = aN && aN[2]; j.elbowN = aN && aN[1]; j.handF = aF && aF[2];
   j.footN = lN && lN[2]; j.footF = lF && lF[2]; j.kneeN = lN && lN[1];
   j.shN = sN;
+  // Disegno: sagoma realistica a strati (contorno + riempimento), arti piu' larghi vicino al tronco.
+  const part = (a, w, far) => {
+    const [p1, p2] = a;
+    return { ol: `<line class="fx-ol" x1="${n1(p1[0])}" y1="${n1(p1[1])}" x2="${n1(p2[0])}" y2="${n1(p2[1])}" stroke-width="${n1(w + 2.6)}"/>`,
+      fl: `<line class="${far ? 'fx-skf' : 'fx-sk'}" x1="${n1(p1[0])}" y1="${n1(p1[1])}" x2="${n1(p2[0])}" y2="${n1(p2[1])}" stroke-width="${n1(w)}"/>` };
+  };
+  const chain = (pts, ws, far) => {
+    const ps = ws.map((w, i) => part([pts[i], pts[i + 1]], w, far));
+    return ps.map((q) => q.ol).join('') + ps.map((q) => q.fl).join('');
+  };
+  const armSvg = (a, far) => (a ? chain(a, [8.6, 7], far) + `<circle class="fx-olf" cx="${n1(a[2][0])}" cy="${n1(a[2][1])}" r="${far ? 4.6 : 5}"/><circle class="${far ? 'fx-skf0' : 'fx-sk0'}" cx="${n1(a[2][0])}" cy="${n1(a[2][1])}" r="${far ? 3.4 : 3.8}"/>` : '');
+  const legSvg = (l, far) => (l ? chain(l, [13, 9.5, 5.6], far) : '');
+  const midT = [(j.pelvis[0] + j.sh[0]) / 2, (j.pelvis[1] + j.sh[1]) / 2];
+  const trunk = chain([j.pelvis, midT, j.sh], [17, 20], false);
+  const neckSvg = chain([j.sh, j.neck], [6.5], false);
+  const shorts = (l, hipP) => (l ? `<line class="fx-sh" x1="${n1(hipP[0])}" y1="${n1(hipP[1])}" x2="${n1(hipP[0] + (l[1][0] - hipP[0]) * 0.5)}" y2="${n1(hipP[1] + (l[1][1] - hipP[1]) * 0.5)}" stroke-width="14.5"/>` : '');
+  const pelvisCap = `<circle class="fx-sh0" cx="${n1(j.pelvis[0])}" cy="${n1(j.pelvis[1])}" r="8.6"/>`;
+  const mark = (p.hl || []).map((h) => hlSvg(h, j, p)).join('');
   let s = '';
-  if (aF) s += poly(aF, 'fx-b fx-far');
-  if (lF) s += poly(lF, 'fx-b fx-far');
-  s += poly([j.pelvis, j.sh, j.neck], 'fx-b');
-  if (p.front) s += poly([sF, sN], 'fx-b') + poly([hF, hN], 'fx-b');
-  if (lN) s += poly(lN, 'fx-b');
-  s += `<circle class="fx-head" cx="${n1(j.head[0])}" cy="${n1(j.head[1])}" r="${L.hr}"/>`;
-  if (aN) s += poly(aN, 'fx-b');
+  s += armSvg(aF, true) + legSvg(lF, true);
+  s += trunk + neckSvg;
+  s += legSvg(lN, false) + shorts(lF, hF) + pelvisCap + shorts(lN, hN);
+  s += `<ellipse class="fx-head" cx="${n1(j.head[0])}" cy="${n1(j.head[1])}" rx="7.4" ry="8.4" transform="rotate(${n1(-(hd - 90))} ${n1(j.head[0])} ${n1(j.head[1])})"/>`;
+  s += armSvg(aN, false);
+  s += mark;
   return { s, j };
+}
+
+// Evidenziazione dei muscoli lavorati (rosso trasparente).
+function hlSvg(name, j, p) {
+  const c = (pt0, r) => `<circle class="fx-hl" cx="${n1(pt0[0])}" cy="${n1(pt0[1])}" r="${r}"/>`;
+  const sg = (a, b, w) => `<line class="fx-hl fx-hll" x1="${n1(a[0])}" y1="${n1(a[1])}" x2="${n1(b[0])}" y2="${n1(b[1])}" stroke-width="${w}"/>`;
+  const mid = (a, b, t = 0.5) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  if (name === 'spalla') return c(j.shN || j.sh, 7) + (j.sh ? c([j.sh[0] - Math.cos(rad(p.torso)) * 6, j.sh[1] + Math.sin(rad(p.torso)) * 6], 5.5) : '');
+  if (name === 'core') return sg(mid(j.pelvis, j.sh, 0.12), mid(j.pelvis, j.sh, 0.7), 15);
+  if (name === 'gluteo') return c(j.pelvis, 10);
+  if (name === 'quadricipite' && j.kneeN) return sg(mid(j.pelvis, j.kneeN, 0.1), mid(j.pelvis, j.kneeN, 0.9), 11);
+  if (name === 'polpaccio' && j.kneeN && j.footN) return sg(mid(j.kneeN, j.footN, 0.15), mid(j.kneeN, j.footN, 0.8), 8);
+  if (name === 'collo') return sg(j.neck, j.sh, 9);
+  if (name === 'gomito' && j.elbowN) return c(j.elbowN, 7);
+  return '';
 }
 
 // ------------------------------------------------------------------- scena
@@ -108,7 +140,9 @@ const quad = (hx, o = {}) => {
 
 // ------------------------------------------------------------ definizioni
 const D = {};
-const def = (id, ...frames) => { D[id] = frames; };
+const HL = {};
+const hlFor = (id) => HL[id] || (/spalla/.test(id) ? (/-(4[a-g]|hl-plank|hl-quadrupedia|hl-bracciata)/.test(id) ? ['spalla', 'core'] : ['spalla']) : []);
+const def = (id, ...frames) => { frames.forEach((f) => { if (f.pose && !f.pose.hl) f.pose.hl = hlFor(id); }); D[id] = frames; };
 const fr = (pose, extra) => ({ pose, extra });
 
 const S = (n) => 'spalla-sinex-' + n;
@@ -150,6 +184,7 @@ function drawPlan(f) {
   if (f.towelOn) s += `<rect class="fx-fill" x="${e[0] - 8}" y="${e[1] - 3}" width="16" height="6" rx="2"/>`;
   s += poly([[sh[0], sh[1] + 6], e], 'fx-b');
   let h;
+  if (f.fore === 'straight') { s += poly([[sh[0], sh[1] + 6], [sh[0] + (e[0] - sh[0]) * 1.7, sh[1] + 6 + (e[1] - sh[1] - 6) * 1.7]], 'fx-b'); s += dot([sh[0] + 1, sh[1] + 1], 3.5); return s; }
   if (f.fore === 'IR') h = [e[0] + 20, e[1]];
   else if (f.fore === 'ER') h = [e[0] - 20, e[1]];
   else h = null;
@@ -285,6 +320,150 @@ def('spalla-hl-plank-instabile-piedi',
 def('spalla-hl-bracciata-secco',
   fr(quad(120), (j) => pad(j.handN[0], G, 36) + circ([j.handN[0], G - 24], 7)),
   fr(prone(120, 35, { toeH: 0 }), (j) => pad(j.handN[0], G, 36) + circ([j.handN[0], G - 24], 7)));
+
+// ---- Spalla: altri esercizi della libreria
+const tbl = (x, y, w = 56) => `<line class="fx-prop" stroke-width="3" x1="${x}" y1="${y}" x2="${x + w}" y2="${y}"/><line class="fx-prop" x1="${x + 6}" y1="${y}" x2="${x + 6}" y2="${G}"/><line class="fx-prop" x1="${x + w - 6}" y1="${y}" x2="${x + w - 6}" y2="${G}"/>`;
+const chair = (x) => `<line class="fx-prop" stroke-width="3" x1="${x - 16}" y1="${G - 27}" x2="${x + 18}" y2="${G - 27}"/><line class="fx-prop" x1="${x - 14}" y1="${G - 27}" x2="${x - 14}" y2="${G}"/><line class="fx-prop" x1="${x + 16}" y1="${G - 27}" x2="${x + 16}" y2="${G}"/><line class="fx-prop" x1="${x - 16}" y1="${G - 27}" x2="${x - 16}" y2="${G - 78}"/>`;
+const stickL = (a, b) => `<line class="fx-stick" x1="${n1(a[0])}" y1="${n1(a[1])}" x2="${n1(b[0])}" y2="${n1(b[1])}"/>`;
+const dumb = (h) => `<rect class="fx-prop fx-fillrect" x="${n1(h[0] - 6)}" y="${n1(h[1] - 3)}" width="12" height="6" rx="2"/>`;
+const bar = (y) => `<line class="fx-prop" stroke-width="3.5" x1="60" y1="${y}" x2="140" y2="${y}"/>`;
+const pulley = (p) => `<circle class="fx-prop" cx="${p[0]}" cy="${p[1]}" r="5"/><line class="fx-prop" x1="${p[0]}" y1="8" x2="${p[0]}" y2="${p[1] - 5}"/>`;
+const kb = (h) => `<rect class="fx-prop fx-fillrect" x="${n1(h[0] - 3)}" y="${n1(h[1] - 3)}" width="6" height="6"/><circle class="fx-prop fx-fillrect" cx="${n1(h[0])}" cy="${n1(h[1] - 10)}" r="6"/>`;
+const sideLie = (o = {}) => ({ pelvis: [140, G - 9], torso: 180, legs: [[20, 340], [10, 335]], arms: [[90, 10], null], ...o });
+const benT = (o = {}) => ({ pelvis: [95, G - 58], torso: 35, legs: stag, arms: [[270, 270], { reach: [150, G - 76] }], ...o });
+const benchT = () => tbl(138, G - 76, 52);
+const wallPush = (bent) => bent
+  ? { pelvis: [88, G - 58], torso: 66, legs: [[270, 270], [262, 268]], arms: [[330, 60], [330, 60]] }
+  : { pelvis: [72, G - 58], torso: 72, legs: [[270, 270], [262, 268]], arms: [[330, 100], [330, 100]] };
+const wp = () => wall(160);
+
+def('spalla-pendolo',
+  fr(benT({ arms: [[250, 250], { reach: [150, G - 76] }] }), (j) => benchT() + circ([j.handN[0], j.handN[1] - 4], 8)),
+  fr(benT({ arms: [[292, 292], { reach: [150, G - 76] }] }), (j) => benchT() + circ([j.handN[0], j.handN[1] - 4], 8)));
+D['postchir-spalla-pendolo-precoce'] = D['spalla-pendolo'];
+def('spalla-mob-circonduzione-assistita',
+  fr(benT({ arms: [[250, 250], { reach: [150, G - 76] }] }), (j) => benchT() + circ([j.handN[0], j.handN[1] - 4], 10)),
+  fr(benT({ arms: [[295, 295], { reach: [150, G - 76] }] }), (j) => benchT() + circ([j.handN[0], j.handN[1] - 4], 10)));
+const rotE = (a, b, anc) => [fr(front({ arms: [[270, a], [270, 270]] }), (j) => band(j.handN, [anc, j.handN[1]]) + `<circle class="fx-dot" cx="${anc}" cy="${n1(j.handN[1])}" r="3"/>`), fr(front({ arms: [[270, b], [270, 270]] }), (j) => band(j.handN, [anc, j.handN[1]]) + `<circle class="fx-dot" cx="${anc}" cy="${n1(j.handN[1])}" r="3"/>`)];
+def('spalla-rotazione-esterna', ...rotE(180, 0, 10));
+def('spalla-rotazione-interna', ...rotE(0, 180, 190));
+def('postchir-spalla-rinforzo-tardivo', ...rotE(180, 0, 10));
+def('spalla-scapular-retraction',
+  fr(stand(100, { arms: [[270, 355], null] }), () => ''),
+  fr(stand(100, { arms: [[242, 335], null] }), (j) => dot([j.sh[0] - 7, j.sh[1] - 5], 4) + arrow([j.sh[0] + 6, j.sh[1] - 14], [j.sh[0] - 10, j.sh[1] - 14])));
+def('spalla-wall-slide',
+  fr(stand(60, { arms: [[300, 75], null] }), () => wall(44)),
+  fr(stand(60, { arms: [[88, 88], null] }), () => wall(44) + arrow([76, 60], [76, 30])));
+def('spalla-flessione-assistita',
+  fr(stand(100, { arms: [{ reach: [132, G - 60] }, { reach: [132, G - 62] }] }), (j) => stickL(j.handN, j.handF)),
+  fr(stand(100, { arms: [{ reach: [112, G - 134] }, { reach: [112, G - 136] }] }), (j) => stickL(j.handN, j.handF)));
+def('spalla-abduzione-elastico',
+  fr(front({ arms: [[290, 290], [270, 270]] }), (j) => band(j.footN, j.handN)),
+  fr(front({ arms: [[0, 0], [270, 270]] }), (j) => band(j.footN, j.handN)));
+const pp = (arrowOn) => fr(prone(120, 35, { toeH: 0 }), (j) => (arrowOn ? protr(j) : ''));
+def('spalla-push-up-plus', pp(false), pp(true));
+def('spalla-scapular-push-up', pp(false), pp(true));
+def('spalla-prone-y-t-w',
+  fr(proneLie({ arms: [[180, 180], null] }), () => ''),
+  fr(proneLie({ arms: [[160, 160], null] }), (j) => dumb(j.handN) + arrow([j.handN[0], j.handN[1] + 8], [j.handN[0], j.handN[1] - 6])));
+const sleeper = (fo) => fr(sideLie({ arms: [[90, fo], null] }), (j) => '');
+def('spalla-stretch-capsula-posteriore', sleeper(10), fr(sideLie({ arms: [[90, 325], null] }), (j) => arrow([j.handN[0] + 4, j.handN[1] - 14], [j.handN[0] + 4, j.handN[1] - 2])));
+D['spalla-sleeper-stretch-dinamico'] = D['spalla-stretch-capsula-posteriore'];
+def('spalla-face-pull',
+  fr(stand(90, { arms: [{ reach: [130, G - 98] }, null] }), (j) => wall(186) + band(j.handN, [186, G - 100])),
+  fr(stand(90, { arms: [[350, 105], null] }), (j) => wall(186) + band(j.handN, [186, G - 100])));
+def('spalla-diagonale-kabat',
+  fr(stand(90, { arms: [[310, 310], null] }), (j) => band(j.footF, j.handN)),
+  fr(stand(90, { arms: [[50, 50], null] }), (j) => band(j.footF, j.handN)));
+def('spalla-push-up-parete', fr(wallPush(false), () => wp()), fr(wallPush(true), () => wp()));
+def('spalla-serratus-wall-punch',
+  fr(wallPush(false), () => wp()),
+  fr(wallPush(false), (j) => wp() + protr(j)));
+def('postchir-spalla-mobilita-passiva-assistita',
+  fr(sup([[70, 150], [76, 150]]), (j) => stickL(j.handN, j.handF)),
+  fr(sup([[100, 100], [106, 106]]), (j) => stickL(j.handN, j.handF)));
+def('spalla-mob-bastone-elevazione',
+  fr(sup([[90, 90], [96, 96]]), (j) => stickL(j.handN, j.handF)),
+  fr(sup([[130, 130], [136, 136]]), (j) => stickL(j.handN, j.handF)));
+def('spalla-mob-bastone-rotazione-esterna', plan({ abd: 20, fore: 'neutra' }), plan({ abd: 20, fore: 'ER' }));
+def('spalla-mob-abduzione-supina', plan({ abd: 20, fore: 'straight', towelOn: false }), plan({ abd: 90, fore: 'straight', towelOn: false }));
+def('postchir-spalla-isometria-protetta',
+  fr(stand(100, { arms: [[270, 0], null] }), (j) => wall(150) + towel([j.elbowN[0] - 6, j.elbowN[1]]) + arrow2([j.handN[0] + 4, j.handN[1] - 6], [j.handN[0] + 16, j.handN[1] - 6])));
+def('postchir-spalla-mobilita-scapolare-precoce',
+  fr(seat(92, { arms: [[270, 270], null] }), (j) => chair(92) + arrow([j.sh[0] + 10, j.sh[1] - 14], [j.sh[0] + 10, j.sh[1] - 26])),
+  fr(seat(92, { arms: [[270, 270], null] }), (j) => chair(92) + arrow([j.sh[0] + 10, j.sh[1] - 26], [j.sh[0] + 10, j.sh[1] - 14])));
+def('postchir-spalla-carrucola',
+  fr(stand(100, { arms: [[270, 270], { reach: [118, G - 140] }] }), (j) => pulley([120, 24]) + stickL(j.handN, [119, 29]) + stickL(j.handF, [121, 29])),
+  fr(stand(100, { arms: [{ reach: [112, 24] }, { reach: [118, G - 108] }] }), (j) => pulley([120, 24]) + stickL(j.handN, [119, 29]) + stickL(j.handF, [121, 29])));
+def('postchir-spalla-cammino-pendolo',
+  fr(stand(100, { legs: [[300, 280], [245, 255]], arms: [[282, 282], null] }), () => ''),
+  fr(stand(100, { legs: [[245, 255], [300, 280]], arms: [[258, 258], null] }), () => ''));
+def('postchir-spalla-progressione-attiva',
+  fr(stand(100, { arms: [[270, 270], null] }), () => ''),
+  fr(stand(100, { arms: [[20, 20], null] }), (j) => arrow([j.handN[0] + 4, j.handN[1] + 8], [j.handN[0] + 4, j.handN[1] - 6])));
+def('spalla-mob-table-slide',
+  fr(seat(70, { torso: 80, arms: [{ reach: [112, G - 60] }, null] }), () => chair(70) + tbl(100, G - 60, 60)),
+  fr(seat(70, { torso: 55, arms: [{ reach: [150, G - 60] }, null] }), () => chair(70) + tbl(100, G - 60, 60) + arrow([118, G - 70], [140, G - 70])));
+def('spalla-mob-mano-dietro-schiena',
+  fr(stand(100, { arms: [[250, 160], [75, 215]] }), (j) => stickL(j.handN, j.handF)),
+  fr(stand(100, { arms: [[245, 120], [75, 215]] }), (j) => stickL(j.handN, j.handF)));
+def('spalla-mob-wall-walk',
+  fr({ pelvis: [95, G - 58], torso: 80, legs: [[270, 270], [262, 268]], arms: [{ reach: [156, G - 70] }, { reach: [156, G - 72] }] }, () => wall(160)),
+  fr({ pelvis: [110, G - 58], torso: 84, legs: [[270, 270], [262, 268]], arms: [{ reach: [156, G - 128] }, { reach: [156, G - 130] }] }, () => wall(160)));
+def('spalla-mob-cross-body',
+  fr(front({ arms: [[190, 190], [260, 165]] }), () => ''),
+  fr(front({ arms: [[185, 185], [255, 150]] }), (j) => arrow([j.handN[0] - 4, j.handN[1] - 12], [j.handN[0] - 18, j.handN[1] - 12])));
+def('spalla-mob-preghiera-quadrupedia',
+  fr(quad(120), () => ''),
+  fr({ pelvis: [62, G - 22], torso: 14, legs: [[330, 180], [330, 180]], arms: [{ reach: [150, G] }, null] }, (j) => arrow([80, G - 40], [60, G - 40])));
+def('spalla-mob-pettorale-porta',
+  fr(stand(100, { arms: [[0, 90], null] }), () => wall(140)),
+  fr(stand(112, { legs: stag, arms: [[0, 90], null], torso: 94 }), () => wall(140) + arrow([100, G - 100], [112, G - 100])));
+def('spalla-mob-estensione-bastone',
+  fr(stand(100, { arms: [[262, 262], [266, 266]] }), (j) => stickL(j.handN, j.handF)),
+  fr(stand(100, { arms: [[240, 240], [244, 244]] }), (j) => stickL(j.handN, j.handF)));
+def('spalla-mob-elevazione-scapolare',
+  fr(stand(100, { arms: [[270, 270], null] }), () => ''),
+  fr(stand(100, { arms: [[25, 25], null] }), (j) => arrow([j.sh[0] + 14, j.sh[1] + 16], [j.sh[0] + 14, j.sh[1] + 4])));
+def('spalla-isometrici-rotatori-muro',
+  fr(front({ arms: [[270, 0], [270, 270]] }), (j) => wall(j.handN[0] + 8) + arrow([j.handN[0] - 8, j.handN[1] - 8], [j.handN[0] + 4, j.handN[1] - 8])));
+def('spalla-scaption-manubrio',
+  fr(stand(100, { arms: [[270, 270], null] }), (j) => dumb(j.handN)),
+  fr(stand(100, { arms: [[22, 22], null] }), (j) => dumb(j.handN)));
+def('spalla-extrarotazione-90-elastico',
+  fr(front({ arms: [[0, 270], [270, 270]] }), (j) => band(j.handN, [178, G - 30])),
+  fr(front({ arms: [[0, 90], [270, 270]] }), (j) => band(j.handN, [178, G - 30])));
+def('spalla-rematore-elastico-spalla',
+  fr(seat(92, { arms: [{ reach: [138, G - 70] }, null] }), (j) => chair(92) + wall(188) + band(j.handN, [188, j.handN[1]])),
+  fr(seat(92, { arms: [[240, 20], null] }), (j) => chair(92) + wall(188) + band(j.handN, [188, j.handN[1]])));
+def('spalla-bottom-up-kettlebell',
+  fr(stand(100, { legs: [[290, 268], [250, 262]], arms: [[270, 0], null] }), (j) => kb(j.handN)),
+  fr(stand(100, { legs: [[250, 262], [290, 268]], arms: [[270, 0], null] }), (j) => kb(j.handN)));
+def('spalla-lanci-medicine-ball',
+  fr(stand(90, { arms: [[85, 85], [95, 95]] }), (j) => wall(176) + ball([j.handN[0], j.handN[1] - 10], 10)),
+  fr(stand(90, { arms: [[25, 25], [32, 32]] }), (j) => wall(176) + ball([j.handN[0] + 10, j.handN[1] - 4], 10) + arrow([j.handN[0] + 24, j.handN[1] - 4], [160, j.handN[1] - 4])));
+def('spalla-isometrico-abduzione-muro',
+  fr(front({ arms: [[285, 85], [270, 270]] }), (j) => wall(j.elbowN[0] + 6) + arrow([j.elbowN[0] - 10, j.elbowN[1] - 4], [j.elbowN[0] + 2, j.elbowN[1] - 4])));
+def('spalla-isometrico-flessione-muro',
+  fr(stand(110, { arms: [[270, 0], null] }), (j) => wall(j.handN[0] + 8) + arrow([j.handN[0] - 8, j.handN[1] - 12], [j.handN[0] + 4, j.handN[1] - 12])));
+def('spalla-mobilita-distale',
+  fr(seat(92, { arms: [[270, 0], null] }), (j) => chair(92)),
+  fr(seat(92, { arms: [[270, 70], null] }), (j) => chair(92) + circ([j.handN[0], j.handN[1] - 14], 6)));
+def('spalla-respirazione-posizione-scapolare',
+  fr(supine({ arms: [[0, 0], null] }), (j) => arrow([j.sh[0] + 22, j.pelvis[1] - 6 - 4], [j.sh[0] + 22, j.pelvis[1] - 22])),
+  fr(supine({ arms: [[0, 0], null] }), (j) => arrow([j.sh[0] + 22, j.pelvis[1] - 22], [j.sh[0] + 22, j.pelvis[1] - 6 - 4])));
+def('spalla-extrarotazione-decubito-laterale',
+  fr(sideLie({ arms: [[0, 20], null] }), (j) => towel([j.elbowN[0] - 6, j.elbowN[1] + 3])),
+  fr(sideLie({ arms: [[0, 85], null] }), (j) => towel([j.elbowN[0] - 6, j.elbowN[1] + 3]) + dumb(j.handN)));
+def('spalla-plank-shoulder-tap',
+  fr(prone(120, 35, { toeH: 0 }), () => ''),
+  fr(prone(120, 35, { toeH: 0, arms: [[270, 270], [125, 205]] }), () => ''));
+def('spalla-trazioni-assistite',
+  fr({ pelvis: [100, 97], torso: 90, legs: [[270, 180], [270, 180]], arms: [[90, 90], [90, 90]] }, () => bar(22)),
+  fr({ pelvis: [100, 82], torso: 90, legs: [[270, 180], [270, 180]], arms: [[255, 80], [255, 80]] }, () => bar(38)));
+def('spalla-press-sopra-testa-landmine',
+  fr(stand(100, { arms: [[290, 70], null] }), (j) => dumb(j.handN)),
+  fr(stand(100, { arms: [[80, 88], null] }), (j) => dumb(j.handN)));
 
 // ------------------------------------------------------------- rendering
 function frameSvg(f, offset) {
