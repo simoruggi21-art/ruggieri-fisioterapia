@@ -13,6 +13,18 @@ const n1 = (n) => Math.round(n * 10) / 10;
 const pts = (a) => a.map((p) => `${n1(p[0])},${n1(p[1])}`).join(' ');
 const poly = (a, cls) => `<polyline class="${cls}" points="${pts(a)}"/>`;
 const deg = (r) => (r * 180) / Math.PI;
+// Cinematica inversa a due segmenti: angoli [segmento 1, segmento 2] per arrivare a 'to' partendo da 'from'.
+function ik(from, to, fwd = true, l1 = L.th, l2 = L.sh) {
+  const dx = to[0] - from[0]; const dy = from[1] - to[1];
+  const d = Math.min(Math.hypot(dx, dy), l1 + l2 - 0.01);
+  const phi = Math.atan2(dy, dx);
+  const A = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d))));
+  const th = phi + (fwd ? A : -A);
+  const k = [from[0] + l1 * Math.cos(th), from[1] - l1 * Math.sin(th)];
+  const sh = Math.atan2(k[1] - to[1], to[0] - k[0]);
+  return [deg(th), deg(sh)];
+}
+const legsTo = (pelvis, a1, a2, fwd = true) => [ik(pelvis, a1, fwd), ik(pelvis, a2 || [a1[0] - 5, a1[1]], fwd)];
 
 // ------------------------------------------------------------------ corpo
 function body(p) {
@@ -47,7 +59,7 @@ function body(p) {
   const lN = leg((p.legs || [])[0], hN);
   const lF = leg((p.legs || [])[1], hF);
   j.handN = aN && aN[2]; j.elbowN = aN && aN[1]; j.handF = aF && aF[2];
-  j.footN = lN && lN[2]; j.footF = lF && lF[2]; j.kneeN = lN && lN[1];
+  j.footN = lN && lN[2]; j.footF = lF && lF[2]; j.kneeN = lN && lN[1]; j.kneeF = lF && lF[1]; j.elbowF = aF && aF[1];
   j.shN = sN;
   // Disegno: sagoma realistica a strati (contorno + riempimento), arti piu' larghi vicino al tronco.
   const part = (a, w, far) => {
@@ -141,7 +153,7 @@ const quad = (hx, o = {}) => {
 // ------------------------------------------------------------ definizioni
 const D = {};
 const HL = {};
-const hlFor = (id) => HL[id] || (/spalla/.test(id) ? (/-(4[a-g]|hl-plank|hl-quadrupedia|hl-bracciata)/.test(id) ? ['spalla', 'core'] : ['spalla']) : []);
+const hlFor = (id) => HL[id] || (/ginocchio|rotulea/.test(id) ? ['quadricipite'] : /spalla/.test(id) ? (/-(4[a-g]|hl-plank|hl-quadrupedia|hl-bracciata)/.test(id) ? ['spalla', 'core'] : ['spalla']) : []);
 const def = (id, ...frames) => { frames.forEach((f) => { if (f.pose && !f.pose.hl) f.pose.hl = hlFor(id); }); D[id] = frames; };
 const fr = (pose, extra) => ({ pose, extra });
 
@@ -464,6 +476,176 @@ def('spalla-trazioni-assistite',
 def('spalla-press-sopra-testa-landmine',
   fr(stand(100, { arms: [[290, 70], null] }), (j) => dumb(j.handN)),
   fr(stand(100, { arms: [[80, 88], null] }), (j) => dumb(j.handN)));
+
+// ---- Ginocchio, tendinopatia rotulea e post-chirurgico ginocchio
+const box = (x, w, h) => `<rect class="fx-prop fx-fillrect" x="${x}" y="${G - h}" width="${w}" height="${h}" rx="2"/>`;
+const wedge = (x, w, h) => `<path class="fx-prop fx-fillrect" d="M${x},${G} L${x + w},${G} L${x + w},${G - h} Z"/>`;
+const dbell = (h) => `<rect class="fx-prop fx-fillrect" x="${n1(h[0] - 4)}" y="${n1(h[1])}" width="8" height="8" rx="2"/>`;
+const sqPose = (x, depth, o = {}) => {
+  const pelvis = [x, G - 58 + depth * 33];
+  const foot = [x + 6 + depth * 12, G];
+  return { pelvis, torso: 90 - depth * 38, legs: legsTo(pelvis, foot, [foot[0] - 6, G]), arms: [[270 + depth * 80, 270 + depth * 80], null], ...o };
+};
+const slPose = (x, depth, far = 'front', o = {}) => {
+  const pelvis = [x, G - 58 + depth * 30];
+  const foot = [x + 4 + depth * 8, G];
+  const f2 = far === 'back' ? ik(pelvis, [x - 30, G - 24], false) : ik(pelvis, [x + 30, G - 24]);
+  return { pelvis, torso: 90 - depth * 32, legs: [ik(pelvis, foot), f2], arms: [[270 + depth * 60, 270 + depth * 60], null], ...o };
+};
+const lungeP = (y, o = {}) => {
+  const pelvis = [92, y];
+  return { pelvis, torso: 90, legs: [ik(pelvis, [114, G]), ik(pelvis, [64, G])], arms: [[300, 300], null], ...o };
+};
+const wallSitP = (y, o = {}) => {
+  const pelvis = [62, y];
+  return { pelvis, torso: 90, legs: [ik(pelvis, [92, G]), ik(pelvis, [88, G])], arms: [[300, 350], null], ...o };
+};
+const longSit = (o = {}) => ({ pelvis: [70, G - 6], torso: 98, legs: [[0, 0], [0, 0]], arms: [[262, 262], null], ...o });
+const supL = (a, b, o = {}) => supine({ legs: [a, b], arms: [[355, 355], null], ...o });
+const bridge = (footX, o = {}) => {
+  const pelvis = [118, G - 26];
+  return { pelvis, torso: 198, legs: [ik(pelvis, [footX, G]), ik(pelvis, [footX - 4, G])], arms: [[345, 345], null], ...o };
+};
+const liftX = (o = {}) => ({ ...stand(100), ...o });
+const crutch = (a, b) => `<line class="fx-stick" x1="${n1(a[0])}" y1="${n1(a[1])}" x2="${n1(b[0])}" y2="${n1(b[1])}"/>`;
+const seatKnee = (flex, o = {}) => seat(80, { legs: [flex ? [0, 270] : [0, 0], [0, 270]], ...o });
+const bikeP = (a, o = {}) => {
+  const C = [128, G - 32]; const pe = (ang) => [C[0] + 13 * Math.cos(rad(ang)), C[1] - 13 * Math.sin(rad(ang))];
+  const pelvis = [84, G - 78];
+  const pn = pe(a); const pf = pe(a + 180);
+  return { pelvis, torso: 62, legs: [ik(pelvis, [pn[0], pn[1] + 3]), ik(pelvis, [pf[0], pf[1] + 3])], arms: [{ reach: [146, G - 96] }, null], ...o };
+};
+const bikeProp = () => `<circle class="fx-prop" cx="128" cy="${G - 32}" r="18"/><line class="fx-prop" x1="84" y1="${G - 70}" x2="128" y2="${G - 32}"/><line class="fx-prop" x1="128" y1="${G - 32}" x2="146" y2="${G - 96}"/><line class="fx-prop" x1="76" y1="${G - 71}" x2="94" y2="${G - 71}"/>`;
+const pressP = (ext, one) => {
+  const pelvis = [56, G - 30];
+  const ank = ext ? [104, G - 64] : [86, G - 74];
+  return { pelvis, torso: 135, legs: [ik(pelvis, ank), one ? [20, 330] : ik(pelvis, [ank[0] - 3, ank[1] + 2])], arms: [[320, 320], null] };
+};
+const pressProp = (ext) => { const a = ext ? [104, G - 64] : [86, G - 74]; return `<line class="fx-prop" stroke-width="3" x1="${a[0] + 5}" y1="${a[1] - 26}" x2="${a[0] + 11}" y2="${a[1] + 26}"/><line class="fx-prop" stroke-width="3" x1="30" y1="${G - 62}" x2="48" y2="${G - 8}"/><line class="fx-prop" x1="48" y1="${G - 8}" x2="150" y2="${G - 8}"/>`; };
+const dn = (p) => arrow([p[0], p[1] - 16], [p[0], p[1] - 4]);
+const up = (p) => arrow([p[0], p[1] - 4], [p[0], p[1] - 16]);
+const mot = (p) => motion(p);
+
+HL['ginocchio-hamstring-curl-scivolamento'] = ['gluteo']; HL['ginocchio-rdl-monopodalico-flessione'] = ['gluteo']; HL['postchir-ginocchio-rinforzo-catena-cinetica'] = ['gluteo'];
+HL['tendinopatia-rotulea-catena-posteriore-tend'] = ['polpaccio', 'gluteo']; HL['postchir-ginocchio-pompe-caviglia'] = ['polpaccio']; HL['ginocchio-hamstring-curl'] = ['polpaccio'];
+
+def('ginocchio-quad-isometrico',
+  fr(longSit(), () => ''), fr(longSit(), (j) => dn([j.kneeN[0], j.kneeN[1] - 4])));
+def('postchir-ginocchio-quad-set',
+  fr(supL([0, 0], [55, 305]), (j) => towel([j.kneeN[0] + 2, G - 4])), fr(supL([0, 0], [55, 305]), (j) => towel([j.kneeN[0] + 2, G - 4]) + dn([j.kneeN[0], j.kneeN[1] - 4])));
+def('ginocchio-isometrico-estensione-cuscino',
+  fr(supL([0, 0], [55, 305]), (j) => ball([j.kneeN[0], G - 5], 5)), fr(supL([0, 0], [55, 305]), (j) => ball([j.kneeN[0], G - 5], 5) + dn([j.kneeN[0], j.kneeN[1] - 4])));
+def('ginocchio-slr', fr(supL([0, 0], [55, 305]), () => ''), fr(supL([35, 35], [55, 305]), (j) => up([j.footN[0] - 14, j.footN[1] + 12])));
+def('postchir-ginocchio-slr-tutore',
+  fr(supL([0, 0], [55, 305]), (j) => `<rect class="fx-prop fx-fillrect" x="${n1(j.kneeN[0] - 7)}" y="${n1(j.kneeN[1] - 6)}" width="14" height="10" rx="3"/>`),
+  fr(supL([35, 35], [55, 305]), (j) => `<rect class="fx-prop fx-fillrect" x="${n1(j.kneeN[0] - 7)}" y="${n1(j.kneeN[1] - 6)}" width="14" height="10" rx="3"/>` + up([j.footN[0] - 14, j.footN[1] + 12])));
+def('ginocchio-heel-slide-flessione',
+  fr(supL([0, 0], [55, 305]), () => ''),
+  fr(supine({ legs: [ik([140, G - 6], [160, G - 3]), [55, 305]], arms: [[355, 355], null] }), (j) => arrow([j.footN[0] + 10, G - 2], [j.footN[0] - 8, G - 2])));
+def('postchir-ginocchio-flessione-passiva',
+  fr(supL([0, 0], [55, 305]), () => ''),
+  fr(supine({ legs: [ik([140, G - 6], [162, G - 3]), [55, 305]], arms: [{ reach: [168, G - 6] }, null] }), (j) => `<line class="fx-stick" x1="${n1(j.footN[0])}" y1="${n1(j.footN[1])}" x2="${n1(j.handN[0])}" y2="${n1(j.handN[1])}"/>`));
+def('postchir-ginocchio-pompe-caviglia',
+  fr(supL([0, 0], [0, 0]), (j) => up([j.footN[0] + 6, j.footN[1] + 6])),
+  fr(supL([0, 0], [0, 0]), (j) => dn([j.footN[0] + 6, j.footN[1] + 20])));
+def('ginocchio-mini-squat', fr(sqPose(100, 0), () => wall(176)), fr(sqPose(96, 0.38), () => wall(176)));
+def('tendinopatia-rotulea-mini-squat-3s', fr(sqPose(100, 0), () => ''), fr(sqPose(96, 0.38), (j) => dn([j.sh[0] + 20, j.sh[1]])));
+def('ginocchio-eccentrico-quad', fr(sqPose(96, 0.15), () => ''), fr(sqPose(94, 0.9), (j) => arrow([j.sh[0] + 22, j.sh[1] - 26], [j.sh[0] + 22, j.sh[1] - 6])));
+def('ginocchio-sit-to-stand-controllato',
+  fr(seat(92, { arms: [[300, 330], null] }), () => chair(92)),
+  fr(stand(98, { arms: [[310, 330], null] }), () => chair(92)));
+const stepUpA = () => ({ pelvis: [95, G - 58], torso: 90, legs: [ik([95, G - 58], [126, G - 20]), [270, 270]], arms: [[282, 285], null] });
+const stepUpB = () => ({ pelvis: [128, G - 78], torso: 90, legs: [[270, 270], [270, 270]], arms: [[282, 285], null] });
+def('ginocchio-step-up', fr(stepUpA(), () => box(108, 40, 20)), fr(stepUpB(), () => box(108, 40, 20)));
+const sdA = () => ({ pelvis: [112, G - 83], torso: 90, legs: [[270, 270], [270, 270]], arms: [[282, 285], null] });
+const sdB = () => ({ pelvis: [112, G - 58], torso: 75, legs: [ik([112, G - 58], [112, G - 25]), ik([112, G - 58], [130, G])], arms: [[320, 320], null] });
+def('ginocchio-step-down', fr(sdA(), () => box(90, 44, 25)), fr(sdB(), () => box(90, 44, 25)));
+def('tendinopatia-rotulea-step-down-decline', fr(sdA(), () => box(90, 44, 25)), fr(sdB(), () => box(90, 44, 25) + dn([140, G - 70])));
+def('ginocchio-hamstring-curl',
+  fr(stand(90, { arms: [{ reach: [150, G - 72] }, null] }), () => wall(156)),
+  fr(stand(90, { legs: [[270, 150], [270, 270]], arms: [{ reach: [150, G - 72] }, null] }), () => wall(156)));
+def('ginocchio-terminal-extension',
+  fr(stand(100, { legs: [[282, 255], [270, 270]] }), (j) => wall(190) + band(j.kneeN, [190, j.kneeN[1] - 2])),
+  fr(stand(100, { legs: [[270, 270], [270, 270]] }), (j) => wall(190) + band(j.kneeN, [190, j.kneeN[1] - 2])));
+const wsFrames = (y1, y2, extra) => [fr(stand(62), () => wall(46)), fr(wallSitP(y2), extra || (() => wall(46)))];
+def('ginocchio-wall-sit', ...wsFrames(G - 58, G - 30));
+def('tendinopatia-rotulea-wall-sit-tendineo', fr(stand(62), () => wall(46)), fr(wallSitP(G - 38), () => wall(46)));
+def('ginocchio-wall-sit-estensione-alternata',
+  fr(wallSitP(G - 36), () => wall(46)),
+  fr(wallSitP(G - 36, { legs: [ik([62, G - 36], [94, G]), [0, 0]] }), () => wall(46)));
+def('ginocchio-leg-press-corta', fr(pressP(false), () => pressProp(false)), fr(pressP(true), () => pressProp(true)));
+def('tendinopatia-rotulea-leg-press-lenta', fr(pressP(false), () => pressProp(false)), fr(pressP(true), () => pressProp(true)));
+def('tendinopatia-rotulea-hsr-leg-press', fr(pressP(false), () => pressProp(false)), fr(pressP(true), () => pressProp(true)));
+def('ginocchio-leg-press-monopodalica', fr(pressP(false, true), () => pressProp(false)), fr(pressP(true, true), () => pressProp(true)));
+const barB = (j) => `<line class="fx-stick" x1="${n1(j.sh[0] - 16)}" y1="${n1(j.sh[1] - 2)}" x2="${n1(j.sh[0] + 6)}" y2="${n1(j.sh[1] - 2)}"/>`;
+def('tendinopatia-rotulea-hsr-squat', fr(sqPose(100, 0, { arms: [[40, 130], null] }), barB), fr(sqPose(94, 0.7, { arms: [[40, 130], null] }), barB));
+def('ginocchio-leg-extension-range-protetto', fr(seatKnee(true), () => chair(80)), fr(seatKnee(false), (j) => chair(80) + arrow([j.footN[0] + 6, j.footN[1] - 14], [j.footN[0] + 6, j.footN[1] - 34])));
+def('tendinopatia-rotulea-estensione-lenta', fr(seatKnee(true), () => chair(80)), fr(seatKnee(false), (j) => chair(80) + arrow([j.footN[0] + 6, j.footN[1] - 14], [j.footN[0] + 6, j.footN[1] - 34])));
+def('tendinopatia-rotulea-isometrici-70',
+  fr(seat(80, { legs: [ik([80, G - 28], [100, G - 6]), [0, 270]] }), (j) => chair(80) + band(j.footN, [18, j.footN[1]])),
+  fr(seat(80, { legs: [ik([80, G - 28], [100, G - 6]), [0, 270]] }), (j) => chair(80) + band(j.footN, [18, j.footN[1]]) + arrow([j.footN[0] - 6, j.footN[1] - 12], [j.footN[0] + 10, j.footN[1] - 12])));
+def('ginocchio-cyclette-range', fr(bikeP(10), bikeProp), fr(bikeP(190), bikeProp));
+def('postchir-ginocchio-cyclette-scarico', fr(bikeP(10), bikeProp), fr(bikeP(190), bikeProp));
+def('ginocchio-affondo-bulgaro',
+  fr({ pelvis: [100, G - 52], torso: 90, legs: [ik([100, G - 52], [124, G]), ik([100, G - 52], [58, G - 24], true)], arms: [[300, 300], null] }, () => box(36, 28, 24)),
+  fr({ pelvis: [100, G - 38], torso: 80, legs: [ik([100, G - 38], [124, G]), ik([100, G - 38], [58, G - 24], true)], arms: [[300, 300], null] }, () => box(36, 28, 24)));
+D['tendinopatia-rotulea-affondo-bulgaro-tend'] = D['ginocchio-affondo-bulgaro'];
+def('ginocchio-split-squat-statico', fr(lungeP(G - 56), () => ''), fr(lungeP(G - 38), (j) => dn([j.sh[0] + 20, j.sh[1] - 4])));
+def('ginocchio-single-leg-squat-box',
+  fr(slPose(100, 0), () => bench(60, 22, 30)),
+  fr(slPose(100, 0.7), () => bench(60, 22, 30)));
+function bench(x, w, h) { return box(x, w, h); }
+def('ginocchio-skater-squat', fr(slPose(100, 0, 'back'), () => ''), fr(slPose(100, 0.75, 'back'), () => ''));
+const dec = () => wedge(70, 70, 22);
+def('tendinopatia-rotulea-decline-squat', fr(sqPose(100, 0, { }), dec), fr(sqPose(96, 0.5, { }), dec));
+D['tendinopatia-rotulea-test-rientro-rotuleo'] = D['tendinopatia-rotulea-decline-squat'];
+def('ginocchio-hamstring-curl-scivolamento', fr(bridge(160), (j) => '<line class="fx-prop" x1="150" y1="' + (G + 1) + '" x2="198" y2="' + (G + 1) + '"/>'), fr(bridge(186), () => ''));
+def('postchir-ginocchio-rinforzo-catena-cinetica', fr(supL([55, 305], [55, 305]), () => ''), fr(bridge(160), () => ''));
+def('ginocchio-hop-test-progressivo',
+  fr(slPose(60, 0.2), (j) => arrow([80, G - 90], [140, G - 90])),
+  fr(slPose(135, 0.6), () => ''));
+def('ginocchio-perturbazioni-monopodaliche',
+  fr(stand(100, { legs: lift, arms: [[330, 330], [20, 20]] }), (j) => arrow([30, j.pelvis[1]], [78, j.pelvis[1]]) + arrow([170, j.sh[1] + 14], [124, j.sh[1] + 14])),
+  fr(stand(100, { legs: lift, arms: [[330, 330], [20, 20]] }), (j) => ball([50, G - 100], 10) + arrow([62, G - 100], [88, G - 100])));
+def('ginocchio-spanish-squat-elastico', fr(sqPose(80, 0), (j) => wall(190) + band(j.kneeN, [190, j.kneeN[1]])), fr(sqPose(80, 0.55, { arms: [[350, 350], null] }), (j) => wall(190) + band(j.kneeN, [190, j.kneeN[1]])));
+D['tendinopatia-rotulea-spanish-squat'] = D['ginocchio-spanish-squat-elastico'];
+const rdlP = (hinge) => { const pelvis = [100, G - 58]; return hinge ? { pelvis, torso: 22, legs: [ik(pelvis, [104, G]), [200, 195]], arms: [[270, 270], null] } : stand(100, { legs: [[272, 268], [270, 270]] }); };
+def('ginocchio-rdl-monopodalico-flessione', fr(rdlP(false), () => ''), fr(rdlP(true), (j) => dumb([j.handN[0], j.handN[1] + 2])));
+def('ginocchio-camminata-laterale-semisquat-banda',
+  fr(front({ pelvis: [90, G - 52.5], legs: [[305, 265], [235, 275]], arms: [[300, 300], [240, 240]] }), (j) => band(j.kneeN, j.kneeF) + arrow([118, G - 20], [150, G - 20])),
+  fr(front({ pelvis: [120, G - 52.5], legs: [[305, 265], [235, 275]], arms: [[300, 300], [240, 240]] }), (j) => band(j.kneeN, j.kneeF)));
+def('ginocchio-reverse-nordic',
+  fr({ pelvis: [90, G - 30], torso: 90, legs: [[270, 180], [270, 180]], arms: [[330, 350], null] }, () => ''),
+  fr({ pelvis: [90, G - 30], torso: 128, legs: [[270, 180], [270, 180]], arms: [[330, 350], null] }, (j) => arrow([j.sh[0] - 10, j.sh[1] - 16], [j.sh[0] - 24, j.sh[1] - 4])));
+def('ginocchio-frenata-decelerazione',
+  fr({ pelvis: [100, G - 56], torso: 80, legs: [ik([100, G - 56], [128, G - 20]), ik([100, G - 56], [66, G - 24], false)], arms: [[320, 70], [250, 100]] }, () => arrow([30, G - 120], [76, G - 120])),
+  fr({ pelvis: [96, G - 46], torso: 100, legs: [ik([96, G - 46], [118, G]), ik([96, G - 46], [88, G])], arms: [[300, 20], [320, 330]] }, () => ''));
+def('ginocchio-atterraggio-controllato',
+  fr(stand(50, { arms: [[270, 270], null] }), () => box(24, 52, 22) + arrow([90, G - 100], [120, G - 70])),
+  fr(sqPose(130, 0.5), () => ''));
+def('tendinopatia-rotulea-drop-jump',
+  fr(stand(50, { arms: [[270, 270], null] }), () => box(24, 52, 22) + arrow([90, G - 100], [120, G - 70])),
+  fr(stand(130, { pelvis: [130, G - 78], arms: [[80, 80], null] }), (j) => mot([j.footN ? j.footN[0] : 130, G - 10])));
+def('tendinopatia-rotulea-salto-contromovimento',
+  fr(sqPose(100, 0.55, { arms: [[240, 240], null] }), () => ''),
+  fr(stand(100, { pelvis: [100, G - 86], arms: [[85, 85], null] }), () => mot([100, G - 12])));
+def('tendinopatia-rotulea-pogo-jump',
+  fr(stand(100), () => ''), fr(stand(100, { pelvis: [100, G - 70] }), () => mot([100, G - 6])));
+def('tendinopatia-rotulea-cambio-direzione-tend',
+  fr({ pelvis: [90, G - 56], torso: 78, legs: [ik([90, G - 56], [122, G - 22]), ik([90, G - 56], [60, G - 22], false)], arms: [[320, 70], [250, 100]] }, () => arrow([40, G - 126], [96, G - 126])),
+  fr({ pelvis: [96, G - 48], torso: 70, legs: [ik([96, G - 48], [116, G]), ik([96, G - 48], [86, G])], arms: [[300, 40], [250, 90]] }, () => arrow([110, G - 126], [140, G - 150])));
+def('tendinopatia-rotulea-catena-posteriore-tend',
+  fr(stand(100, { arms: [[270, 270], null] }), () => ''),
+  fr(stand(100, { pelvis: [100, G - 66], arms: [[270, 270], null] }), (j) => up([j.footN[0] + 2, G - 4])));
+def('ginocchio-salto-laterale-bound',
+  fr(front({ pelvis: [58, G - 58], legs: [[270, 270], [275, 215]], arms: [[300, 300], [240, 240]] }), () => arrow([78, G - 20], [146, G - 20])),
+  fr(front({ pelvis: [142, G - 50], legs: [[255, 275], [285, 255]], arms: [[300, 300], [240, 240]] }), () => ''));
+def('postchir-ginocchio-propriocezione-precoce',
+  fr(front({ arms: [[300, 300], [240, 240]] }), (j) => arrow2([j.head[0] - 14, j.head[1] - 14], [j.head[0] + 14, j.head[1] - 14])),
+  fr(front({ arms: [[300, 300], [240, 240]] }), (j) => arrow2([j.head[0] - 14, j.head[1] - 14], [j.head[0] + 14, j.head[1] - 14])));
+def('postchir-ginocchio-carico-progressivo',
+  fr(stand(100, { arms: [[300, 300], null] }), (j) => crutch([j.sh[0] + 4, j.sh[1] + 6], [j.sh[0] + 30, G]) + dn([j.footN[0], G - 14])),
+  fr(stand(100, { arms: [[300, 300], null] }), (j) => crutch([j.sh[0] + 4, j.sh[1] + 6], [j.sh[0] + 30, G]) + dn([j.footN[0], G - 14]) + dn([j.footN[0] + 10, G - 14])));
 
 // ------------------------------------------------------------- rendering
 function frameSvg(f, offset) {
