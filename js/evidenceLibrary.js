@@ -19,7 +19,7 @@ export const regionLabels = {
 // Quali patologie del database appartengono a ciascun distretto.
 export const regionByProtocol = {
   'spalla-conflitto': 'spalla', 'capsulite-adesiva': 'spalla', 'cuffia-rotatori': 'spalla', 'instabilita-spalla': 'spalla',
-  'lussazione-spalla': 'spalla', 'instabilita-spalla-proiezioni': 'spalla',
+  'lussazione-spalla': 'spalla', 'lussazione-spalla-atleta-high-level': 'spalla', 'instabilita-spalla-proiezioni': 'spalla',
   'tendinopatia-rotulea': 'ginocchio', 'ginocchio-lca': 'ginocchio', 'gonartrosi': 'ginocchio', 'condropatia-femoro-rotulea': 'ginocchio',
   'protesi-ginocchio': 'ginocchio', 'lussazione-rotula': 'ginocchio', 'contusione-ginocchio': 'ginocchio', 'sublussazione-rotula': 'ginocchio',
   'instabilita-funzionale-ginocchio-lca': 'ginocchio', 'infortunio-ginocchio-placcaggio': 'ginocchio',
