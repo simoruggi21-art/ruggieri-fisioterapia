@@ -968,6 +968,193 @@ HL['bacino-stabilita-monopodalica'] = ['gluteo'];
 def('bacino-mobilita-lombo-pelvica', fr(seat(80, { torso: 80, arms: [[282, 285], null] }), () => chair(80)), fr(seat(80, { torso: 100, arms: [[282, 285], null] }), () => chair(80)));
 HL['bacino-mobilita-lombo-pelvica'] = ['core'];
 
+// ---- Equilibrio, respirazione, funzionale, anziani, sport, acqua, combattimento, neuro, vestibolare, linfatico, pelvi, pediatria e altro
+const water = (y = G - 52) => `<rect class="fx-water" x="6" y="${y}" width="188" height="${G + 2 - y}"/><path class="fx-prop" d="M6,${y} q12,-5 24,0 t24,0 t24,0 t24,0 t24,0 t24,0 t24,0 t24,0"/>`;
+const eyes = (j) => eyesClosed(j.head);
+const spk = (j, t) => `<text class="fx-num" x="${n1(j.head[0] + 10)}" y="${n1(j.head[1] - 10)}">${t}</text>`;
+const one = (o = {}) => stand(100, { legs: lift, arms: [[330, 330], [30, 30]], ...o });
+def('equilibrio-monopodalico-base', fr(one(), () => ''), fr(one(), (j) => arrow2([j.pelvis[0] - 16, G - 130], [j.pelvis[0] + 16, G - 130])));
+def('equilibrio-occhi-chiusi', fr(one(), eyes), fr(one(), eyes));
+def('equilibrio-superficie-instabile', fr(stand(100, { arms: [[330, 330], [30, 30]] }), (j) => pad(100, G, 70)), fr(stand(100, { arms: [[330, 330], [30, 30]] }), (j) => pad(100, G, 70) + arrow2([84, G - 130], [116, G - 130])));
+al('equilibrio-perturbazioni', 'ginocchio-perturbazioni-monopodaliche', ['polpaccio']);
+def('equilibrio-lancio-palla', fr(one({ arms: [[10, 10], [14, 14]] }), (j) => ball([j.handN[0] + 6, j.handN[1] - 8], 7)), fr(one({ arms: [[10, 10], [14, 14]] }), (j) => ball([j.handN[0] + 24, j.handN[1] - 8], 7) + arrow([j.handN[0] + 6, j.handN[1] - 20], [j.handN[0] + 34, j.handN[1] - 20])));
+const tan = () => stand(100, { legs: [[280, 268], [260, 272]], arms: [[300, 300], [240, 240]] });
+def('equilibrio-tandem', fr(tan(), () => `<line class="fx-prop" x1="30" y1="${G + 2}" x2="170" y2="${G + 2}"/>`), fr(stand(100, { legs: [[285, 266], [255, 274]], arms: [[300, 300], [240, 240]] }), () => `<line class="fx-prop" x1="30" y1="${G + 2}" x2="170" y2="${G + 2}"/>`));
+al('equilibrio-camminata-linea', 'equilibrio-tandem', []); 
+al('equilibrio-affondo-dinamico', 'ginocchio-split-squat-statico', ['quadricipite', 'gluteo']);
+def('equilibrio-star-excursion', fr(stand(100, { legs: [[270, 270], ik([100, G - 58], [136, G - 6])], arms: [[330, 330], [30, 30]] }), () => ''), fr(stand(100, { legs: [[270, 270], ik([100, G - 58], [62, G - 8], false)], arms: [[330, 330], [30, 30]] }), () => ''));
+def('equilibrio-doppio-compito', fr(one(), (j) => spk(j, '20, 17…')), fr(one(), (j) => spk(j, '20, 17…')));
+for (const id of ['equilibrio-monopodalico-base', 'equilibrio-occhi-chiusi', 'equilibrio-superficie-instabile', 'equilibrio-lancio-palla', 'equilibrio-tandem', 'equilibrio-star-excursion', 'equilibrio-doppio-compito', 'equilibrio-camminata-linea']) HL[id] = ['polpaccio'];
+
+// Respirazione
+const sb = (arrowOn, o = {}) => supL([55, 305], [55, 305], { arms: [{ reach: [112, G - 18] }, { reach: [120, G - 16] }], ...o });
+def('respirazione-diaframmatica', fr(sb(false), () => ''), fr(sb(true), (j) => arrow([116, G - 14], [116, G - 30])));
+al('pelvi-respiro-rilassamento', 'respirazione-diaframmatica', ['core']); al('respirazione-rilassamento', 'respirazione-diaframmatica', ['core']); al('linfa-respirazione-drenante', 'respirazione-diaframmatica', ['core']);
+HL['respirazione-diaframmatica'] = ['core'];
+al('respirazione-costale', 'toracica-respirazione-costale-3d', ['core']); al('resp-respiro-controllato-asma', 'toracica-respirazione-costale-3d', ['core']); al('resp-ciclo-attivo-respiro', 'toracica-respirazione-costale-3d', ['core']);
+def('respirazione-labbra-socchiuse', fr(seat(80, { arms: [[282, 285], null] }), () => chair(80)), fr(seat(80, { arms: [[282, 285], null] }), (j) => chair(80) + arrow([j.head[0] + 9, j.head[1] + 1], [j.head[0] + 34, j.head[1] + 1])));
+HL['respirazione-labbra-socchiuse'] = ['core']; al('resp-tecniche-espettorazione', 'respirazione-labbra-socchiuse', ['core']);
+def('resp-spirometria-incentivante', fr(seat(80, { arms: [{ reach: [100, G - 90] }, null] }), (j) => chair(80) + `<rect class="fx-prop fx-fillrect" x="${n1(j.head[0] + 12)}" y="${n1(j.head[1] - 6)}" width="10" height="24" rx="3"/>`), fr(seat(80, { arms: [{ reach: [100, G - 90] }, null] }), (j) => chair(80) + `<rect class="fx-prop fx-fillrect" x="${n1(j.head[0] + 12)}" y="${n1(j.head[1] - 6)}" width="10" height="24" rx="3"/>` + arrow([j.head[0] + 32, j.head[1] + 4], [j.head[0] + 16, j.head[1] + 4])));
+HL['resp-spirometria-incentivante'] = ['core'];
+def('respirazione-controllo-sforzo', fr(sqPose(100, 0.6, { arms: [[340, 340], null] }), (j) => arrow([j.head[0] + 9, j.head[1]], [j.head[0] + 30, j.head[1]])), fr(sqPose(100, 0, { arms: [[340, 340], null] }), (j) => arrow([j.head[0] + 9, j.head[1]], [j.head[0] + 30, j.head[1]])));
+HL['respirazione-controllo-sforzo'] = ['core']; al('respirazione-toracica-mobilita', 'toracica-open-book', ['core']);
+al('resp-cammino-intervallato', 'lombare-cammino-intervallato-lombare', []); al('resp-sit-to-stand-fatica', 'ginocchio-sit-to-stand-controllato', ['quadricipite']);
+def('resp-rinforzo-arti-sup-respiro', fr(stand(100, { arms: [[270, 270], null] }), (j) => dumb(j.handN)), fr(stand(100, { arms: [[10, 10], null] }), (j) => dumb(j.handN) + arrow([j.head[0] + 9, j.head[1]], [j.head[0] + 30, j.head[1]])));
+HL['resp-rinforzo-arti-sup-respiro'] = ['spalla'];
+
+// Funzionale
+al('funzionale-squat-completo', 'ginocchio-eccentrico-quad', ['quadricipite', 'gluteo']); al('funzionale-deadlift-kettlebell', 'lombare-stacco-progressivo', ['gluteo']);
+def('funzionale-push-up', fr(prone(125, 35, { toeH: 0 }), () => ''), fr(prone(125, 24, { toeH: 0, arms: [[225, 315], null] }), () => ''));
+HL['funzionale-push-up'] = ['spalla', 'core']; al('funzionale-trazione-elastico', 'spalla-face-pull', ['spalla']);
+al('funzionale-carry', 'core-farmers-walk', ['core']); al('funzionale-rotazione-tronco-carico', 'core-rotazione-tronco-parete', ['core']); al('funzionale-squat-jump', 'tendinopatia-rotulea-salto-contromovimento', ['quadricipite']);
+al('funzionale-plank-dinamico', 'spalla-plank-shoulder-tap', ['core']);
+def('funzionale-step-up-carico', fr(stepUpA(), (j) => box(108, 40, 20) + dumb(j.handN)), fr(stepUpB(), (j) => box(108, 40, 20) + dumb(j.handN)));
+HL['funzionale-step-up-carico'] = ['quadricipite', 'gluteo'];
+def('funzionale-circuito-misto', fr(sqPose(100, 0.7), () => ''), fr(prone(125, 35, { toeH: 0 }), () => ''));
+HL['funzionale-circuito-misto'] = ['core', 'quadricipite'];
+
+// Anziani
+al('anziani-alzata-sedia', 'ginocchio-sit-to-stand-controllato', ['quadricipite']); al('anziani-rinforzo-quadricipite-seduti', 'ginocchio-leg-extension-range-protetto', ['quadricipite']);
+al('anziani-cammino-assistito', 'postchir-anca-cammino-con-ausili', []); al('anziani-doppio-compito-cammino', 'lombare-cammino-intervallato-lombare', []); al('anziani-stretching-dolce', 'generale-stretching-ischiocrurali', ['polpaccio']);
+al('anziani-esercizi-mano-funzionali', 'polso-mobilita-flesso-estensione', ['gomito']);
+def('anziani-equilibrio-appoggio', fr(stand(90, { arms: [{ reach: [150, G - 72] }, null] }), () => wall(156)), fr(stand(90, { legs: lift, arms: [{ reach: [150, G - 72] }, null] }), () => wall(156)));
+HL['anziani-equilibrio-appoggio'] = ['polpaccio'];
+def('anziani-mobilita-anca-seduti', fr(seat(80, { legs: [[10, 270], [0, 270]], arms: [[282, 285], null] }), () => chair(80)), fr(seat(80, { legs: [[0, 270], [10, 270]], arms: [[282, 285], null] }), () => chair(80)));
+HL['anziani-mobilita-anca-seduti'] = ['quadricipite'];
+def('anziani-rinforzo-polpacci-seduti', fr(seat(80, { legs: [[0, 270], [0, 270]], arms: [[282, 285], null] }), () => chair(80)), fr(seat(80, { legs: [[0, 270], [0, 270]], arms: [[282, 285], null] }), (j) => chair(80) + up([j.footN[0] - 6, G - 6])));
+HL['anziani-rinforzo-polpacci-seduti'] = ['polpaccio'];
+def('anziani-cammino-ostacoli-bassi', fr(stand(100, { legs: [[285, 262], [250, 268]], arms: [[300, 300], [240, 240]] }), () => `<rect class="fx-prop fx-fillrect" x="124" y="${G - 8}" width="14" height="8"/>`), fr(stand(100, { legs: [[250, 268], [320, 255]], arms: [[240, 240], [300, 300]] }), () => `<rect class="fx-prop fx-fillrect" x="124" y="${G - 8}" width="14" height="8"/>`));
+HL['anziani-cammino-ostacoli-bassi'] = ['quadricipite'];
+
+// Sport
+const runP = (o = {}) => ({ pelvis: [100, G - 58], torso: 80, legs: [ik([100, G - 58], [130, G - 24]), ik([100, G - 58], [68, G - 26], false)], arms: [[320, 70], [250, 100]], ...o });
+def('sport-corsa-progressiva', fr(runP(), () => ''), fr(runP({ legs: [ik([100, G - 58], [70, G - 24], false), ik([100, G - 58], [128, G - 26])], arms: [[250, 100], [320, 70]] }), () => ''));
+HL['sport-corsa-progressiva'] = ['quadricipite']; al('muscolo-corsa-progressiva-lesione', 'sport-corsa-progressiva', ['quadricipite']);
+def('sport-sprint-progressivi', fr(runP({ torso: 70 }), () => arrow([20, G - 130], [76, G - 130])), fr(runP({ torso: 70, legs: [ik([100, G - 58], [70, G - 24], false), ik([100, G - 58], [128, G - 26])], arms: [[250, 100], [320, 70]] }), () => arrow([20, G - 130], [76, G - 130])));
+HL['sport-sprint-progressivi'] = ['quadricipite'];
+def('sport-agility-scaletta', fr(stand(100, { legs: [[285, 262], [250, 268]], arms: [[320, 70], [250, 100]] }), () => [40, 70, 100, 130, 160].map((x) => `<line class="fx-prop" x1="${x}" y1="${G - 1}" x2="${x}" y2="${G + 3}"/>`).join('') + `<line class="fx-prop" x1="30" y1="${G + 2}" x2="170" y2="${G + 2}"/>`), fr(stand(100, { legs: [[250, 268], [285, 262]], arms: [[250, 100], [320, 70]] }), () => `<line class="fx-prop" x1="30" y1="${G + 2}" x2="170" y2="${G + 2}"/>`));
+HL['sport-agility-scaletta'] = ['polpaccio'];
+al('sport-cambio-direzione', 'tendinopatia-rotulea-cambio-direzione-tend', ['quadricipite']); al('sport-pliometria-base', 'tendinopatia-rotulea-salto-contromovimento', ['quadricipite']); al('sport-test-funzionale-ritorno', 'ginocchio-hop-test-progressivo', ['quadricipite']);
+al('sport-rinforzo-eccentrico-ischiocrurali', 'ginocchio-hamstring-curl-scivolamento', ['gluteo']); al('sport-core-stability-avanzato', 'core-stir-the-pot', ['core']); al('sport-riscaldamento-strutturato', 'riscaldamento-jumping-jack-basso-impatto', []);
+def('sport-gesto-tecnico-specifico', fr(stand(100, { legs: stag, arms: [[100, 190], [250, 100]] }), (j) => ball([j.handN[0] - 4, j.handN[1] - 8], 7)), fr(stand(100, { legs: [[290, 262], [245, 268]], arms: [[20, 10], [250, 100]], torso: 96 }), (j) => ball([j.handN[0] + 8, j.handN[1]], 7) + arrow([j.handN[0] + 20, j.handN[1]], [j.handN[0] + 50, j.handN[1]])));
+HL['sport-gesto-tecnico-specifico'] = ['spalla'];
+
+// Acqua
+const wp1 = (o) => stand(100, { arms: [[282, 285], null], ...o });
+const aw = (pose) => fr(pose, () => water());
+def('acqua-cammino-vasca', aw(wp1({ legs: [[285, 262], [250, 268]] })), aw(wp1({ legs: [[250, 268], [285, 262]] })));
+def('acqua-mobilita-articolare', aw(wp1({ arms: [[270, 270], null] })), aw(wp1({ arms: [[0, 0], null] })));
+def('acqua-rinforzo-arti-inferiori', aw(wp1()), aw(wp1({ legs: [[270, 270], [330, 300]] })));
+def('acqua-aquajogging', aw(runP({ pelvis: [100, G - 70] })), aw(runP({ pelvis: [100, G - 70], legs: [ik([100, G - 70], [70, G - 40], false), ik([100, G - 70], [126, G - 42])] })));
+def('acqua-equilibrio', aw(wp1({ legs: lift, arms: [[330, 330], [30, 30]] })), aw(wp1({ legs: lift, arms: [[320, 320], [40, 40]] })));
+def('acqua-stretching-assistito', aw(wp1({ legs: [[270, 150], [270, 270]], arms: [{ reach: [86, G - 30] }, null] })), aw(wp1({ legs: [[270, 150], [270, 270]], arms: [{ reach: [86, G - 30] }, null] })));
+def('acqua-rinforzo-arti-superiori', aw(wp1({ arms: [[0, 0], [0, 0]], pelvis: [100, G - 58] })), aw(wp1({ arms: [[40, 40], [320, 320]] })));
+def('acqua-camminata-laterale', fr(front({ pelvis: [90, G - 58], arms: [[300, 300], [240, 240]] }), () => water() + arrow([110, G - 30], [150, G - 30])), fr(front({ pelvis: [120, G - 58], arms: [[300, 300], [240, 240]] }), () => water()));
+def('acqua-salti-scarico', aw(wp1({ arms: [[282, 285], null] })), aw(wp1({ pelvis: [100, G - 72], arms: [[80, 80], null] })));
+def('acqua-rilassamento-galleggiamento', fr(supine({ pelvis: [140, G - 46], arms: [[355, 355], null], legs: [[0, 0], [0, 0]] }), () => water(G - 44)), fr(supine({ pelvis: [140, G - 46], arms: [[355, 355], null], legs: [[0, 0], [0, 0]] }), () => water(G - 44)));
+for (const id of Object.keys(D)) if (/^acqua-/.test(id)) HL[id] = ['quadricipite'];
+HL['acqua-rinforzo-arti-superiori'] = ['spalla']; HL['acqua-rilassamento-galleggiamento'] = ['core'];
+
+// Combattimento
+al('combattimento-rinforzo-cuffia-proiezioni', 'spalla-rotazione-esterna', ['spalla']); al('combattimento-mobilita-dita-presa', 'gomito-grip-isometrico', ['gomito']);
+al('combattimento-rinforzo-collo-multidirezionale', 'cervicale-isometria-flessione', ['collo']);
+def('combattimento-controllo-caduta-ukemi', fr(supine({ legs: [[55, 305], [55, 305]], arms: [[25, 25], null] }), () => ''), fr(supine({ legs: [[55, 305], [55, 305]], arms: [[330, 330], null], torso: 170 }), (j) => arrow([j.handN[0] + 6, j.handN[1] - 24], [j.handN[0] + 6, j.handN[1] - 6])));
+HL['combattimento-controllo-caduta-ukemi'] = ['core'];
+al('combattimento-core-antirotazione', 'core-pallof-press', ['core']); al('combattimento-mobilita-anca-guardia', 'generale-stretching-adduttori', ['gluteo']);
+al('combattimento-controllo-eccentrico-ginocchio', 'ginocchio-split-squat-statico', ['quadricipite']); al('combattimento-propriocezione-caviglia-dinamica', 'caviglia-propriocezione', ['polpaccio']);
+al('combattimento-rinforzo-avambraccio-presa', 'gomito-trazione-presa-sbarra', ['gomito']); al('combattimento-rinforzo-eccentrico-achille-calci', 'caviglia-calf-raise', ['polpaccio']);
+al('combattimento-mobilita-toracica-rotazione', 'toracica-open-book', ['core']); al('combattimento-riscaldamento-neuromuscolare', 'riscaldamento-jumping-jack-basso-impatto', []);
+
+// Neurologico
+const pillow = (p) => `<rect class="fx-fill" x="${n1(p[0] - 8)}" y="${n1(p[1] - 5)}" width="16" height="10" rx="4"/>`;
+def('neuro-posizionamento-letto', fr(supL([0, 0], [0, 0], { arms: [[330, 330], null] }), (j) => pillow([j.head[0] - 6, j.head[1] + 4]) + `<line class="fx-prop" x1="10" y1="${G + 1}" x2="190" y2="${G + 1}"/>`), fr(sideLieHip(...closed, { arms: [[355, 355], [345, 345]] }), (j) => pillow([j.head[0] - 6, j.head[1] + 4]) + pillow([j.kneeN[0] + 6, j.kneeN[1] + 8])));
+def('neuro-mobilizzazione-passiva-arto', fr(supL([0, 0], [0, 0], { arms: [[355, 355], [20, 20]] }), () => ''), fr(supL([0, 0], [0, 0], { arms: [[100, 100], [100, 100]] }), (j) => arrow([j.handN[0] + 8, j.handN[1] + 14], [j.handN[0] + 8, j.handN[1] - 4])));
+al('neuro-stretching-spasticita', 'gomito-stretch-flessori', ['gomito']);
+def('neuro-controllo-tronco-seduto', fr(seat(80, { arms: [[300, 300], null], legs: [[0, 270], [0, 270]] }), () => chair(80)), fr(seat(80, { arms: [[300, 300], null], legs: [[0, 270], [0, 270]], torso: 78 }), (j) => chair(80) + arrow2([j.sh[0] - 14, j.sh[1] - 8], [j.sh[0] + 14, j.sh[1] - 8])));
+HL['neuro-controllo-tronco-seduto'] = ['core'];
+def('neuro-trasferimenti-letto-sedia', fr(seat(60, { arms: [[300, 300], null] }), () => `<rect class="fx-prop fx-fillrect" x="20" y="${G - 28}" width="70" height="28"/>` + chair(150)), fr(seat(150, { arms: [[300, 300], null] }), () => `<rect class="fx-prop fx-fillrect" x="20" y="${G - 28}" width="70" height="28"/>` + chair(150) + arrow([96, G - 70], [124, G - 70])));
+al('neuro-trasferimenti-autonomi', 'neuro-trasferimenti-letto-sedia', ['spalla']); al('neuro-alzata-assistita', 'ginocchio-sit-to-stand-controllato', ['quadricipite']);
+const par = () => `<line class="fx-prop" stroke-width="3" x1="40" y1="${G - 62}" x2="170" y2="${G - 62}"/><line class="fx-prop" x1="48" y1="${G - 62}" x2="48" y2="${G}"/><line class="fx-prop" x1="162" y1="${G - 62}" x2="162" y2="${G}"/>`;
+def('neuro-carico-arto-plegico', fr(stand(100, { arms: [{ reach: [112, G - 62] }, null] }), par), fr(stand(100, { legs: [[270, 270], [270, 270]], arms: [{ reach: [112, G - 62] }, null], pelvis: [104, G - 58] }), (j) => par() + dn([j.pelvis[0], j.pelvis[1] + 8])));
+HL['neuro-carico-arto-plegico'] = ['quadricipite'];
+def('neuro-cammino-parallele', fr(stand(100, { legs: [[285, 262], [250, 268]], arms: [{ reach: [114, G - 62] }, null] }), par), fr(stand(100, { legs: [[250, 268], [285, 262]], arms: [{ reach: [114, G - 62] }, null] }), par));
+HL['neuro-cammino-parallele'] = ['quadricipite'];
+al('neuro-cammino-ritmo-sonoro', 'lombare-cammino-intervallato-lombare', []);
+def('neuro-rotazioni-tronco-parkinson', fr(seat(80, { arms: [[40, 40], [20, 20]] }), () => chair(80)), fr(seat(80, { torso: 82, arms: [[130, 130], [100, 100]] }), (j) => chair(80) + circ([j.sh[0], j.sh[1] - 18], 9)));
+HL['neuro-rotazioni-tronco-parkinson'] = ['core'];
+def('neuro-movimenti-ampi', fr(front({ arms: [[282, 285], [255, 255]] }), () => ''), fr(front({ legs: [[250, 255], [290, 285]], arms: [[60, 60], [120, 120]] }), () => ''));
+al('neuro-compito-funzionale-arto-superiore', 'gomito-estensione-assistita', ['gomito']); al('neuro-rinforzo-sottomassimale', 'spalla-rematore-elastico-spalla', ['spalla']);
+al('neuro-cammino-aerobico-supervisionato', 'lombare-cammino-intervallato-lombare', []); al('neuro-equilibrio-dinamico-neuro', 'anziani-cammino-ostacoli-bassi', ['polpaccio']);
+def('neuro-sollevamenti-scarico-carrozzina', fr(seat(80, { arms: [[250, 270], null] }), () => chair(80)), fr(seat(80, { pelvis: [80, G - 40], arms: [[250, 270], null] }), (j) => chair(80) + up([j.pelvis[0], j.pelvis[1] + 22])));
+HL['neuro-sollevamenti-scarico-carrozzina'] = ['spalla'];
+def('neuro-recupero-graduale-attivita', fr(seat(80, { arms: [[282, 285], null] }), () => chair(80)), fr(stand(100), () => ''));
+al('neuro-neuropatia-rinforzo-gambe', 'ginocchio-sit-to-stand-controllato', ['quadricipite']);
+def('neuro-neuropatia-equilibrio-sicuro', fr(stand(90, { arms: [{ reach: [150, G - 72] }, null] }), () => wall(156)), fr(stand(90, { legs: [[280, 268], [262, 272]], arms: [{ reach: [150, G - 72] }, null] }), () => wall(156)));
+HL['neuro-neuropatia-equilibrio-sicuro'] = ['polpaccio'];
+def('neuro-facciale-massaggio-dolce', fr(front({ arms: [{ reach: [112, G - 104] }, { reach: [88, G - 104] }] }), (j) => circ([j.head[0] + 12, j.head[1] + 8], 5)), fr(front({ arms: [{ reach: [114, G - 100] }, { reach: [86, G - 100] }] }), (j) => circ([j.head[0] - 12, j.head[1] + 8], 5)));
+HL['neuro-facciale-massaggio-dolce'] = ['collo'];
+def('neuro-facciale-mimica-specchio', fr(front({ arms: [[282, 285], [258, 255]] }), (j) => `<rect class="fx-prop" x="${n1(j.head[0] + 16)}" y="${n1(j.head[1] - 18)}" width="22" height="34" rx="3"/>`), fr(front({ arms: [[282, 285], [258, 255]], headDir: 90 }), (j) => `<rect class="fx-prop" x="${n1(j.head[0] + 16)}" y="${n1(j.head[1] - 18)}" width="22" height="34" rx="3"/>` + arrow2([j.head[0] - 8, j.head[1] - 14], [j.head[0] + 8, j.head[1] - 14])));
+HL['neuro-facciale-mimica-specchio'] = ['collo'];
+
+// Vestibolare
+def('vestib-brandt-daroff', fr(seat(60, { arms: [[300, 300], null] }), () => `<rect class="fx-prop fx-fillrect" x="20" y="${G - 28}" width="110" height="28"/>`), fr(sideLie({ pelvis: [110, G - 38], legs: [[10, 350], [10, 350]], arms: [[330, 330], null], headDir: 145 }), () => `<rect class="fx-prop fx-fillrect" x="20" y="${G - 28}" width="140" height="28"/>`));
+HL['vestib-brandt-daroff'] = ['collo']; al('vestib-abituazione-movimenti-testa', 'vestib-brandt-daroff', ['collo']);
+al('vestib-stabilizzazione-sguardo', 'cervicale-propriocezione-testa-bersaglio', ['collo']);
+def('vestib-equilibrio-schiuma-occhi-chiusi', fr(stand(100, { arms: [[330, 330], [30, 30]] }), (j) => pad(100, G, 60) + eyes(j)), fr(stand(100, { arms: [[330, 330], [30, 30]] }), (j) => pad(100, G, 60) + eyes(j)));
+def('vestib-cammino-con-rotazioni-testa', fr(stand(100, { legs: [[285, 262], [250, 268]], arms: [[300, 300], [240, 240]], headDir: 70 }), (j) => arrow([j.head[0] - 8, j.head[1] - 14], [j.head[0] + 10, j.head[1] - 14])), fr(stand(100, { legs: [[250, 268], [285, 262]], arms: [[240, 240], [300, 300]], headDir: 110 }), (j) => arrow([j.head[0] + 8, j.head[1] - 14], [j.head[0] - 10, j.head[1] - 14])));
+for (const id of ['vestib-equilibrio-schiuma-occhi-chiusi', 'vestib-cammino-con-rotazioni-testa']) HL[id] = ['collo'];
+
+// Linfatico e vascolare
+def('linfa-autodrenaggio', fr(front({ arms: [{ reach: [112, G - 96] }, [240, 240]] }), (j) => arrow([j.sh[0] + 14, j.sh[1] + 20], [j.sh[0] + 4, j.sh[1] + 4])), fr(front({ arms: [{ reach: [106, G - 82] }, [240, 240]] }), (j) => arrow([j.sh[0] + 14, j.sh[1] + 30], [j.sh[0] + 4, j.sh[1] + 12])));
+HL['linfa-autodrenaggio'] = ['collo'];
+def('linfa-pompa-muscolare-arto-superiore', fr(stand(100, { arms: [[85, 85], null] }), (j) => circ([j.handN[0] + 6, j.handN[1] - 12], 5)), fr(stand(100, { arms: [[85, 85], null] }), (j) => arrow2([j.handN[0] + 4, j.handN[1] - 20], [j.handN[0] + 4, j.handN[1] - 6])));
+HL['linfa-pompa-muscolare-arto-superiore'] = ['gomito'];
+def('linfa-pompa-muscolare-arto-inferiore', fr(supL([20, 20], [20, 20], { arms: [[355, 355], null] }), (j) => pillow([j.kneeN[0] - 4, j.kneeN[1] + 12])), fr(supL([20, 20], [20, 20], { arms: [[355, 355], null] }), (j) => pillow([j.kneeN[0] - 4, j.kneeN[1] + 12]) + arrow2([j.footN[0] + 6, j.footN[1] - 14], [j.footN[0] + 6, j.footN[1] + 2])));
+HL['linfa-pompa-muscolare-arto-inferiore'] = ['polpaccio']; al('vasc-pompa-caviglia', 'postchir-ginocchio-pompe-caviglia', ['polpaccio']);
+al('linfa-esercizio-con-compressione', 'lombare-cammino-intervallato-lombare', []); al('linfa-mantenimento-attivo', 'lombare-cammino-intervallato-lombare', []);
+al('vasc-camminata-fino-al-dolore', 'lombare-cammino-intervallato-lombare', ['polpaccio']); al('vasc-intervalli-cammino', 'lombare-cammino-intervallato-lombare', ['polpaccio']); al('vasc-cammino-dopo-bypass', 'lombare-cammino-intervallato-lombare', ['polpaccio']);
+al('vasc-sollevamenti-polpacci-claudicatio', 'caviglia-calf-raise', ['polpaccio']);
+def('linfa-rinforzo-progressivo-linfedema', fr(stand(100, { arms: [[270, 270], null] }), (j) => dumb(j.handN)), fr(stand(100, { arms: [[10, 10], null] }), (j) => dumb(j.handN)));
+HL['linfa-rinforzo-progressivo-linfedema'] = ['spalla'];
+
+// Pavimento pelvico
+const up2 = (j) => arrow([j.pelvis[0] - 6, j.pelvis[1] - 4], [j.pelvis[0] - 6, j.pelvis[1] - 20]);
+def('pelvi-contrazione-base', fr(supL([55, 305], [55, 305]), () => ''), fr(supL([55, 305], [55, 305]), up2));
+HL['pelvi-contrazione-base'] = ['gluteo']; al('pelvi-contrazioni-resistenti', 'pelvi-contrazione-base', ['gluteo']);
+def('pelvi-knack', fr(stand(100, { arms: [[282, 285], null] }), () => ''), fr(stand(100, { arms: [[282, 285], null] }), (j) => up2({ pelvis: [j.pelvis[0] + 6, j.pelvis[1] + 8] }) + arrow([j.head[0] + 9, j.head[1] + 1], [j.head[0] + 24, j.head[1] + 1])));
+HL['pelvi-knack'] = ['gluteo']; al('pelvi-ponte-con-contrazione', 'core-bridge', ['gluteo']); al('pelvi-squat-con-contrazione', 'ginocchio-eccentrico-quad', ['gluteo']);
+al('pelvi-ginocchia-al-petto-rilassamento', 'lombare-ginocchia-al-petto', ['gluteo']); al('pelvi-diastasi-attivazione-trasverso', 'lombare-abdominal-bracing', ['core']);
+def('pelvi-diastasi-testa-sollevata-protetta', fr(supL([55, 305], [55, 305], { arms: [{ reach: [112, G - 18] }, { reach: [118, G - 16] }] }), () => ''), fr(supL([55, 305], [55, 305], { torso: 168, headDir: 160, arms: [{ reach: [112, G - 18] }, { reach: [118, G - 16] }] }), () => ''));
+HL['pelvi-diastasi-testa-sollevata-protetta'] = ['core']; al('pelvi-plank-progressivo-postparto', 'core-plank', ['core']);
+
+// Pediatria
+def('pedia-tummy-time', fr(mck(false), () => ball([40, G - 8], 7)), fr(mck(false), () => ball([40, G - 8], 7)));
+HL['pedia-tummy-time'] = ['core']; al('pedia-rotolamento-gioco', 'neuro-posizionamento-letto', ['core']);
+def('pedia-rotazione-capo-gioco', fr(supL([0, 0], [0, 0], { arms: [[355, 355], null] }), (j) => ball([j.head[0] - 24, j.head[1] + 2], 7)), fr(supL([0, 0], [0, 0], { arms: [[355, 355], null], headDir: 160 }), (j) => ball([j.head[0] - 24, j.head[1] + 2], 7) + arrow([j.head[0] - 6, j.head[1] - 14], [j.head[0] - 22, j.head[1] - 14])));
+al('pedia-posizione-trasporto-anca', 'generale-stretching-adduttori', []);
+def('pedia-gattonamento', fr(quad(110), (j) => ball([168, G - 6], 7)), fr(quad(122, { arms: [[270, 270], [330, 300]] }), (j) => ball([168, G - 6], 7) + arrow([140, G - 50], [160, G - 50])));
+al('pedia-piedi-nudi-giochi', 'piede-cammino-terreni-vari', []);
+def('pedia-gioco-attivo-guidato', fr(stand(100, { arms: [[300, 300], [240, 240]] }), () => `<ellipse class="fx-prop" cx="136" cy="${G}" rx="14" ry="4"/><ellipse class="fx-prop" cx="170" cy="${G}" rx="14" ry="4"/>`), fr(stand(100, { pelvis: [134, G - 76], arms: [[60, 60], [120, 120]] }), () => `<ellipse class="fx-prop" cx="136" cy="${G}" rx="14" ry="4"/><ellipse class="fx-prop" cx="170" cy="${G}" rx="14" ry="4"/>`));
+
+// Muscolo e tendine, altri
+al('muscolo-isometrici-graduali', 'spalla-isometrico-flessione-muro', []);
+def('muscolo-adduttori-squeeze', fr(supL([55, 305], [55, 305]), (j) => ball([j.kneeN[0], j.kneeN[1] - 4], 6)), fr(supL([55, 305], [55, 305]), (j) => ball([j.kneeN[0], j.kneeN[1] - 4], 5) + arrow2([j.kneeN[0] - 12, j.kneeN[1] - 4], [j.kneeN[0] - 6, j.kneeN[1] - 4])));
+HL['muscolo-adduttori-squeeze'] = ['gluteo'];
+def('muscolo-ponte-ischiocrurali-carico', fr(supine({ legs: [[0, 0], [0, 0]], arms: [[345, 345], null] }), () => box(150, 24, 8)), fr({ pelvis: [118, G - 26], torso: 198, legs: [ik([118, G - 26], [168, G - 8], true), ik([118, G - 26], [166, G - 8], true)], arms: [[345, 345], null] }, () => box(150, 30, 8)));
+HL['muscolo-ponte-ischiocrurali-carico'] = ['gluteo']; al('muscolo-stacco-rumeno', 'anca-hip-hinge-eccentrico', ['gluteo']);
+def('muscolo-copenhagen-adduttori', fr(sp([350, 350]), () => box(150, 30, 28)), fr({ pelvis: [96, G - 24], torso: 160, legs: [[350, 350], [350, 350]], arms: [[270, 340], null] }, () => box(150, 30, 28)));
+HL['muscolo-copenhagen-adduttori'] = ['gluteo']; al('muscolo-affondo-camminato-lunghezza', 'ginocchio-split-squat-statico', ['quadricipite', 'gluteo']);
+for (const id of ['achille-isometrici-achille', 'achille-calf-raise-carico-lento', 'osteo-heel-drops']) al(id, 'caviglia-calf-raise', ['polpaccio']);
+al('achille-rimbalzi-ritmici', 'tendinopatia-rotulea-pogo-jump', ['polpaccio']); al('piede-calf-raise-asciugamano', 'caviglia-calf-raise', ['polpaccio']);
+al('gomito-isometrici-estensori', 'gomito-isometrici-flessori-polso', ['gomito']); al('mano-isometrici-pollice', 'gomito-isometrici-flessori-polso', ['gomito']); al('mano-nerve-glide-mediano', 'cervicale-slider-mediano-cervicale', ['gomito']);
+def('gomito-tyler-twist', fr(stand(100, { arms: [[0, 0], [0, 0]] }), (j) => stickL([j.handN[0] - 8, j.handN[1]], [j.handN[0] + 8, j.handN[1]])), fr(stand(100, { arms: [[0, 0], [0, 0]] }), (j) => stickL([j.handN[0] - 8, j.handN[1] - 4], [j.handN[0] + 8, j.handN[1] + 4]) + circ([j.handN[0] + 14, j.handN[1] - 8], 5)));
+HL['gomito-tyler-twist'] = ['gomito'];
+def('osteo-squat-carico-ossa', fr(sqPose(100, 0, { arms: [[270, 270], null] }), (j) => dumb(j.handN)), fr(sqPose(96, 0.55, { arms: [[270, 270], null] }), (j) => dumb(j.handN)));
+HL['osteo-squat-carico-ossa'] = ['quadricipite', 'gluteo']; al('fibro-cammino-leggero-progressivo', 'lombare-cammino-intervallato-lombare', []);
+al('crps-terapia-specchio', 'polso-mobilita-flesso-estensione', ['gomito']); al('crps-desensibilizzazione', 'polso-mobilita-flesso-estensione', ['gomito']);
+al('sarcopenia-resistenza-elastico', 'spalla-rematore-elastico-spalla', ['spalla']);
+al('contusione-mobilita-precoce-indolore', 'ginocchio-heel-slide-flessione', []); al('contusione-carico-graduale-trauma', 'postchir-ginocchio-carico-progressivo', ['quadricipite']);
+
 // Applica a posteriori le evidenziazioni indicate in HL (gli HL sono dichiarati dopo def).
 for (const id of Object.keys(D)) { if (HL[id]) D[id].forEach((f) => { if (f.pose) f.pose.hl = HL[id]; }); }
 
