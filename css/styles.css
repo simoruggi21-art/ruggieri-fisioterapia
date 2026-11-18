@@ -979,3 +979,21 @@ html.light-theme ::placeholder{color:#5B6A72; opacity:1;}
 .home-remind-info .home-tag{align-self:flex-start;}
 .care-check{display:flex; align-items:flex-start; gap:8px; margin-top:12px; font-size:13.5px; color:var(--text-dim); cursor:pointer;}
 .care-check input{margin-top:3px;}
+
+/* Disegni schematici degli esercizi */
+.ex-figure{margin:10px 0; max-width:420px;}
+.ex-fig{width:100%; height:auto; display:block; background:var(--bg-alt); border:1px solid var(--line); border-radius:6px;}
+.ex-fig .fx-b{fill:none; stroke:var(--text); stroke-width:5; stroke-linecap:round; stroke-linejoin:round;}
+.ex-fig .fx-far{opacity:.4;}
+.ex-fig .fx-head{fill:var(--bg-alt); stroke:var(--text); stroke-width:3.5;}
+.ex-fig .fx-prop{fill:none; stroke:var(--text-dim); stroke-width:2;}
+.ex-fig .fx-fillrect{fill:var(--accent-soft);}
+.ex-fig .fx-fill{fill:var(--accent-soft); stroke:var(--accent); stroke-width:2;}
+.ex-fig .fx-acc{fill:none; stroke:var(--accent); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;}
+.ex-fig .fx-dash{stroke-dasharray:5 4;}
+.ex-fig .fx-dot{fill:var(--accent);}
+.ex-fig .fx-floor,.ex-fig .fx-wall{stroke:var(--line); stroke-width:2;}
+.ex-fig .fx-sep{stroke:var(--line); stroke-width:1; stroke-dasharray:3 4;}
+.ex-fig .fx-num{fill:var(--text-dimmer); font:600 11px/1 system-ui,sans-serif;}
+.guided-list .ex-figure{max-width:300px;}
+.guided-fig summary{cursor:pointer; font-size:12.5px; color:var(--accent); margin-top:6px;}
