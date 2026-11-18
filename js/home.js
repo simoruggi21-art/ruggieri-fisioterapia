@@ -27,6 +27,12 @@ function dayRange() {
   return { start, end };
 }
 
+function dateKey(d) {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
 function isSameDay(iso, ref = new Date()) {
   const d = new Date(iso);
   return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth() && d.getDate() === ref.getDate();
@@ -139,16 +145,30 @@ async function loadStaffData() {
     safe(async () => (await supabase.from('messages').select('id', { count: 'exact', head: true }).eq('read_by_staff', false)).count || 0, 0),
     safe(async () => (await supabase.from('contact_requests').select('id', { count: 'exact', head: true }).neq('status', 'contattata')).count || 0, 0),
     safe(async () => {
-      const { data: pts } = await supabase.from('profiles').select('id, full_name, sessions_per_week')
-        .eq('role', 'patient').eq('care_status', 'in_trattamento').not('sessions_per_week', 'is', null);
-      const list = pts || [];
+      const { data: pts } = await supabase.from('profiles')
+        .select('id, full_name, sessions_per_week, sessions_total, week_target_override, week_target_week')
+        .eq('role', 'patient').eq('care_status', 'in_trattamento');
+      const list = (pts || []).filter((p) => p.sessions_per_week || p.sessions_total);
       if (!list.length) return [];
-      const { data: appts } = await supabase.from('appointments').select('patient_id')
-        .in('patient_id', list.map((p) => p.id)).in('status', ['richiesto', 'confermato'])
-        .gte('slot_start', monday.toISOString()).lt('slot_start', next.toISOString());
-      const count = {};
-      (appts || []).forEach((a) => { count[a.patient_id] = (count[a.patient_id] || 0) + 1; });
-      return list.map((p) => ({ ...p, booked: count[p.id] || 0 })).filter((p) => p.booked < p.sessions_per_week);
+      const ids = list.map((p) => p.id);
+      const { data: appts } = await supabase.from('appointments').select('patient_id, slot_start, slot_end, status')
+        .in('patient_id', ids).in('status', ['richiesto', 'confermato']);
+      const now = Date.now();
+      const mondayMs = monday.getTime();
+      const nextMs = next.getTime();
+      const mondayKey = dateKey(monday);
+      return list.map((p) => {
+        const mine = (appts || []).filter((a) => a.patient_id === p.id);
+        const booked = mine.filter((a) => { const t = new Date(a.slot_start).getTime(); return t >= mondayMs && t < nextMs; }).length;
+        const done = mine.filter((a) => a.status === 'confermato' && new Date(a.slot_end).getTime() <= now).length;
+        const upcoming = mine.filter((a) => new Date(a.slot_start).getTime() > now).length;
+        const overridden = p.week_target_week === mondayKey && p.week_target_override != null;
+        const weekTarget = overridden ? p.week_target_override : p.sessions_per_week;
+        const weekMissing = weekTarget ? Math.max(0, weekTarget - booked) : 0;
+        const totalLeft = p.sessions_total ? Math.max(0, p.sessions_total - done) : 0;
+        return { ...p, booked, done, upcoming, overridden, weekTarget, weekMissing, totalLeft };
+      }).filter((p) => p.weekMissing > 0 || p.totalLeft > 0)
+        .sort((a, b) => (b.weekMissing > 0) - (a.weekMissing > 0) || (a.full_name || '').localeCompare(b.full_name || ''));
     }, []),
     safe(async () => {
       const { data } = await supabase.from('patient_checkins').select('patient_id, created_at, answers').gte('created_at', sinceIso).order('created_at', { ascending: false });
@@ -179,10 +199,20 @@ function staffWidgets(d) {
     { id: 'unread', title: 'Messaggi non letti', html: big(String(d.unread), d.unread ? 'dai pazienti' : 'tutto letto'), href: '#messaggi', cta: 'Apri i messaggi', tone: d.unread ? 'attention' : '' },
     { id: 'requests', title: 'Richieste dal sito', html: big(String(d.requests), d.requests ? 'da richiamare' : 'nessuna da gestire'), href: '#richieste', cta: 'Apri le richieste', tone: d.requests ? 'attention' : '' },
     {
-      id: 'missing', title: 'In trattamento, sedute da prenotare', wide: true,
+      id: 'missing', title: 'Promemoria sedute', wide: true,
       html: d.treat.length
-        ? `<ul class="home-list">${d.treat.map((p) => `<li>${patientButton(p.id, p.full_name)}<span class="home-sub">${p.booked} su ${p.sessions_per_week} prenotate questa settimana</span></li>`).join('')}</ul>`
-        : '<p class="home-sub">Tutti i pazienti in trattamento hanno le sedute della settimana.</p>',
+        ? `<ul class="home-list home-remind">${d.treat.map((p) => {
+          const lines = [];
+          if (p.weekMissing > 0) {
+            lines.push(`<span class="home-tag high">${p.weekMissing === 1 ? 'manca 1 seduta' : `mancano ${p.weekMissing} sedute`}</span><span class="home-sub">questa settimana ${p.booked} su ${p.weekTarget}${p.overridden ? ' (obiettivo solo per questa settimana)' : ''}</span>`);
+          }
+          if (p.totalLeft > 0) {
+            lines.push(`<span class="home-sub">percorso: ${p.done} su ${p.sessions_total} fatte, ${p.totalLeft === 1 ? 'resta 1 seduta' : `restano ${p.totalLeft} sedute`}${p.upcoming ? ` (${p.upcoming} già in agenda)` : ''}</span>`);
+          }
+          const skip = p.weekMissing > 0 ? `<button type="button" class="btn btn-ghost btn-small" data-week-enough="${escapeHtml(p.id)}" data-booked="${p.booked}">Basta così questa settimana</button>` : '';
+          return `<li class="home-remind-row">${patientButton(p.id, p.full_name)}<span class="home-remind-info">${lines.join('')}</span>${skip}</li>`;
+        }).join('')}</ul>`
+        : '<p class="home-sub">Nessun promemoria: tutti i pazienti in trattamento sono a posto.</p>',
     },
     {
       id: 'pain', title: `Dolore alto nei check-in (${HIGH_PAIN}% o più, ultimi 7 giorni)`, wide: true,
@@ -252,6 +282,16 @@ async function renderStaff(root) {
       if (j < 0 || j >= ids.length) return;
       [ids[i], ids[j]] = [ids[j], ids[i]];
       savePrefs({ ...loadPrefs(), order: ids });
+      renderStaff(root);
+    };
+  });
+  root.querySelectorAll('[data-week-enough]').forEach((b) => {
+    b.onclick = async () => {
+      b.disabled = true;
+      const { error } = await supabase.from('profiles')
+        .update({ week_target_override: Number(b.dataset.booked), week_target_week: dateKey(weekRange().monday) })
+        .eq('id', b.dataset.weekEnough);
+      if (error) { console.error(error); b.disabled = false; return; }
       renderStaff(root);
     };
   });
