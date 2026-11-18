@@ -3,6 +3,7 @@ import { getState, isAdmin, isManager } from './state.js';
 import { showInviteResult } from './invite.js';
 import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime, avatarHtml } from './ui.js';
 import { protocolLibrary } from './protocolLibrary.js';
+import { figureHtmlForName } from './exerciseFigures.js';
 import { exerciseLibrary, exercisePhases, phaseLabel, exerciseVideoUrl, exerciseDose, bumpDose } from './exerciseLibrary.js';
 import { evidenceByRegion, regionByProtocol, regionPrinciples, regionLabels } from './evidenceLibrary.js';
 import { progressionLibrary } from './progressionLibrary.js';
@@ -743,6 +744,7 @@ export function drawGuidedPath(patientId, protocolId, assigned) {
             <a class="video-link" href="${exerciseVideoUrl(ex.name)}" target="_blank" rel="noopener noreferrer">▶ video</a>
             ${doseLabel(ex) ? `<div class="guided-dose">Dose di partenza: ${doseLabel(ex)}</div>` : ''}
             <div class="text-dim guided-desc">${escapeHtml(ex.description)}</div>
+            ${figureHtmlForName(ex.name) ? `<details class="guided-fig"><summary>Vedi il disegno</summary>${figureHtmlForName(ex.name)}</details>` : ''}
           </li>`;
         }).join('')}
       </ul>
@@ -819,7 +821,7 @@ function exerciseDetailHtml(ex) {
   if (ex.notes) lines.push(linkifyHtml(ex.notes));
   const how = exerciseHowHtml(ex);
   if (how) lines.push(how);
-  return lines.join('<br>');
+  return lines.join('<br>') + figureHtmlForName(ex.name);
 }
 
 // I 200 esercizi in un'unica tendina sono scomodi da scorrere: il campo di
