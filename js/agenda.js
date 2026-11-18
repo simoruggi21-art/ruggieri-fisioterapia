@@ -158,7 +158,7 @@ async function renderPatientPlan(el) {
       <div class="stat-label">Il tuo piano · ${CARE_LABELS[profile.care_status] || ''}</div>
       <div class="stat-value">${escapeHtml(cadenceLabel(profile.sessions_per_week, plan.interval))}</div>
       <div class="plan-dots" aria-hidden="true">${Array.from({ length: perWeek }, (_, i) => `<span class="${i < booked ? 'on' : ''}"></span>`).join('')}</div>
-      <div class="stat-sub" style="margin-top:8px;">${(() => { const when = plan.interval > 1 ? 'In questo periodo' : 'Questa settimana'; return left === 0 ? when + ' sei a posto: ' + booked + ' su ' + perWeek + ' prenotate.' : when + ' ne hai prenotate ' + booked + ' su ' + perWeek + (left === 1 ? ': ne manca 1.' : ': ne mancano ' + left + '.'); })()}</div>
+      <div class="stat-sub" style="margin-top:8px;">${perWeek === 0 ? (plan.interval > 1 ? 'In questo periodo non servono altre sedute.' : 'Questa settimana non servono altre sedute.') : (() => { const when = plan.interval > 1 ? 'In questo periodo' : 'Questa settimana'; return left === 0 ? when + ' sei a posto: ' + booked + ' su ' + perWeek + ' prenotate.' : when + ' ne hai prenotate ' + booked + ' su ' + perWeek + (left === 1 ? ': ne manca 1.' : ': ne mancano ' + left + '.'); })()}</div>
     </div>`;
 }
 

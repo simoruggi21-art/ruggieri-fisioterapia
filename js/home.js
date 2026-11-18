@@ -59,6 +59,7 @@ async function renderPatient(root) {
   const doneToday = exList.filter((e) => e.last_done_at && isSameDay(e.last_done_at)).length;
   const toDo = exList.length - doneToday;
   const unreadCount = unread.count || 0;
+  const configured = profile.sessions_per_week;
   const perWeek = plan.target;
   const active = profile.care_status !== 'terminato';
 
@@ -66,8 +67,8 @@ async function renderPatient(root) {
   const todo = [];
   if (unreadCount) todo.push({ text: `Hai ${unreadCount} ${unreadCount === 1 ? 'messaggio' : 'messaggi'} da leggere`, href: '#messaggi', cta: 'Leggi' });
   if (active && exList.length && toDo > 0) todo.push({ text: `Hai ancora ${toDo} ${toDo === 1 ? 'esercizio' : 'esercizi'} da fare oggi`, href: '#miei-esercizi', cta: 'Vai agli esercizi' });
-  if (active && perWeek && booked < perWeek) todo.push({ text: `${plan.interval > 1 ? 'In questo periodo' : 'Questa settimana'} ti ${perWeek - booked === 1 ? 'serve ancora 1 seduta' : `servono ancora ${perWeek - booked} sedute`}`, href: '#agenda', cta: 'Prenota' });
-  if (!appt && active && !perWeek) todo.push({ text: 'Non hai appuntamenti in programma', href: '#agenda', cta: 'Prenota una seduta' });
+  if (active && configured && booked < perWeek) todo.push({ text: `${plan.interval > 1 ? 'In questo periodo' : 'Questa settimana'} ti ${perWeek - booked === 1 ? 'serve ancora 1 seduta' : `servono ancora ${perWeek - booked} sedute`}`, href: '#agenda', cta: 'Prenota' });
+  if (!appt && active && !configured) todo.push({ text: 'Non hai appuntamenti in programma', href: '#agenda', cta: 'Prenota una seduta' });
 
   const agendaHead = qs('#agenda h2');
   if (agendaHead) agendaHead.textContent = 'Appuntamenti';
@@ -87,8 +88,8 @@ async function renderPatient(root) {
     ? card('Esercizi di oggi', big(`${doneToday}<span class="home-of"> / ${exList.length}</span>`, doneToday === exList.length ? 'Fatti tutti, bravo' : 'fatti oggi'), { href: '#miei-esercizi', cta: 'Vai agli esercizi' })
     : card('Esercizi di oggi', big('—', 'Nessun esercizio assegnato per ora'));
 
-  const planBody = perWeek && active
-    ? big(escapeHtml(cadenceLabel(profile.sessions_per_week || perWeek, plan.interval)), `${escapeHtml(CARE_LABELS[profile.care_status] || '')} · ${plan.interval > 1 ? 'nel periodo' : 'questa settimana'} ${booked} su ${perWeek} prenotate`)
+  const planBody = configured && active
+    ? big(escapeHtml(cadenceLabel(profile.sessions_per_week || perWeek, plan.interval)), perWeek === 0 ? `${escapeHtml(CARE_LABELS[profile.care_status] || '')} · ${plan.interval > 1 ? 'in questo periodo' : 'questa settimana'} non servono altre sedute` : `${escapeHtml(CARE_LABELS[profile.care_status] || '')} · ${plan.interval > 1 ? 'nel periodo' : 'questa settimana'} ${booked} su ${perWeek} prenotate`)
       + `<div class="plan-dots" aria-hidden="true">${Array.from({ length: perWeek }, (_, i) => `<span class="${i < booked ? 'on' : ''}"></span>`).join('')}</div>`
     : big(escapeHtml(CARE_LABELS[profile.care_status] || 'In valutazione'), active ? 'Il tuo fisioterapista indicherà quante sedute a settimana' : 'Grazie per la fiducia');
   const planCard = card('Il tuo piano', planBody, { href: '#mio-percorso', cta: 'Vedi il percorso' });
@@ -151,7 +152,7 @@ async function loadStaffData() {
         const weekTarget = plan.target;
         const weekMissing = weekTarget ? Math.max(0, weekTarget - booked) : 0;
         const totalLeft = p.sessions_total ? Math.max(0, p.sessions_total - done) : 0;
-        return { ...p, booked, done, upcoming, overridden, interval, weekTarget, weekMissing, totalLeft };
+        return { ...p, booked, done, upcoming, overridden, interval, weekTarget, weekMissing, totalLeft, weekKey: dateKey(plan.monday) };
       }).filter((p) => p.weekMissing > 0 || p.totalLeft > 0)
         .sort((a, b) => (b.weekMissing > 0) - (a.weekMissing > 0) || (a.full_name || '').localeCompare(b.full_name || ''));
     }, []),
@@ -194,7 +195,7 @@ function staffWidgets(d) {
           if (p.totalLeft > 0) {
             lines.push(`<span class="home-sub">percorso: ${p.done} su ${p.sessions_total} fatte, ${p.totalLeft === 1 ? 'resta 1 seduta' : `restano ${p.totalLeft} sedute`}${p.upcoming ? ` (${p.upcoming} già in agenda)` : ''}</span>`);
           }
-          const skip = p.weekMissing > 0 ? `<button type="button" class="btn btn-ghost btn-small" data-week-enough="${escapeHtml(p.id)}" data-booked="${p.booked}">Basta così questa settimana</button>` : '';
+          const skip = p.weekMissing > 0 ? `<button type="button" class="btn btn-ghost btn-small" data-week-enough="${escapeHtml(p.id)}" data-booked="${p.booked}" data-week="${escapeHtml(p.weekKey)}">Basta così questa settimana</button>` : '';
           return `<li class="home-remind-row">${patientButton(p.id, p.full_name)}<span class="home-remind-info">${lines.join('')}</span>${skip}</li>`;
         }).join('')}</ul>`
         : '<p class="home-sub">Nessun promemoria: tutti i pazienti in trattamento sono a posto.</p>',
@@ -272,6 +273,7 @@ async function renderStaff(root) {
   });
   root.querySelectorAll('[data-week-enough]').forEach((b) => {
     b.onclick = async () => {
+      if (b.dataset.week !== dateKey(mondayOf())) { renderStaff(root); return; }
       b.disabled = true;
       const { error } = await supabase.from('profiles')
         .update({ week_target_override: Number(b.dataset.booked), week_target_week: dateKey(mondayOf()) })

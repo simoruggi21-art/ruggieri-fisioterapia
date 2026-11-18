@@ -659,7 +659,10 @@ function wireCarePlan(p) {
   const interval = qs('#careIntervalSelect');
   const emails = qs('#careEmailsToggle');
   if (!status || !sess || !total || !interval || !emails) return;
-  const save = async (extra = {}) => {
+  // Un salvataggio alla volta: vale sempre l'ultima scelta, letta quando il salvataggio parte.
+  let queue = Promise.resolve();
+  const save = (extra = {}) => { queue = queue.then(() => persist(extra)).catch((e) => console.error(e)); return queue; };
+  const persist = async (extra = {}) => {
     const v = sess.value.trim();
     const sessions = v === '' ? null : Math.max(0, Math.min(14, parseInt(v, 10) || 0));
     const tv = total.value.trim();
