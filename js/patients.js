@@ -361,10 +361,14 @@ export async function renderDetail(p, hasUnread) {
         <label>Sedute a settimana
           <span class="rx-step"><button type="button" id="careSessMinus" aria-label="Meno sedute">−</button><input id="careSessionsInput" inputmode="numeric" value="${p.sessions_per_week ?? ''}" placeholder="es. 2"><button type="button" id="careSessPlus" aria-label="Più sedute">+</button></span>
         </label>
+        <label>Cadenza
+          <select id="careIntervalSelect">${[1, 2, 3, 4].map((n) => `<option value="${n}" ${(p.weeks_between_sessions || 1) === n ? 'selected' : ''}>${n === 1 ? 'Ogni settimana' : 'Una ogni ' + n + ' settimane'}</option>`).join('')}</select>
+        </label>
         <label>Sedute totali previste
           <span class="rx-step"><button type="button" id="careTotalMinus" aria-label="Meno sedute totali">−</button><input id="careTotalInput" inputmode="numeric" value="${p.sessions_total ?? ''}" placeholder="es. 7"><button type="button" id="careTotalPlus" aria-label="Più sedute totali">+</button></span>
         </label>
       </div>
+      <label class="care-check"><input type="checkbox" id="careEmailsToggle" ${p.appointment_emails === false ? '' : 'checked'}> Invia al paziente le email sugli appuntamenti (conferme, annullamenti, promemoria)</label>
       <p class="text-dim care-meta" id="careMeta">${careMetaText(p)}</p>
     </div>
 
@@ -652,13 +656,18 @@ function wireCarePlan(p) {
   const status = qs('#careStatusSelect');
   const sess = qs('#careSessionsInput');
   const total = qs('#careTotalInput');
-  if (!status || !sess || !total) return;
-  const save = async (extra = {}) => {
+  const interval = qs('#careIntervalSelect');
+  const emails = qs('#careEmailsToggle');
+  if (!status || !sess || !total || !interval || !emails) return;
+  // Un salvataggio alla volta: vale sempre l'ultima scelta, letta quando il salvataggio parte.
+  let queue = Promise.resolve();
+  const save = (extra = {}) => { queue = queue.then(() => persist(extra)).catch((e) => console.error(e)); return queue; };
+  const persist = async (extra = {}) => {
     const v = sess.value.trim();
     const sessions = v === '' ? null : Math.max(0, Math.min(14, parseInt(v, 10) || 0));
     const tv = total.value.trim();
     const totalSessions = tv === '' ? null : Math.max(1, Math.min(99, parseInt(tv, 10) || 1));
-    const patch = { care_status: status.value, sessions_per_week: sessions, sessions_total: totalSessions, ...extra };
+    const patch = { care_status: status.value, sessions_per_week: sessions, sessions_total: totalSessions, weeks_between_sessions: parseInt(interval.value, 10) > 1 ? parseInt(interval.value, 10) : null, appointment_emails: emails.checked, ...extra };
     if (status.value === 'in_trattamento' && !p.care_started_at) patch.care_started_at = new Date().toISOString();
     if (status.value === 'terminato' && !p.care_ended_at) patch.care_ended_at = new Date().toISOString();
     if (status.value !== 'terminato' && p.care_ended_at) { patch.care_ended_at = null; }
@@ -673,6 +682,8 @@ function wireCarePlan(p) {
   status.addEventListener('change', () => save());
   sess.addEventListener('change', () => save());
   total.addEventListener('change', () => save());
+  interval.addEventListener('change', () => save());
+  emails.addEventListener('change', () => save());
   qs('#careTotalPlus').onclick = () => { total.value = String(Math.min(99, (parseInt(total.value, 10) || 0) + 1)); save(); };
   qs('#careTotalMinus').onclick = () => { const n = (parseInt(total.value, 10) || 0) - 1; total.value = n < 1 ? '' : String(n); save(); };
   qs('#careSessPlus').onclick = () => { sess.value = String(Math.min(14, (parseInt(sess.value, 10) || 0) + 1)); save(); };

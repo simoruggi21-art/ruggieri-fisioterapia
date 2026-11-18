@@ -3,6 +3,7 @@ import { getState, isManager, isStaff } from './state.js';
 import { showInviteResult } from './invite.js';
 import { qs, el, showToast, formatDateTime, escapeHtml } from './ui.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { planWindow, cadenceLabel } from './carePlan.js';
 
 const APPT_STATUS_LABELS = { confermato: 'Confermato', chiuso: 'Chiuso', annullato: 'Annullato', rifiutato: 'Rifiutato', richiesto: 'In attesa di conferma' };
 
@@ -137,28 +138,27 @@ const CARE_LABELS = { in_valutazione: 'In valutazione', in_trattamento: 'In trat
 async function renderPatientPlan(el) {
   const { session, profile } = getState();
   if (!session || !profile) { el.innerHTML = ''; return; }
-  const perWeek = profile.sessions_per_week;
-  if (!perWeek || profile.care_status === 'terminato') {
+  const plan = planWindow(profile);
+  const perWeek = plan.target;
+  if (!profile.sessions_per_week || profile.care_status === 'terminato') {
     el.className = 'agenda-summary';
     el.innerHTML = profile.care_status === 'terminato'
       ? '<div class="stat-card"><div class="stat-label">Il tuo percorso</div><div class="stat-value">Concluso <span class="stat-sub">— grazie per la fiducia</span></div></div>'
       : '';
     return;
   }
-  const monday = currentWeekMonday();
-  const nextMonday = new Date(monday); nextMonday.setDate(nextMonday.getDate() + 7);
   const { data } = await supabase.from('appointments').select('id')
     .eq('patient_id', session.user.id).in('status', ['richiesto', 'confermato'])
-    .gte('slot_start', monday.toISOString()).lt('slot_start', nextMonday.toISOString());
+    .gte('slot_start', plan.start.toISOString()).lt('slot_start', plan.end.toISOString());
   const booked = (data || []).length;
   const left = Math.max(0, perWeek - booked);
   el.className = 'agenda-summary';
   el.innerHTML = `
     <div class="stat-card plan-card">
       <div class="stat-label">Il tuo piano · ${CARE_LABELS[profile.care_status] || ''}</div>
-      <div class="stat-value">${perWeek} ${perWeek === 1 ? 'seduta' : 'sedute'} a settimana</div>
+      <div class="stat-value">${escapeHtml(cadenceLabel(profile.sessions_per_week, plan.interval))}</div>
       <div class="plan-dots" aria-hidden="true">${Array.from({ length: perWeek }, (_, i) => `<span class="${i < booked ? 'on' : ''}"></span>`).join('')}</div>
-      <div class="stat-sub" style="margin-top:8px;">${left === 0 ? 'Questa settimana sei a posto: ' + booked + ' su ' + perWeek + ' prenotate.' : 'Questa settimana ne hai prenotate ' + booked + ' su ' + perWeek + (left === 1 ? ': ne manca 1.' : ': ne mancano ' + left + '.')}</div>
+      <div class="stat-sub" style="margin-top:8px;">${perWeek === 0 ? (plan.interval > 1 ? 'In questo periodo non servono altre sedute.' : 'Questa settimana non servono altre sedute.') : (() => { const when = plan.interval > 1 ? 'In questo periodo' : 'Questa settimana'; return left === 0 ? when + ' sei a posto: ' + booked + ' su ' + perWeek + ' prenotate.' : when + ' ne hai prenotate ' + booked + ' su ' + perWeek + (left === 1 ? ': ne manca 1.' : ': ne mancano ' + left + '.'); })()}</div>
     </div>`;
 }
 
