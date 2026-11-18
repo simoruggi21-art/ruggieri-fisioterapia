@@ -977,3 +977,5 @@ html.light-theme ::placeholder{color:#5B6A72; opacity:1;}
 .home-remind-row{justify-content:space-between;}
 .home-remind-info{display:flex; flex-direction:column; align-items:flex-start; gap:4px; flex:1 1 220px; min-width:0;}
 .home-remind-info .home-tag{align-self:flex-start;}
+.care-check{display:flex; align-items:flex-start; gap:8px; margin-top:12px; font-size:13.5px; color:var(--text-dim); cursor:pointer;}
+.care-check input{margin-top:3px;}
