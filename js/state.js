@@ -39,6 +39,12 @@ export function isAdmin() {
   return role() === 'admin';
 }
 
+// Accesso completo: amministratore, oppure tecnico con il permesso "accesso completo"
+// (finanze, team, turni, assegnazioni). L'eliminazione dei pazienti resta solo dell'amministratore.
+export function hasFullAccess() {
+  return role() === 'admin' || (role() === 'technician' && state.profile?.full_access === true);
+}
+
 // Amministratore o tecnico: gestiscono agenda, pazienti, contenuti del sito.
 // Finanze, ruoli e cancellazione pazienti restano solo dell'amministratore (isAdmin).
 export function isManager() {

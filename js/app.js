@@ -1,5 +1,5 @@
 import * as auth from './auth.js';
-import { isAdmin, isManager, isStaff } from './state.js';
+import { hasFullAccess, isManager, isStaff } from './state.js';
 import { qs, showToast } from './ui.js';
 import * as agenda from './agenda.js';
 import * as chat from './chat.js';
@@ -34,6 +34,9 @@ async function boot(state) {
   body.classList.toggle('authed', !!state.session);
   body.classList.remove('role-admin', 'role-technician', 'role-operator', 'role-patient');
   if (state.profile) body.classList.add('role-' + state.profile.role);
+  // Tecnico con accesso completo: stessa interfaccia dell'amministratore (tranne l'eliminazione dei pazienti).
+  body.classList.toggle('full-access', hasFullAccess());
+  if (hasFullAccess()) body.classList.add('role-admin');
   // "Impostazioni" esiste solo per l'admin: per chiunque altro (logout,
   // login di un paziente/operatore sullo stesso browser) non deve restare
   // agganciata da una sessione precedente.
@@ -66,7 +69,7 @@ async function boot(state) {
         await safeRun('impostazioni', () => profileAdmin.render());
         await safeRun('blog', () => blog.renderAdmin());
       }
-      if (isAdmin()) {
+      if (hasFullAccess()) {
         await safeRun('operatori', () => operators.render());
         await safeRun('gestionale', () => finance.render());
       }

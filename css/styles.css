@@ -593,6 +593,7 @@ body.role-admin .owner-only{display:block;}
 body.role-admin .patient-only{display:none;}
 body.role-technician .admin-only, body.role-technician .staff-only{display:block;}
 body.role-technician .patient-only{display:none;}
+body.full-access .owner-only{display:block;}
 body.role-operator .operator-only, body.role-operator .staff-only{display:block;}
 body.role-operator .patient-only{display:none;}
 body.role-patient .patient-only{display:block;}
