@@ -27,6 +27,7 @@ export async function render() {
   qs('#igHandleInput').value = content.ig_handle || '';
   qs('#footerEmailInput').value = content.footer_email || '';
   qs('#googleReviewUrlInput').value = content.google_review_url || '';
+  qs('#googleBusinessUrlInput').value = content.google_business_url || '';
 
   const preview = qs('#profilePhotoPreview');
   const previewInitials = qs('#profilePreviewInitials');
@@ -191,6 +192,7 @@ export async function saveProfile() {
     ig_handle: qs('#igHandleInput').value.replace('@', '').trim(),
     footer_email: qs('#footerEmailInput').value,
     google_review_url: qs('#googleReviewUrlInput').value.trim(),
+    google_business_url: qs('#googleBusinessUrlInput').value.trim(),
     updated_at: new Date().toISOString(),
   };
   const statusEl = qs('#profileSaveStatus');

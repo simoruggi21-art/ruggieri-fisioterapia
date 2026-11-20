@@ -139,6 +139,16 @@ function applyContentToDom(c) {
     reviewLink.style.display = 'none';
   }
 
+  const businessLink = qs('#googleBusinessLink');
+  if (businessLink) {
+    if (/^https:\/\//i.test(c.google_business_url || '')) {
+      businessLink.href = c.google_business_url;
+      businessLink.style.display = '';
+    } else {
+      businessLink.style.display = 'none';
+    }
+  }
+
   const initials = (c.name || 'SR').split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   const photoSlot = qs('#photoSlot');
   const initialsEl = qs('#photoInitials');

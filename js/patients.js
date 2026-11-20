@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient.js';
-import { getState, isAdmin, isManager } from './state.js';
+import { getState, isAdmin, hasFullAccess, isManager } from './state.js';
 import { showInviteResult } from './invite.js';
 import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime, avatarHtml } from './ui.js';
 import { protocolLibrary } from './protocolLibrary.js';
@@ -321,7 +321,7 @@ export async function renderDetail(p, hasUnread) {
   if (!p) { detail.innerHTML = '<p class="text-dim">Seleziona un paziente dalla lista.</p>'; return; }
 
   const [protocol, notes, operators, checkins, exercises] = await Promise.all([
-    fetchProtocol(p.id), fetchPrivateNotes(p.id), isAdmin() ? fetchOperators() : Promise.resolve([]), fetchCheckins(p.id), fetchExercises(p.id),
+    fetchProtocol(p.id), fetchPrivateNotes(p.id), hasFullAccess() ? fetchOperators() : Promise.resolve([]), fetchCheckins(p.id), fetchExercises(p.id),
   ]);
   const age = computeAge(p.birth_date);
 
@@ -342,14 +342,14 @@ export async function renderDetail(p, hasUnread) {
           <p class="meta-line">${escapeHtml(p.gender || '—')} · ${age ?? '—'} anni · tel. ${escapeHtml(p.phone || '—')} · ${escapeHtml(p.email || '')}</p>
         `}
       </div>
-      ${isAdmin() ? `
+      ${hasFullAccess() ? `
       <div>
         <label class="text-dim" style="font-size:12.5px; display:block; margin-bottom:5px;">Assegnato a</label>
         <select id="assignSelect" style="background:var(--bg-alt); border:1px solid var(--line); color:var(--text); padding:8px 12px; border-radius:3px; font-size:13.5px;">
           <option value="">Solo Simone (nessun operatore)</option>
           ${operators.map(o => `<option value="${o.id}" ${p.operator_id === o.id ? 'selected' : ''}>${escapeHtml(o.full_name)}</option>`).join('')}
         </select>
-        <button class="btn btn-danger-ghost btn-small" id="deletePatientBtn" style="margin-top:10px; width:100%;">Elimina paziente</button>
+        ${isAdmin() ? '<button class="btn btn-danger-ghost btn-small" id="deletePatientBtn" style="margin-top:10px; width:100%;">Elimina paziente</button>' : ''}
       </div>` : ''}
     </div>
 
