@@ -744,7 +744,9 @@ export function drawGuidedPath(patientId, protocolId, assigned, boxSel = '#guide
   if (!box) return;
   const prog = progressionLibrary[protocolId];
   if (!protocolId || !prog) {
-    box.innerHTML = '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico o un percorso di prevenzione per vedere le fasi.</p>';
+    box.innerHTML = boxSel === '#preventionPhases'
+      ? '<p class="text-dim" style="font-size:13px;">Scegli lo sport o il percorso per vedere i tre livelli (basso, medio, alto).</p>'
+      : '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico per vedere le fasi.</p>';
     return;
   }
   if (protocolId.startsWith('prev-')) { drawPreventionPath(patientId, protocolId, assigned, boxSel).catch((e) => console.error(e)); return; }
