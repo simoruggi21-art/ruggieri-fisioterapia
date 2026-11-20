@@ -4,6 +4,7 @@ import { showInviteResult } from './invite.js';
 import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime, avatarHtml } from './ui.js';
 import { protocolLibrary } from './protocolLibrary.js';
 import { figureHtmlForName } from './exerciseFigures.js';
+import { DAYS, todayId, isScheduledOn, isReserve, daysLabel, distribute } from './schedule.js';
 import { exerciseLibrary, exercisePhases, phaseLabel, exerciseVideoUrl, exerciseDose, bumpDose } from './exerciseLibrary.js';
 import { protocolFocus, evidenceByRegion, regionByProtocol, regionPrinciples, regionLabels } from './evidenceLibrary.js';
 import { progressionLibrary } from './progressionLibrary.js';
@@ -474,6 +475,25 @@ export async function renderDetail(p, hasUnread) {
           </div>
         </div>
       </details>
+      <details class="library-toggle" id="distributePanel">
+        <summary>Distribuisci gli esercizi sulla settimana</summary>
+        <div class="library-toggle-body">
+          <p class="rb-sub">Scegli i giorni in cui il paziente può allenarsi: gli esercizi vengono divisi in modo che nessun giorno ne abbia troppi (mobilità più spesso, rinforzo 2-3 volte, stretching a fine seduta). Puoi sempre cambiare i giorni di ogni esercizio a mano.</p>
+          <div class="dist-days">${DAYS.map((d) => `<label class="day-pick"><input type="checkbox" data-dist-day="${d.id}" ${['lun', 'mer', 'ven'].includes(d.id) ? 'checked' : ''}> ${d.label}</label>`).join('')}</div>
+          <div class="dist-row">
+            <label>Massimo esercizi al giorno <input type="number" id="distCap" value="10" min="3" max="30" style="width:80px;"></label>
+            <label>Programma fino alla fase
+              <select id="distUpTo"><option value="">Tutte le fasi</option>${exercisePhases.filter((x) => !x.id.startsWith('prev-')).map((x) => `<option value="${x.id}">${x.label}</option>`).join('')}</select>
+            </label>
+          </div>
+          <p class="text-dim" style="font-size:12.5px;">Le fasi successive restano "in riserva": assegnate ma non visibili al paziente finché non le programmi.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <button type="button" class="btn btn-ghost btn-small" id="distPreviewBtn">Anteprima</button>
+            <button type="button" class="btn btn-primary btn-small" id="distApplyBtn">Applica</button>
+            <span class="text-dim" id="distPreview" style="font-size:13px;"></span>
+          </div>
+        </div>
+      </details>
       <div id="exerciseList" style="display:flex; flex-direction:column; gap:10px; margin-top:18px;">
         ${exercises.length === 0
           ? '<p class="text-dim" style="font-size:13px;">Nessun esercizio assegnato finora.</p>'
@@ -493,6 +513,11 @@ export async function renderDetail(p, hasUnread) {
                   </select>
                   <button class="btn btn-ghost btn-small" data-remove-exercise="${ex.id}" style="padding:4px 9px; font-size:12px;" aria-label="Rimuovi">✕</button>
                 </div>
+              </div>
+              <div class="rx-days" data-days-box="${ex.id}"><span class="rx-days-label">Giorni</span>
+                <button type="button" class="day-chip${ex.days == null ? ' on' : ''}" data-day-set="${ex.id}" data-day="all">Ogni giorno</button>
+                ${DAYS.map((d) => `<button type="button" class="day-chip${ex.days && ex.days.includes(d.id) ? ' on' : ''}" data-day-set="${ex.id}" data-day="${d.id}">${d.label}</button>`).join('')}
+                <button type="button" class="day-chip reserve${isReserve(ex) ? ' on' : ''}" data-day-set="${ex.id}" data-day="none" title="Assegnato ma non programmato: il paziente non lo vede">In riserva</button>
               </div>
               <div class="rx-grid" data-rx="${ex.id}">
                 <label>Serie <span class="rx-step"><input data-rx-field="sets" value="${escapeHtml(ex.sets || '')}" inputmode="numeric"><button type="button" data-rx-bump="sets" aria-label="Più serie">+</button></span></label>
@@ -612,6 +637,51 @@ export async function renderDetail(p, hasUnread) {
       await render();
     };
   });
+  detail.querySelectorAll('[data-day-set]').forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.daySet;
+      const ex = exercises.find((e) => e.id === id);
+      let days;
+      if (btn.dataset.day === 'all') days = null;
+      else if (btn.dataset.day === 'none') days = [];
+      else {
+        const cur = new Set(ex.days || []);
+        if (cur.has(btn.dataset.day)) cur.delete(btn.dataset.day); else cur.add(btn.dataset.day);
+        days = DAYS.filter((d) => cur.has(d.id)).map((d) => d.id);
+        if (!days.length) days = [];
+      }
+      const { error } = await supabase.from('patient_exercises').update({ days }).eq('id', id);
+      if (error) { showToast('Errore nel salvataggio dei giorni.', 'error'); return; }
+      ex.days = days;
+      const box = btn.closest('[data-days-box]');
+      box.querySelectorAll('.day-chip').forEach((c) => {
+        const k = c.dataset.day;
+        c.classList.toggle('on', k === 'all' ? days == null : k === 'none' ? Array.isArray(days) && days.length === 0 : !!days && days.includes(k));
+      });
+    };
+  });
+  const distCompute = () => {
+    const dayIds = [...detail.querySelectorAll('[data-dist-day]:checked')].map((c) => c.dataset.distDay);
+    const res = distribute(exercises, dayIds, { cap: Number(qs('#distCap').value) || 10, upToPhase: qs('#distUpTo').value || null });
+    const text = dayIds.length ? DAYS.filter((d) => dayIds.includes(d.id)).map((d) => `${d.label} ${res.counts[d.id]}`).join(' · ') + (res.reserve ? ` · in riserva ${res.reserve}` : '') : 'Scegli almeno un giorno.';
+    qs('#distPreview').textContent = text;
+    return { res, dayIds };
+  };
+  qs('#distPreviewBtn').onclick = () => { distCompute(); };
+  qs('#distApplyBtn').onclick = async () => {
+    const { res, dayIds } = distCompute();
+    if (!dayIds.length) return;
+    const groups = new Map();
+    res.out.forEach((days, id) => { const k = JSON.stringify(days); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(id); });
+    let failed = false;
+    for (const [k, ids] of groups) {
+      const { error } = await supabase.from('patient_exercises').update({ days: JSON.parse(k) }).in('id', ids);
+      if (error) failed = true;
+    }
+    if (failed) { showToast('Errore nel salvataggio della distribuzione.', 'error'); return; }
+    showToast('Esercizi distribuiti sulla settimana.', 'ok');
+    await render();
+  };
   detail.querySelectorAll('[data-remove-exercise]').forEach((btn) => {
     btn.onclick = () => removeExercise(btn.dataset.removeExercise);
   });
@@ -1025,6 +1095,7 @@ function isSameDay(isoA, isoB) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+let ownView = 'oggi';
 export async function renderOwnExercises() {
   const target = qs('#myExercisesList');
   if (!target) return;
@@ -1036,7 +1107,29 @@ export async function renderOwnExercises() {
     return;
   }
   const now = new Date().toISOString();
-  target.innerHTML = groupExercisesByPhase(exercises).map((g) => `
+  const today = todayId();
+  const scheduled = exercises.filter((ex) => !isReserve(ex));
+  const todayList = scheduled.filter((ex) => isScheduledOn(ex, today));
+  const hasPlan = scheduled.some((ex) => ex.days != null);
+  const viewBar = hasPlan ? `<div class="own-view" role="tablist">
+      <button type="button" class="btn btn-small ${ownView === 'oggi' ? 'btn-primary' : 'btn-ghost'}" data-own-view="oggi">Oggi (${todayList.length})</button>
+      <button type="button" class="btn btn-small ${ownView === 'settimana' ? 'btn-primary' : 'btn-ghost'}" data-own-view="settimana">Tutta la settimana</button>
+    </div>` : '';
+  if (hasPlan && ownView === 'settimana') {
+    target.innerHTML = viewBar + DAYS.map((d) => {
+      const items = scheduled.filter((ex) => isScheduledOn(ex, d.id));
+      if (!items.length) return '';
+      return `<div class="week-day${d.id === today ? ' today' : ''}"><div class="week-day-head">${d.full}${d.id === today ? ' · oggi' : ''} <span>${items.length}</span></div><ul>${items.map((ex) => `<li>${escapeHtml(ex.name)}</li>`).join('')}</ul></div>`;
+    }).join('');
+    target.querySelectorAll('[data-own-view]').forEach((b) => { b.onclick = () => { ownView = b.dataset.ownView; renderOwnExercises(); }; });
+    return;
+  }
+  if (hasPlan && !todayList.length) {
+    target.innerHTML = viewBar + '<p class="text-dim">Oggi non hai esercizi in programma. Guarda "Tutta la settimana" per i prossimi giorni.</p>';
+    target.querySelectorAll('[data-own-view]').forEach((b) => { b.onclick = () => { ownView = b.dataset.ownView; renderOwnExercises(); }; });
+    return;
+  }
+  target.innerHTML = viewBar + groupExercisesByPhase(hasPlan ? todayList : exercises).map((g) => `
     <div class="exercise-phase-head">${escapeHtml(g.label)}${g.hint ? `<small>${escapeHtml(g.hint)}</small>` : ''}</div>
     ${g.items.map((ex) => {
     const doneToday = ex.last_done_at && isSameDay(ex.last_done_at, now);
@@ -1059,6 +1152,7 @@ export async function renderOwnExercises() {
     </div>`;
   }).join('')}
   `).join('');
+  target.querySelectorAll('[data-own-view]').forEach((b) => { b.onclick = () => { ownView = b.dataset.ownView; renderOwnExercises(); }; });
   target.querySelectorAll('[data-mark-done]').forEach((btn) => {
     btn.onclick = () => markExerciseDone(btn.dataset.markDone, btn.dataset.effort ? Number(btn.dataset.effort) : null);
   });
