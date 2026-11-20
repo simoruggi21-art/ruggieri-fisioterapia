@@ -32,7 +32,7 @@ const CLASS_ORDER = ['prev-mobilita', 'prev-rinforzo', 'prev-mantenimento', 'pre
 // Distribuisce gli esercizi sui giorni scelti, senza superare 'cap' esercizi al giorno.
 // upToPhase: i percorsi a fasi (acuta...ritorno) si programmano solo fino a questa fase;
 // le fasi successive restano "in riserva" finche' il paziente non avanza.
-export function distribute(exercises, dayIds, { cap = 10, upToPhase = null } = {}) {
+export function distribute(exercises, dayIds, { cap = 10, upToPhase = null, base = {} } = {}) {
   const N = dayIds.length;
   const out = new Map();
   if (!N) return { out, counts: {}, reserve: exercises.length };
@@ -56,18 +56,20 @@ export function distribute(exercises, dayIds, { cap = 10, upToPhase = null } = {
     offset += items.length;
   });
   const byId = new Map(exercises.map((e) => [e.id, e]));
-  const load = () => { const c = Object.fromEntries(dayIds.map((d) => [d, []])); out.forEach((days, id) => days.forEach((d) => c[d] && c[d].push(id))); return c; };
+  // 'base': esercizi gia' fissati a mano per giorno (contano nel carico ma non si spostano).
+  const load = () => { const c = Object.fromEntries(dayIds.map((d) => [d, Array.from({ length: base[d] || 0 }, () => null)])); out.forEach((days, id) => days.forEach((d) => c[d] && c[d].push(id))); return c; };
   for (let guard = 0; guard < 2000; guard += 1) {
     const c = load();
     const busy = dayIds.reduce((a, d) => (c[d].length > c[a].length ? d : a), dayIds[0]);
     if (c[busy].length <= cap) break;
-    const multi = c[busy].filter((id) => out.get(id).length > 1);
-    const pool = multi.length ? multi : c[busy];
+    const multi = c[busy].filter((id) => id !== null && out.get(id).length > 1);
+    const pool = multi.length ? multi : c[busy].filter((id) => id !== null);
+    if (!pool.length) break;
     const rank = (id) => KEEP[byId.get(id).phase] ?? 2;
     const pick = pool.reduce((a, b) => (rank(b) > rank(a) || (rank(b) === rank(a) && out.get(b).length > out.get(a).length) ? b : a));
     if (multi.length) out.set(pick, out.get(pick).filter((d) => d !== busy)); else out.set(pick, []);
   }
-  const counts = Object.fromEntries(dayIds.map((d) => [d, 0]));
+  const counts = Object.fromEntries(dayIds.map((d) => [d, base[d] || 0]));
   let reserve = 0;
   out.forEach((days) => { if (!days.length) reserve += 1; days.forEach((d) => { counts[d] += 1; }); });
   return { out, counts, reserve };
