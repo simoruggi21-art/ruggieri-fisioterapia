@@ -3,6 +3,9 @@ import { getState, isStaff } from './state.js';
 import { qs, escapeHtml, formatDateTime, formatTime } from './ui.js';
 import { openPatient } from './patients.js';
 import { planWindow, dateKey, mondayOf, cadenceLabel } from './carePlan.js';
+import { progressionLibrary } from './progressionLibrary.js';
+import { protocolLibrary } from './protocolLibrary.js';
+import { exerciseLibrary, exerciseDose } from './exerciseLibrary.js';
 
 const CARE_LABELS = { in_valutazione: 'In valutazione', in_trattamento: 'In trattamento', in_pausa: 'In pausa', terminato: 'Percorso concluso' };
 const HIGH_PAIN = 70;
@@ -124,7 +127,7 @@ async function loadStaffData() {
   const { start, end } = dayRange();
   const sinceIso = new Date(Date.now() - 7 * 86400000).toISOString();
 
-  const [today, pending, unread, requests, treat, checkins] = await Promise.all([
+  const [today, pending, unread, requests, treat, checkins, progress] = await Promise.all([
     safe(async () => (await supabase.from('appointments').select('id, patient_id, slot_start, status, profiles(full_name)')
       .in('status', ['confermato', 'richiesto']).gte('slot_start', start.toISOString()).lt('slot_start', end.toISOString()).order('slot_start')).data || [], []),
     safe(async () => (await supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'richiesto').gte('slot_start', new Date().toISOString())).count || 0, 0),
@@ -168,8 +171,11 @@ async function loadStaffData() {
       const { data: names } = await supabase.from('profiles').select('id, full_name').in('id', ids);
       return ids.map((id) => ({ id, name: (names || []).find((n) => n.id === id)?.full_name, ...worst[id] }));
     }, []),
+    safe(async () => (await supabase.from('prevention_progressions')
+      .select('id, patient_id, protocol_id, from_level, to_level, ratings, easy_share, created_at, profiles(full_name)')
+      .eq('status', 'in_attesa').order('created_at')).data || [], []),
   ]);
-  return { today, pending, unread, requests, treat, checkins };
+  return { today, pending, unread, requests, treat, checkins, progress };
 }
 
 function staffWidgets(d) {
@@ -201,6 +207,16 @@ function staffWidgets(d) {
         : '<p class="home-sub">Nessun promemoria: tutti i pazienti in trattamento sono a posto.</p>',
     },
     {
+      id: 'progress', title: 'Prevenzione: passaggi di livello da confermare', wide: true,
+      html: d.progress.length
+        ? `<ul class="home-list home-remind">${d.progress.map((p) => {
+          const label = protocolLibrary.find((x) => x.id === p.protocol_id)?.label || p.protocol_id;
+          return `<li class="home-remind-row">${patientButton(p.patient_id, p.profiles?.full_name)}<span class="home-remind-info"><span class="home-tag confermato">da ${escapeHtml(p.from_level)} a ${escapeHtml(p.to_level)}</span><span class="home-sub">${escapeHtml(label)}: ${Math.round(p.easy_share * 100)}% di "facile" su ${p.ratings} valutazioni</span></span><span><button type="button" class="btn btn-primary btn-small" data-prog-yes="${escapeHtml(p.id)}">Conferma</button> <button type="button" class="btn btn-ghost btn-small" data-prog-no="${escapeHtml(p.id)}">Non ora</button></span></li>`;
+        }).join('')}</ul>`
+        : '<p class="home-sub">Nessun paziente pronto per il livello successivo.</p>',
+      tone: d.progress.length ? 'attention' : '',
+    },
+    {
       id: 'pain', title: `Dolore alto nei check-in (${HIGH_PAIN}% o più, ultimi 7 giorni)`, wide: true,
       html: d.checkins.length
         ? `<ul class="home-list">${d.checkins.map((c) => `<li>${patientButton(c.id, c.name)}<span class="home-tag high">${c.v}%</span><span class="home-sub">${escapeHtml(formatDateTime(c.at))}</span></li>`).join('')}</ul>`
@@ -228,6 +244,35 @@ function customizeHtml(sorted, hidden) {
       <button type="button" class="btn btn-ghost btn-small" data-home-move="${w.id}" data-dir="1" ${i === sorted.length - 1 ? 'disabled' : ''} aria-label="Sposta giù">↓</button></span>
     </div>`).join('')}
   </div>`;
+}
+
+// Conferma o rifiuta il passaggio di livello. Se confermato, gli esercizi del livello
+// precedente di quel percorso vengono sostituiti con quelli del livello nuovo.
+async function decideProgression(id, accept, p) {
+  if (!p) return false;
+  const name = p.profiles?.full_name || 'il paziente';
+  if (accept && !window.confirm(`Passare ${name} dal livello ${p.from_level} al livello ${p.to_level}? Gli esercizi del livello ${p.from_level} di questo percorso saranno sostituiti con quelli del livello ${p.to_level}.`)) return false;
+  const { error } = await supabase.rpc('decide_prevention_progression', { progression_id: id, accept });
+  if (error) { console.error(error); return false; }
+  if (!accept) return true;
+  await supabase.from('patient_exercises').delete().eq('patient_id', p.patient_id).eq('prevention_protocol', p.protocol_id).eq('prevention_level', p.from_level);
+  const { data: left } = await supabase.from('patient_exercises').select('name, sort_order').eq('patient_id', p.patient_id);
+  const names = new Set((left || []).map((x) => x.name));
+  let order = Math.max(-1, ...(left || []).map((x) => x.sort_order ?? 0)) + 1;
+  const { session } = getState();
+  const rows = [];
+  (progressionLibrary[p.protocol_id] || []).filter((ph) => ph.level === p.to_level).forEach((ph) => {
+    ph.exercises.forEach((exId) => {
+      const ex = exerciseLibrary.find((e) => e.id === exId);
+      if (!ex || names.has(ex.name)) return;
+      names.add(ex.name);
+      const dz = exerciseDose(ex);
+      rows.push({ patient_id: p.patient_id, name: ex.name, description: ex.description, phase: ph.phase, prevention_protocol: p.protocol_id, prevention_level: p.to_level,
+        sets: dz.sets || null, reps: dz.reps || null, load: dz.load || null, frequency: dz.frequency || null, sort_order: order++, updated_by: session.user.id });
+    });
+  });
+  if (rows.length) await supabase.from('patient_exercises').insert(rows);
+  return true;
 }
 
 async function renderStaff(root) {
@@ -269,6 +314,15 @@ async function renderStaff(root) {
       [ids[i], ids[j]] = [ids[j], ids[i]];
       savePrefs({ ...loadPrefs(), order: ids });
       renderStaff(root);
+    };
+  });
+  root.querySelectorAll('[data-prog-yes],[data-prog-no]').forEach((b) => {
+    b.onclick = async () => {
+      const id = b.dataset.progYes || b.dataset.progNo;
+      const yes = !!b.dataset.progYes;
+      b.disabled = true;
+      const ok = await decideProgression(id, yes, d.progress.find((x) => x.id === id));
+      if (ok !== false) renderStaff(root); else b.disabled = false;
     };
   });
   root.querySelectorAll('[data-week-enough]').forEach((b) => {
