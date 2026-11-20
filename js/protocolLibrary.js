@@ -2,6 +2,46 @@
 // Vanno sempre rivisti, personalizzati e validati clinicamente: non sono
 // un'indicazione automatica. Dato statico (non per-paziente): non serve nel database.
 export const protocolLibrary = [
+  // ---- PREVENZIONE SPORTIVA ----
+  {id:'prev-sport-pesi', category:'Prevenzione sportiva', label:'Pesi: palestra, powerlifting e bodybuilding', text:
+    'Per chi si allena con i pesi. Mobilità di spalle, torace e anche per fare bene i movimenti, rinforzo dei muscoli che stabilizzano spalla e colonna, tecnica di stacco e squat, gestione del carico.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-crossfit', category:'Prevenzione sportiva', label:'CrossFit e sollevamento olimpico', text:
+    'Per chi solleva sopra la testa e alterna forza, ginnastica e fiato. Mobilità di spalla, polso e anca per le posizioni sopra la testa e di squat, forza di spalla e colonna, controllo del carico settimanale.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-corsa', category:'Prevenzione sportiva', label:'Corsa su strada (5-42 km)', text:
+    'Per chi corre su asfalto. Mobilità di caviglia e anca, forza di piede, polpaccio, glutei e quadricipite, regolarità e aumento graduale dei chilometri.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-trail', category:'Prevenzione sportiva', label:'Trail running e corsa in montagna', text:
+    'Per chi corre su sentieri e in dislivello. In più rispetto alla corsa su strada: equilibrio su terreno irregolare, forza eccentrica di quadricipite nelle discese e stabilità di caviglia.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-bici-strada', category:'Prevenzione sportiva', label:'Ciclismo su strada', text:
+    'Per chi pedala molte ore. Mobilità di anche, torace e collo per la posizione sulla bici, forza di glutei, quadricipite e core per sostenere la posizione, cura del polso e delle spalle.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-mtb', category:'Prevenzione sportiva', label:'Mountain bike e gravel', text:
+    'Per chi pedala su sterrato. In più rispetto alla bici da strada: spalle, braccia e core per assorbire le irregolarità e controllare la bici, equilibrio e reattività per le cadute.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-nuoto', category:'Prevenzione sportiva', label:'Nuoto', text:
+    'Per chi nuota con regolarità. Mobilità di spalla e torace, controllo scapolare e forza dei rotatori esterni, core e anche per la posizione in acqua; attenzione al carico dei volumi settimanali.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-pallanuoto', category:'Prevenzione sportiva', label:'Pallanuoto', text:
+    'Per chi gioca a pallanuoto. Spalla da lancio (rotatori, scapola), adduttori e anche per la rotazione a gambe a bicicletta, core e lombare, controllo del carico di allenamento.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-judo-lotta', category:'Prevenzione sportiva', label:'Judo e lotta', text:
+    'Per chi pratica judo o lotta. Spalla (proiezioni e cadute), collo, ginocchio, anca e presa; allenamento della caduta (ukemi) e della forza di presa.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-boxe', category:'Prevenzione sportiva', label:'Boxe e kickboxing', text:
+    'Per chi fa boxe, kickboxing o muay thai. Polso e mano, spalla (spinta dei colpi), collo, rotazione del tronco, caviglia e piede.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-mma-bjj', category:'Prevenzione sportiva', label:'MMA e jiu-jitsu brasiliano', text:
+    'Per chi fa MMA o jiu-jitsu brasiliano. Collo, spalla, anca (guardia), ginocchio e presa; mobilità d\'anca e di colonna per lavorare da terra.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-trekking', category:'Prevenzione sportiva', label:'Trekking ed escursionismo con zaino', text:
+    'Per chi cammina in montagna con lo zaino. Forza di quadricipite per le discese, caviglia e piede, glutei e core per sostenere lo zaino, equilibrio su terreno irregolare.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-calcio', category:'Prevenzione sportiva', label:'Calcio e calcio a 5', text:
+    'Per chi gioca a calcio. Riscaldamento di tipo FIFA 11+, forza eccentrica degli ischiocrurali (Nordic), rinforzo degli adduttori, equilibrio e atterraggio per caviglia e ginocchio.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-basket', category:'Prevenzione sportiva', label:'Basket', text:
+    'Per chi gioca a basket. Atterraggio dai salti, equilibrio e forza di caviglia e ginocchio, anche e core, spalla per il tiro; riscaldamento neuromuscolare.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-pallavolo', category:'Prevenzione sportiva', label:'Pallavolo', text:
+    'Per chi gioca a pallavolo. Spalla da schiacciata, tendine rotuleo (salto), caviglia nell\'atterraggio e zona lombare; forza eccentrica e controllo dell\'atterraggio.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-tennis-padel', category:'Prevenzione sportiva', label:'Tennis e padel', text:
+    'Per chi gioca a tennis o padel. Gomito e polso (epicondilite), spalla nel servizio e nello smash, rotazione del tronco, caviglia e scatti brevi.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-rugby', category:'Prevenzione sportiva', label:'Rugby', text:
+    'Per chi gioca a rugby. Collo e spalla (placcaggio), ginocchio e caviglia (cambi di direzione), forza generale e capacità di assorbire i contatti.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-arrampicata', category:'Prevenzione sportiva', label:'Arrampicata e bouldering', text:
+    'Per chi arrampica. Dita e avambracci (carico graduale), gomito e spalla per le trazioni e le posizioni sopra la testa, scapola e core, mobilità d\'anca per i passi alti.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+  {id:'prev-sport-sci', category:'Prevenzione sportiva', label:'Sci alpino e snowboard', text:
+    'Per chi scia o fa snowboard. Forza eccentrica di quadricipite, glutei e ischiocrurali per la tenuta in curva, equilibrio e reattività, core, preparazione prima della stagione.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
+
   // ---- PREVENZIONE ----
   {id:'prev-scrivania-collo-spalle', category:'Prevenzione', label:'Collo, spalle e postura da scrivania', text:
     'Per chi lavora molte ore seduto o al computer. Mobilità di collo, torace e spalle, allungamento di trapezi, pettorali e flessori di polso, rinforzo dei muscoli che sostengono la postura (scapole, flessori profondi del collo, core) e pause attive durante la giornata.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento. Per chi non ha una patologia: adattare a età, sport e disponibilità di tempo, 2-3 sedute a settimana.'},
