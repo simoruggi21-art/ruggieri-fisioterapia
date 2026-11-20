@@ -377,10 +377,10 @@ export async function renderDetail(p, hasUnread) {
       <details class="library-toggle">
         <summary>Suggerimento protocollo</summary>
         <div class="library-toggle-body">
-          <p class="rb-sub">Scegli un quadro clinico: propone un protocollo di partenza da rivedere e personalizzare — non è un'indicazione clinica automatica.</p>
+          <p class="rb-sub">Scegli un quadro clinico o un percorso di prevenzione: propone un protocollo di partenza da rivedere e personalizzare — non è un'indicazione clinica automatica.</p>
           <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
             <select id="protocolSuggestSelect" style="flex:1; min-width:220px;">
-              <option value="">— seleziona un quadro clinico —</option>
+              <option value="">— seleziona un quadro clinico o la prevenzione —</option>
               ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
                 `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}">${pl.label}</option>`).join('')}</optgroup>`
               ).join('')}
@@ -400,9 +400,9 @@ export async function renderDetail(p, hasUnread) {
 
     <div class="record-block" id="guidedPath">
       <div class="rb-title">Percorso guidato per fasi</div>
-      <p class="rb-sub">Per il quadro clinico scelto vedi le fasi (acuta, subacuta, rinforzo, ritorno all'attività) con obiettivi, esercizi e criteri per avanzare. Aggiungi alla scheda gli esercizi della fase in cui si trova il paziente.</p>
+      <p class="rb-sub">Per il quadro clinico scelto vedi le fasi (acuta, subacuta, rinforzo, ritorno all'attività) con obiettivi, esercizi e criteri per avanzare. Per chi non ha una patologia scegli un percorso di Prevenzione (mobilità, stretching, rinforzo strutturale, mantenimento). Aggiungi alla scheda gli esercizi della fase in cui si trova il paziente.</p>
       <select id="guidedProtocolSelect" style="width:100%; margin-bottom:14px;">
-        <option value="">— scegli un quadro clinico —</option>
+        <option value="">— scegli un quadro clinico o la prevenzione —</option>
         ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
           `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}" ${pl.id === protocol?.protocol_library_id ? 'selected' : ''}>${pl.label}</option>`).join('')}</optgroup>`
         ).join('')}
@@ -426,6 +426,7 @@ export async function renderDetail(p, hasUnread) {
             <select id="exercisePhaseFilter" style="flex:1; min-width:160px;">
               <option value="">Tutte le fasi</option>
               ${exercisePhases.map((ph) => `<option value="${ph.id}">${ph.label}</option>`).join('')}
+              <option value="prev-">Prevenzione · tutti gli esercizi</option>
             </select>
             <input type="text" id="exerciseSearchInput" placeholder="Cerca (es. rotulea, equilibrio...)" style="flex:2; min-width:180px;">
           </div>
@@ -724,7 +725,7 @@ export function drawGuidedPath(patientId, protocolId, assigned) {
   if (!box) return;
   const prog = progressionLibrary[protocolId];
   if (!protocolId || !prog) {
-    box.innerHTML = '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico per vedere il percorso a fasi.</p>';
+    box.innerHTML = '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico o un percorso di prevenzione per vedere le fasi.</p>';
     return;
   }
   const have = new Set(assigned.map((a) => a.name));
@@ -827,13 +828,24 @@ function exerciseDetailHtml(ex) {
 // I 200 esercizi in un'unica tendina sono scomodi da scorrere: il campo di
 // ricerca ricostruisce le opzioni filtrando per nome o categoria man mano
 // che si digita, cosi' non serve un componente di autocomplete dedicato.
+// Esercizi dei percorsi di prevenzione, per fase (mobilita', stretching, rinforzo, mantenimento).
+function preventionExerciseIds(phaseId) {
+  const out = new Set();
+  Object.entries(progressionLibrary).forEach(([key, phases]) => {
+    if (!key.startsWith('prev-')) return;
+    phases.filter((p) => p.phase.startsWith(phaseId)).forEach((p) => p.exercises.forEach((id) => out.add(id)));
+  });
+  return out;
+}
+
 function populateExerciseSelect() {
   const select = qs('#exerciseSuggestSelect');
   if (!select) return;
   const f = (qs('#exerciseSearchInput')?.value || '').trim().toLowerCase();
   const phase = qs('#exercisePhaseFilter')?.value || '';
+  const prevSet = phase.startsWith('prev-') ? preventionExerciseIds(phase) : null;
   const filtered = exerciseLibrary.filter((ex) =>
-    (!phase || ex.phase === phase || ex.always)
+    (!phase || ex.phase === phase || ex.always || (prevSet && prevSet.has(ex.id)))
     && (!f || ex.name.toLowerCase().includes(f) || ex.category.toLowerCase().includes(f)));
   const categories = [...new Set(filtered.map((ex) => ex.category))];
   select.innerHTML = filtered.length
