@@ -14,10 +14,12 @@ export const regionLabels = {
   lombare: 'Colonna lombare',
   toracica: 'Colonna toracica',
   cervicale: 'Colonna cervicale',
+  prevenzione: 'Prevenzione',
 };
 
 // Quali patologie del database appartengono a ciascun distretto.
 export const regionByProtocol = {
+  'prev-scrivania-collo-spalle': 'prevenzione', 'prev-schiena-lombare': 'prevenzione', 'prev-spalla-overhead': 'prevenzione', 'prev-ginocchio-sport': 'prevenzione', 'prev-anca-bacino': 'prevenzione', 'prev-caviglia-piede': 'prevenzione', 'prev-gomito-polso': 'prevenzione', 'prev-cadute-equilibrio': 'prevenzione', 'prev-ossa-muscoli-over50': 'prevenzione', 'prev-sportivo-infortuni': 'prevenzione', 'prev-routine-benessere': 'prevenzione',
   'spalla-conflitto': 'spalla', 'capsulite-adesiva': 'spalla', 'cuffia-rotatori': 'spalla', 'instabilita-spalla': 'spalla',
   'lussazione-spalla': 'spalla', 'lussazione-spalla-atleta-high-level': 'spalla', 'instabilita-spalla-proiezioni': 'spalla',
   'tendinopatia-rotulea': 'ginocchio', 'ginocchio-lca': 'ginocchio', 'gonartrosi': 'ginocchio', 'condropatia-femoro-rotulea': 'ginocchio',
@@ -34,6 +36,7 @@ export const regionByProtocol = {
 
 // Principi di prescrizione ricavati dalle fonti, mostrati sopra l'elenco.
 export const regionPrinciples = {
+  prevenzione: 'Per prevenire gli infortuni funzionano soprattutto rinforzo, equilibrio/propriocezione e programmi che li combinano; lo stretching da solo non riduce gli infortuni, quindi resta un complemento della mobilità. L\'efficacia dipende da dose, regolarità e correzione della tecnica. Livello basso: semplicità e aderenza (2 sedute a settimana, corpo libero, equilibrio di base). Livello medio: carico progressivo, esercizi su una gamba, componente eccentrica (2-3 sedute). Livello alto: forza ad alto carico, eccentrici specifici, pliometria e cambi di direzione, con carico che cresce gradualmente. Il passaggio di livello si propone quando gli esercizi risultano costantemente facili ma lo decide il fisioterapista.',
   spalla: 'Educazione e riabilitazione attiva sono la base. Per le tendinopatie: carico esterno progressivo (elastici, manubri), 2-3 sedute a settimana, dolore come guida (accettabile fino a 3-4/10 senza peggioramento nelle 24 ore). Nella spalla rigida: stretching e mobilità tutti i giorni, con ampiezza che cresce di pochi gradi per volta.',
   ginocchio: 'Dolore femoro-rotuleo: rinforzo di anca e ginocchio insieme. Tendinopatia rotulea: carico lento e pesante (HSR) o strategie di carico progressivo equivalenti. Dopo il legamento crociato: progressione per criteri (forza e salti ≥90% rispetto all\'altro lato, assenza di gonfiore, prontezza psicologica), non solo per tempi.',
   anca: 'Esercizio ed educazione sono la base. Nel conflitto femoro-acetabolare rinforzo mirato e stretching migliorano entrambi la qualità di vita; il rinforzo dà più forza e meno dolore percepito. Nella tendinopatia glutea: carico progressivo senza compressione (evitare adduzione prolungata).',
@@ -45,6 +48,56 @@ export const regionPrinciples = {
 };
 
 export const evidenceByRegion = {
+  prevenzione: [
+    { pmid: "24100287", doi: "10.1136/bjsports-2013-092538", year: 2014, journal: "Br J Sports Med", title: "The effectiveness of exercise interventions to prevent sports injuries: a systematic review and meta-analysis of randomised controlled trials",
+      note: "Rinforzo, propriocezione e programmi combinati riducono gli infortuni sportivi (il rinforzo li riduce a meno di un terzo); lo stretching da solo non ha mostrato effetto. Per questo nel programma lo stretching è un complemento della mobilità." },
+    { pmid: "38684329", doi: "10.1136/bjsports-2023-106906", year: 2024, journal: "Br J Sports Med", title: "Best practices for the dissemination and implementation of neuromuscular training injury prevention warm-ups in youth team sport: a systematic review",
+      note: "I programmi neuromuscolari di riscaldamento riducono gli infortuni del 36-72% e funzionano meglio quando l'aderenza è alta: conta più la regolarità che la complessità, soprattutto al livello base." },
+    { pmid: "26758673", doi: "10.1136/bjsports-2015-095788", year: 2016, journal: "Br J Sports Med", title: "The training-injury prevention paradox: should athletes be training smarter and harder?", for: ["prev-sportivo-infortuni", "prev-ginocchio-sport", "prev-spalla-overhead", "prev-caviglia-piede", "prev-anca-bacino"],
+      note: "Aumentare il carico di allenamento in modo graduale protegge dagli infortuni, mentre i picchi improvvisi li aumentano: nel livello alto il carico settimanale cresce con prudenza." },
+    { pmid: "19952811", doi: "10.1249/MSS.0b013e3181b88d37", year: 2010, journal: "Med Sci Sports Exerc", title: "Neuromuscular training for sports injury prevention: a systematic review", for: ["prev-sportivo-infortuni", "prev-ginocchio-sport", "prev-caviglia-piede", "prev-anca-bacino"],
+      note: "L'allenamento neuromuscolare (propriocezione, forza, equilibrio) riduce certi infortuni in adolescenti e giovani adulti negli sport con cambi di direzione." },
+    { pmid: "28087568", doi: "10.1136/bjsports-2016-097066", year: 2017, journal: "Br J Sports Med", title: "Effect of specific exercise-based football injury prevention programmes on the overall injury rate in football: a systematic review and meta-analysis of the FIFA 11 and 11+ programmes", for: ["prev-sportivo-infortuni", "prev-ginocchio-sport", "prev-caviglia-piede"],
+      note: "Il programma FIFA 11+ riduce gli infortuni nel calcio di circa il 39%." },
+    { pmid: "32253193", doi: "10.1136/bjsports-2019-101587", year: 2020, journal: "Br J Sports Med", title: "Making football safer for women: a systematic review and meta-analysis of injury prevention programmes in 11 773 female football (soccer) players", for: ["prev-sportivo-infortuni", "prev-ginocchio-sport"],
+      note: "Nel calcio femminile i programmi multicomponente riducono gli infortuni totali (27%) e del crociato (45%), con evidenza di bassa qualità." },
+    { pmid: "29737024", doi: "10.1002/jor.24043", year: 2018, journal: "J Orthop Res", title: "Meta-analysis of meta-analyses of anterior cruciate ligament injury reduction training programs", for: ["prev-ginocchio-sport", "prev-sportivo-infortuni"],
+      note: "I programmi di prevenzione dei danni al crociato dimezzano le lesioni; nelle atlete riducono di due terzi quelle senza contatto." },
+    { pmid: "27251898", doi: "10.1136/bjsports-2015-095596", year: 2016, journal: "Br J Sports Med", title: "Critical components of neuromuscular training to reduce ACL injury risk in female athletes: meta-regression analysis", for: ["prev-ginocchio-sport", "prev-sportivo-infortuni"],
+      note: "L'effetto dei programmi per il crociato dipende dall'età, dalla dose, dalle varianti di esercizio e dal feedback verbale sulla tecnica." },
+    { pmid: "30001501", doi: "10.1177/0363546518782460", year: 2019, journal: "Am J Sports Med", title: "Evidence-Based Best-Practice Guidelines for Preventing Anterior Cruciate Ligament Injuries in Young Female Athletes: A Systematic Review and Meta-analysis", for: ["prev-ginocchio-sport", "prev-sportivo-infortuni"],
+      note: "Le linee guida per il crociato nelle giovani atlete includono forza degli arti inferiori (Nordic, affondi, calf raise) e stabilizzazione dell'atterraggio." },
+    { pmid: "30808663", doi: "10.1136/bjsports-2018-100045", year: 2019, journal: "Br J Sports Med", title: "Including the Nordic hamstring exercise in injury prevention programmes halves the rate of hamstring injuries: a systematic review and meta-analysis of 8459 athletes", for: ["prev-sportivo-infortuni", "prev-ginocchio-sport", "prev-anca-bacino"],
+      note: "I programmi che includono il Nordic hamstring dimezzano gli infortuni degli ischiocrurali (riduzione fino al 51%)." },
+    { pmid: "35384731", doi: "10.1177/03635465221083998", year: 2023, journal: "Am J Sports Med", title: "Evidence-Based Hamstring Injury Prevention and Risk Factor Management: A Systematic Review and Meta-analysis of Randomized Controlled Trials", for: ["prev-sportivo-infortuni", "prev-ginocchio-sport", "prev-anca-bacino"],
+      note: "Il rinforzo eccentrico riduce gli infortuni degli ischiocrurali e migliora forza e lunghezza del fascicolo; lo stretching migliora la flessibilità." },
+    { pmid: "31502142", doi: "10.1007/s40279-019-01178-7", year: 2020, journal: "Sports Med", title: "The Effect of Nordic Hamstring Exercise Intervention Volume on Eccentric Strength and Muscle Architecture Adaptations: A Systematic Review and Meta-analyses", for: ["prev-sportivo-infortuni", "prev-ginocchio-sport"],
+      note: "Volumi più bassi di Nordic danno adattamenti simili a volumi alti: conviene partire con poche ripetizioni per migliorare l'aderenza." },
+    { pmid: "29891614", doi: "10.1136/bjsports-2017-098937", year: 2019, journal: "Br J Sports Med", title: "The Adductor Strengthening Programme prevents groin problems among male football players: a cluster-randomised controlled trial", for: ["prev-anca-bacino", "prev-sportivo-infortuni"],
+      note: "Un programma semplice di rinforzo degli adduttori riduce del 41% i problemi all'inguine nei calciatori." },
+    { pmid: "26589483", doi: "10.1111/sms.12585", year: 2016, journal: "Scand J Med Sci Sports", title: "Large eccentric strength increase using the Copenhagen Adduction exercise in football: A randomized controlled trial", for: ["prev-anca-bacino", "prev-sportivo-infortuni"],
+      note: "Il Copenhagen adduction aumenta molto la forza eccentrica degli adduttori in 8 settimane progressive, con alta compliance e poco dolore muscolare." },
+    { pmid: "35753965", doi: "10.1016/j.jphys.2022.05.019", year: 2022, journal: "J Physiother", title: "Injury prevention programs that include balance training exercises reduce ankle injury rates among soccer players: a systematic review", for: ["prev-caviglia-piede", "prev-sportivo-infortuni"],
+      note: "Gli esercizi di equilibrio, da soli o nei programmi di prevenzione, riducono gli infortuni alla caviglia (circa -36%/-42%)." },
+    { pmid: "29140127", doi: "10.4085/1062-6050-52.11.16", year: 2017, journal: "J Athl Train", title: "Proprioceptive Training for the Prevention of Ankle Sprains: An Evidence-Based Review", for: ["prev-caviglia-piede", "prev-sportivo-infortuni"],
+      note: "L'allenamento propriocettivo riduce le distorsioni di caviglia sia nei sani sia in chi ne ha già avute (RR 0,57 e 0,64)." },
+    { pmid: "34560586", doi: "10.1016/j.ptsp.2021.09.004", year: 2021, journal: "Phys Ther Sport", title: "Effectiveness of shoulder injury prevention programs in an overhead athletic population: A systematic review", for: ["prev-spalla-overhead"],
+      note: "Nei lanciatori e negli sportivi overhead l'evidenza sui programmi di prevenzione della spalla è limitata: in uno studio lo stretching della capsula posteriore ha ridotto gli infortuni." },
+    { pmid: "36261251", doi: "10.1136/bjsports-2022-105674", year: 2023, journal: "Br J Sports Med", title: "Diagnosis, prevention and treatment of common shoulder injuries in sport: grading the evidence - a statement paper commissioned by the Danish Society of Sports Physical Therapy (DSSF)", for: ["prev-spalla-overhead"],
+      note: "Il documento di consenso sulle spalle sportive classifica la qualità dell'evidenza come bassa o moderata: rinforzo e mobilità guidati dalla clinica restano la base." },
+    { pmid: "18461010", doi: "10.1249/MSS.0b013e3181676640", year: 2008, journal: "Med Sci Sports Exerc", title: "A randomized controlled intervention trial to relieve and prevent neck/shoulder pain", for: ["prev-scrivania-collo-spalle", "prev-spalla-overhead"],
+      note: "Per chi lavora al computer, un allenamento specifico di forza per collo e spalle riduce il dolore e previene la comparsa di dolore alla spalla; l'aderenza cala nel tempo." },
+    { pmid: "32266072", doi: "10.1186/s13102-020-0158-0", year: 2020, journal: "BMC Sports Sci Med Rehabil", title: "Dose-response of resistance training for neck-and shoulder pain relief: a workplace intervention study", for: ["prev-scrivania-collo-spalle"],
+      note: "Brevi sedute quotidiane di rinforzo di collo e spalle sul posto di lavoro riducono dolore e migliorano la qualità di vita; 10 minuti bastano quanto 20." },
+    { pmid: "20091596", doi: "10.1002/14651858.CD006555.pub2", year: 2010, journal: "Cochrane Database Syst Rev", title: "Exercises for prevention of recurrences of low-back pain", for: ["prev-schiena-lombare"],
+      note: "Programmi di esercizio dopo un episodio di mal di schiena possono prevenire le ricadute (evidenza di qualità moderata)." },
+    { pmid: "31792067", doi: "10.1136/bjsports-2019-101512", year: 2020, journal: "Br J Sports Med", title: "Exercise for preventing falls in older people living in the community: an abridged Cochrane systematic review", for: ["prev-cadute-equilibrio"],
+      note: "Programmi di esercizio che combinano equilibrio, esercizi funzionali e rinforzo riducono le cadute degli anziani di circa un terzo (-34%)." },
+    { pmid: "27707740", doi: "10.1136/bjsports-2016-096547", year: 2017, journal: "Br J Sports Med", title: "Exercise to prevent falls in older adults: an updated systematic review and meta-analysis", for: ["prev-cadute-equilibrio"],
+      note: "L'esercizio da solo previene le cadute; i programmi che sfidano l'equilibrio e hanno una dose maggiore funzionano meglio." },
+    { pmid: "39368450", doi: "10.1016/j.gerinurse.2024.09.016", year: 2024, journal: "Geriatr Nurs", title: "Effects of over 10 weeks of resistance training on muscle and bone mineral density in older people with sarcopenia over 70 years old: A systematic review and meta-analysis of randomized controlled trials", for: ["prev-ossa-muscoli-over50"],
+      note: "Oltre 10 settimane di rinforzo migliorano forza e massa muscolare negli over 70 con sarcopenia; sulla densità ossea non si è visto un effetto favorevole." },
+  ],
   spalla: [
     { pmid: '35964498', doi: '10.1016/j.msksp.2022.102645', year: 2022, journal: 'Musculoskelet Sci Pract', title: 'Progressive therapeutic exercise in upper limb tendinopathies: systematic review and meta-analysis',
       note: 'Nelle tendinopatie della spalla e del gomito l\'esercizio progressivo è efficace (evidenza di qualità bassa); il dolore è il criterio più usato per avanzare, con componente eccentrica.' },

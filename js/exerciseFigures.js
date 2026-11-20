@@ -1155,6 +1155,12 @@ al('crps-terapia-specchio', 'polso-mobilita-flesso-estensione', ['gomito']); al(
 al('sarcopenia-resistenza-elastico', 'spalla-rematore-elastico-spalla', ['spalla']);
 al('contusione-mobilita-precoce-indolore', 'ginocchio-heel-slide-flessione', []); al('contusione-carico-graduale-trauma', 'postchir-ginocchio-carico-progressivo', ['quadricipite']);
 
+
+// Prevenzione: figure condivise con esercizi simili
+al("prev-pausa-attiva-ora", "cervicale-pause-attive-lavoro", []);
+al("prev-mobilita-mattutina", "core-cat-camel", []);
+al("prev-world-greatest-stretch", "anca-flessori-stretch", []);
+al("prev-hip-9090", "generale-stretching-adduttori", []);
 // Applica a posteriori le evidenziazioni indicate in HL (gli HL sono dichiarati dopo def).
 for (const id of Object.keys(D)) { if (HL[id]) D[id].forEach((f) => { if (f.pose) f.pose.hl = HL[id]; }); }
 

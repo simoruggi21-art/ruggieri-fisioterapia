@@ -377,10 +377,10 @@ export async function renderDetail(p, hasUnread) {
       <details class="library-toggle">
         <summary>Suggerimento protocollo</summary>
         <div class="library-toggle-body">
-          <p class="rb-sub">Scegli un quadro clinico: propone un protocollo di partenza da rivedere e personalizzare — non è un'indicazione clinica automatica.</p>
+          <p class="rb-sub">Scegli un quadro clinico o un percorso di prevenzione: propone un protocollo di partenza da rivedere e personalizzare — non è un'indicazione clinica automatica.</p>
           <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
             <select id="protocolSuggestSelect" style="flex:1; min-width:220px;">
-              <option value="">— seleziona un quadro clinico —</option>
+              <option value="">— seleziona un quadro clinico o la prevenzione —</option>
               ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
                 `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}">${pl.label}</option>`).join('')}</optgroup>`
               ).join('')}
@@ -400,9 +400,9 @@ export async function renderDetail(p, hasUnread) {
 
     <div class="record-block" id="guidedPath">
       <div class="rb-title">Percorso guidato per fasi</div>
-      <p class="rb-sub">Per il quadro clinico scelto vedi le fasi (acuta, subacuta, rinforzo, ritorno all'attività) con obiettivi, esercizi e criteri per avanzare. Aggiungi alla scheda gli esercizi della fase in cui si trova il paziente.</p>
+      <p class="rb-sub">Per il quadro clinico scelto vedi le fasi (acuta, subacuta, rinforzo, ritorno all'attività) con obiettivi, esercizi e criteri per avanzare. Per chi non ha una patologia scegli un percorso di Prevenzione (mobilità, stretching, rinforzo strutturale, mantenimento). Aggiungi alla scheda gli esercizi della fase in cui si trova il paziente.</p>
       <select id="guidedProtocolSelect" style="width:100%; margin-bottom:14px;">
-        <option value="">— scegli un quadro clinico —</option>
+        <option value="">— scegli un quadro clinico o la prevenzione —</option>
         ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
           `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}" ${pl.id === protocol?.protocol_library_id ? 'selected' : ''}>${pl.label}</option>`).join('')}</optgroup>`
         ).join('')}
@@ -426,6 +426,7 @@ export async function renderDetail(p, hasUnread) {
             <select id="exercisePhaseFilter" style="flex:1; min-width:160px;">
               <option value="">Tutte le fasi</option>
               ${exercisePhases.map((ph) => `<option value="${ph.id}">${ph.label}</option>`).join('')}
+              <option value="prev-">Prevenzione · tutti gli esercizi</option>
             </select>
             <input type="text" id="exerciseSearchInput" placeholder="Cerca (es. rotulea, equilibrio...)" style="flex:2; min-width:180px;">
           </div>
@@ -705,7 +706,7 @@ function doseLabel(ex) {
 function evidenceHtml(protocolId) {
   const region = regionByProtocol[protocolId];
   if (!region) return '';
-  const refs = evidenceByRegion[region] || [];
+  const refs = (evidenceByRegion[region] || []).filter((r) => !r.for || r.for.includes(protocolId));
   return `
     <div class="guided-evidence">
       <p class="guided-principles"><strong>${escapeHtml(regionLabels[region])} — principi dalla letteratura:</strong> ${escapeHtml(regionPrinciples[region])}</p>
@@ -714,7 +715,7 @@ function evidenceHtml(protocolId) {
         <ul>
           ${refs.map((r) => `<li><a href="https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/" target="_blank" rel="noopener noreferrer">${escapeHtml(r.title)}</a> <span class="text-dim">(${escapeHtml(r.journal)}, ${r.year})</span><br><span class="text-dim">${escapeHtml(r.note)}</span></li>`).join('')}
         </ul>
-        <p class="text-dim" style="font-size:12px;">Ricerca del 3 novembre 2026. Sintesi in parole nostre: fasi e dosi sono un punto di partenza da adattare al paziente.</p>
+        <p class="text-dim" style="font-size:12px;">Ricerca del ${region === 'prevenzione' ? '20' : '3'} novembre 2026. Sintesi in parole nostre: fasi e dosi sono un punto di partenza da adattare al paziente.</p>
       </details>
     </div>`;
 }
@@ -724,9 +725,10 @@ export function drawGuidedPath(patientId, protocolId, assigned) {
   if (!box) return;
   const prog = progressionLibrary[protocolId];
   if (!protocolId || !prog) {
-    box.innerHTML = '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico per vedere il percorso a fasi.</p>';
+    box.innerHTML = '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico o un percorso di prevenzione per vedere le fasi.</p>';
     return;
   }
+  if (protocolId.startsWith('prev-')) { drawPreventionPath(patientId, protocolId, assigned).catch((e) => console.error(e)); return; }
   const have = new Set(assigned.map((a) => a.name));
   box.innerHTML = evidenceHtml(protocolId) + prog.map((ph, i) => {
     const meta = exercisePhases.find((x) => x.id === ph.phase);
@@ -757,7 +759,74 @@ export function drawGuidedPath(patientId, protocolId, assigned) {
   });
 }
 
-async function addGuidedPhase(patientId, phase, detailsEl, assigned) {
+// Percorsi di prevenzione: tre livelli (basso, medio, alto) con le stesse quattro fasi.
+// Il livello del paziente e' salvato; quando gli esercizi risultano costantemente facili
+// il sistema propone il passaggio al livello successivo, che conferma il fisioterapista.
+const PREV_LEVELS = [
+  { id: 'basso', label: 'Livello basso', hint: 'Sedentari, principianti o sport ricreativo: semplicità e regolarità.' },
+  { id: 'medio', label: 'Livello medio', hint: 'Sportivi amatoriali o già allenati: carico progressivo ed esercizi su una gamba.' },
+  { id: 'alto', label: 'Livello alto', hint: 'Atleti agonisti: forza, eccentrici, pliometria e gesto sportivo.' },
+];
+const prevUi = {};
+
+async function drawPreventionPath(patientId, protocolId, assigned) {
+  const box = qs('#guidedPhases');
+  const prog = progressionLibrary[protocolId];
+  const { data: row } = await supabase.from('patient_prevention').select('level, level_since')
+    .eq('patient_id', patientId).eq('protocol_id', protocolId).maybeSingle();
+  const key = patientId + protocolId;
+  const shown = prevUi[key] || row?.level || 'basso';
+  const have = new Set(assigned.map((a) => a.name));
+  const meta = PREV_LEVELS.find((l) => l.id === shown);
+  const since = row?.level_since ? new Date(row.level_since).toLocaleDateString('it-IT') : null;
+  const phases = prog.filter((ph) => ph.level === shown);
+  box.innerHTML = evidenceHtml(protocolId) + `
+    <div class="prev-levels" role="tablist">
+      ${PREV_LEVELS.map((l) => `<button type="button" class="btn btn-small ${l.id === shown ? 'btn-primary' : 'btn-ghost'}" data-prev-level="${l.id}">${l.label}${row?.level === l.id ? ' ✓' : ''}</button>`).join('')}
+    </div>
+    <p class="text-dim prev-level-hint">${escapeHtml(meta.hint)} ${row ? `Livello attuale del paziente: <strong>${escapeHtml(row.level)}</strong> dal ${since}.` : 'Nessun livello ancora assegnato al paziente.'}${row && row.level !== shown ? ' <button type="button" class="btn btn-ghost btn-small" data-prev-setlevel>Imposta questo livello per il paziente</button>' : ''}${!row ? ' <button type="button" class="btn btn-ghost btn-small" data-prev-setlevel>Assegna questo livello al paziente</button>' : ''}</p>`
+    + phases.map((ph, i) => {
+    const pm = exercisePhases.find((x) => x.id === ph.phase);
+    const items = ph.exercises.map((id) => exerciseLibrary.find((e) => e.id === id)).filter(Boolean);
+    return `
+    <details class="guided-phase" ${i === 0 ? 'open' : ''}>
+      <summary><strong>${escapeHtml(pm.label)}</strong> <span class="text-dim">· ${items.length} esercizi</span></summary>
+      <p class="guided-goal"><strong>Obiettivo:</strong> ${escapeHtml(ph.goal)}</p>
+      <ul class="guided-list">
+        ${items.map((ex) => {
+          const done = have.has(ex.name);
+          return `<li>
+            <label><input type="checkbox" data-guided-ex="${ex.id}" ${done ? 'disabled' : 'checked'}> ${escapeHtml(ex.name)}</label>
+            ${done ? '<span class="guided-have">già assegnato</span>' : ''}
+            <a class="video-link" href="${exerciseVideoUrl(ex.name)}" target="_blank" rel="noopener noreferrer">▶ video</a>
+            ${doseLabel(ex) ? `<div class="guided-dose">Dose di partenza: ${doseLabel(ex)}</div>` : ''}
+            <div class="text-dim guided-desc">${escapeHtml(ex.description)}</div>
+            ${figureHtmlForName(ex.name) ? `<details class="guided-fig"><summary>Vedi il disegno</summary>${figureHtmlForName(ex.name)}</details>` : ''}
+          </li>`;
+        }).join('')}
+      </ul>
+      <p class="guided-crit"><strong>Per avanzare:</strong> ${escapeHtml(ph.criterion)}</p>
+      <button type="button" class="btn btn-ghost btn-small" data-guided-add="${ph.phase}">Aggiungi alla scheda gli esercizi selezionati</button>
+    </details>`;
+  }).join('');
+  box.querySelectorAll('[data-prev-level]').forEach((b) => {
+    b.onclick = () => { prevUi[key] = b.dataset.prevLevel; drawPreventionPath(patientId, protocolId, assigned); };
+  });
+  box.querySelectorAll('[data-prev-setlevel]').forEach((b) => {
+    b.onclick = async () => {
+      const { error } = await supabase.from('patient_prevention').upsert(
+        { patient_id: patientId, protocol_id: protocolId, level: shown, level_since: new Date().toISOString() }, { onConflict: 'patient_id,protocol_id' });
+      if (error) { showToast('Errore nel salvataggio del livello.', 'error'); return; }
+      showToast(`Livello ${shown} assegnato al paziente.`, 'ok');
+      drawPreventionPath(patientId, protocolId, assigned);
+    };
+  });
+  box.querySelectorAll('[data-guided-add]').forEach((btn) => {
+    btn.onclick = () => addGuidedPhase(patientId, btn.dataset.guidedAdd, btn.closest('details'), assigned, { protocol: protocolId, level: shown });
+  });
+}
+
+async function addGuidedPhase(patientId, phase, detailsEl, assigned, prev = null) {
   const ids = [...detailsEl.querySelectorAll('[data-guided-ex]:checked')].map((c) => c.dataset.guidedEx);
   const items = ids.map((id) => exerciseLibrary.find((e) => e.id === id)).filter((e) => e && !assigned.some((a) => a.name === e.name));
   if (!items.length) { showToast('Nessun nuovo esercizio selezionato.', 'error'); return; }
@@ -767,12 +836,19 @@ async function addGuidedPhase(patientId, phase, detailsEl, assigned) {
     name: item.name,
     description: item.description,
     phase,
+    ...(prev ? { prevention_protocol: prev.protocol, prevention_level: prev.level } : {}),
     ...doseColumns(item),
     sort_order: assigned.length + i,
     updated_by: session.user.id,
   }));
   const { error } = await supabase.from('patient_exercises').insert(rows);
   if (error) { showToast('Errore nell\'aggiunta degli esercizi.', 'error'); return; }
+  if (prev) {
+    // Se il paziente non ha ancora un livello per questo percorso, parte da quello scelto.
+    await supabase.from('patient_prevention').upsert(
+      { patient_id: patientId, protocol_id: prev.protocol, level: prev.level, level_since: new Date().toISOString() },
+      { onConflict: 'patient_id,protocol_id', ignoreDuplicates: true });
+  }
   showToast(items.length > 1 ? `${items.length} esercizi aggiunti.` : 'Esercizio aggiunto.', 'ok');
   await render();
 }
@@ -827,13 +903,24 @@ function exerciseDetailHtml(ex) {
 // I 200 esercizi in un'unica tendina sono scomodi da scorrere: il campo di
 // ricerca ricostruisce le opzioni filtrando per nome o categoria man mano
 // che si digita, cosi' non serve un componente di autocomplete dedicato.
+// Esercizi dei percorsi di prevenzione, per fase (mobilita', stretching, rinforzo, mantenimento).
+function preventionExerciseIds(phaseId) {
+  const out = new Set();
+  Object.entries(progressionLibrary).forEach(([key, phases]) => {
+    if (!key.startsWith('prev-')) return;
+    phases.filter((p) => p.phase.startsWith(phaseId)).forEach((p) => p.exercises.forEach((id) => out.add(id)));
+  });
+  return out;
+}
+
 function populateExerciseSelect() {
   const select = qs('#exerciseSuggestSelect');
   if (!select) return;
   const f = (qs('#exerciseSearchInput')?.value || '').trim().toLowerCase();
   const phase = qs('#exercisePhaseFilter')?.value || '';
+  const prevSet = phase.startsWith('prev-') ? preventionExerciseIds(phase) : null;
   const filtered = exerciseLibrary.filter((ex) =>
-    (!phase || ex.phase === phase || ex.always)
+    (!phase || ex.phase === phase || ex.always || (prevSet && prevSet.has(ex.id)))
     && (!f || ex.name.toLowerCase().includes(f) || ex.category.toLowerCase().includes(f)));
   const categories = [...new Set(filtered.map((ex) => ex.category))];
   select.innerHTML = filtered.length
@@ -921,18 +1008,25 @@ export async function renderOwnExercises() {
         </div>
         ${doneToday
           ? `<span style="color:var(--ok); font-size:13px; white-space:nowrap;">✓ Fatto oggi alle ${new Date(ex.last_done_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</span>`
-          : `<button class="btn btn-ghost btn-small" data-mark-done="${ex.id}" style="white-space:nowrap; flex-shrink:0;">Segna come fatto oggi</button>`}
+          : ex.prevention_protocol
+            ? `<div class="effort-pick"><span class="text-dim">Fatto oggi? Com'era:</span>
+                <button class="btn btn-ghost btn-small" data-mark-done="${ex.id}" data-effort="1">Facile</button>
+                <button class="btn btn-ghost btn-small" data-mark-done="${ex.id}" data-effort="2">Giusto</button>
+                <button class="btn btn-ghost btn-small" data-mark-done="${ex.id}" data-effort="3">Impegnativo</button></div>`
+            : `<button class="btn btn-ghost btn-small" data-mark-done="${ex.id}" style="white-space:nowrap; flex-shrink:0;">Segna come fatto oggi</button>`}
       </div>
     </div>`;
   }).join('')}
   `).join('');
   target.querySelectorAll('[data-mark-done]').forEach((btn) => {
-    btn.onclick = () => markExerciseDone(btn.dataset.markDone);
+    btn.onclick = () => markExerciseDone(btn.dataset.markDone, btn.dataset.effort ? Number(btn.dataset.effort) : null);
   });
 }
 
-async function markExerciseDone(exerciseId) {
-  const { error } = await supabase.rpc('mark_exercise_done', { exercise_id: exerciseId });
+async function markExerciseDone(exerciseId, effort = null) {
+  const { error } = effort
+    ? await supabase.rpc('mark_exercise_done_effort', { exercise_id: exerciseId, effort })
+    : await supabase.rpc('mark_exercise_done', { exercise_id: exerciseId });
   if (error) { showToast('Errore nell\'aggiornamento.', 'error'); return; }
   showToast('Esercizio segnato come fatto oggi.', 'ok');
   await renderOwnExercises();

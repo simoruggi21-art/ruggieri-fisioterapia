@@ -606,6 +606,11 @@ export const exerciseLibrary = [
   { id: "spalla-hl-plank-instabile-bacino", category: "Spalla", phase: "ritorno", name: "Plank con superficie instabile sotto il bacino", description: "Plank con mani a terra e una superficie instabile sotto il bacino (per esempio una palla o un cuscino), mantenendo il corpo allineato e la scapola controllata. Il carico sulla spalla aumenta con l'instabilità.", dose: {"sets": "3", "reps": "30-45 secondi", "load": "peso del corpo, superficie instabile", "frequency": "3 volte a settimana"} },
   { id: "spalla-hl-plank-instabile-piedi", category: "Spalla", phase: "ritorno", name: "Plank con piedi su superficie instabile", description: "Plank con le mani a terra e i piedi su una superficie instabile (palla, TRX o tavoletta). È la versione più impegnativa: controllare scapole, tronco e respirazione.", dose: {"sets": "3", "reps": "30-45 secondi", "load": "peso del corpo, superficie instabile", "frequency": "3 volte a settimana"} },
   { id: "spalla-hl-bracciata-secco", category: "Spalla", phase: "ritorno", name: "Simulazione a secco della pressione in acqua (bracciata)", description: "Per gli sport in acqua: riprodurre a secco il movimento di spinta con le mani che serve per galleggiare, su superficie instabile con carico crescente. Si parte dalla quadrupedia e si passa al plank, mantenendo scapola e tronco stabili.", dose: {"sets": "3", "reps": "20-30 secondi", "load": "peso del corpo, superficie instabile", "frequency": "3 volte a settimana"} },
+  // Prevenzione e benessere
+  { id: "prev-pausa-attiva-ora", category: "Prevenzione", phase: "prev-mobilita", name: "Pausa attiva ogni ora", description: "Ogni 45-60 minuti alzarsi, fare 10 passi, 5 respiri profondi, qualche cerchio di spalle e una rotazione del busto, poi riprendere il lavoro. Riduce rigidità di collo, schiena e anche.", dose: {"sets": "1", "reps": "2 minuti", "load": "nessuno", "frequency": "ogni ora di lavoro seduto"} },
+  { id: "prev-mobilita-mattutina", category: "Prevenzione", phase: "prev-mobilita", name: "Routine di mobilità del mattino (5 minuti)", description: "Una sequenza lenta: gatto-cammello in quadrupedia (8 volte), rotazione del busto con un braccio che sale (6 per lato), cerchi di spalle (10), squat profondo assistito (6) e flessione in avanti con ginocchia morbide (30 secondi).", dose: {"sets": "1", "reps": "1 giro completo", "load": "peso del corpo", "frequency": "ogni mattina"} },
+  { id: "prev-world-greatest-stretch", category: "Prevenzione", phase: "prev-mobilita", name: "World's greatest stretch (affondo con rotazione)", description: "Affondo lungo in avanti con le mani a terra, portare il gomito interno verso il piede, poi ruotare il busto e aprire il braccio verso l'alto seguendolo con lo sguardo. Mobilizza anca, torace e caviglia insieme.", dose: {"sets": "2", "reps": "5 per lato", "load": "peso del corpo", "frequency": "prima dell'allenamento o ogni giorno"} },
+  { id: "prev-hip-9090", category: "Prevenzione", phase: "prev-mobilita", name: "Mobilità d'anca 90/90", description: "Seduti a terra con entrambe le ginocchia piegate a 90° (una davanti, una di lato), busto eretto: portare lentamente il busto sopra la gamba davanti, poi ruotare le ginocchia dall'altra parte. Migliora la rotazione interna ed esterna dell'anca.", dose: {"sets": "2", "reps": "6 passaggi", "load": "peso del corpo", "frequency": "3-5 volte a settimana"} },
 ];
 
 // Fasi del percorso: ogni esercizio della libreria ne ha una; nella scheda
@@ -615,6 +620,10 @@ export const exercisePhases = [
   { id: 'subacuta', label: 'Fase subacuta', hint: 'Recuperare mobilità e controllo, carico leggero e graduale' },
   { id: 'rinforzo', label: 'Fase di rinforzo', hint: 'Forza progressiva e resistenza al carico' },
   { id: 'ritorno', label: 'Ritorno all\'attività', hint: 'Gesti funzionali e sport-specifici, criteri di rientro' },
+  { id: 'prev-mobilita', label: 'Prevenzione · mobilità e attivazione', hint: 'Sciogliere le articolazioni e attivare i muscoli' },
+  { id: 'prev-stretching', label: 'Prevenzione · stretching', hint: 'Mantenere la lunghezza dei muscoli che si accorciano' },
+  { id: 'prev-rinforzo', label: 'Prevenzione · rinforzo strutturale', hint: 'Forza progressiva per proteggere articolazioni e tendini' },
+  { id: 'prev-mantenimento', label: 'Prevenzione · mantenimento', hint: 'Routine, equilibrio e pause attive nel tempo' },
 ];
 
 export function phaseLabel(id) {
