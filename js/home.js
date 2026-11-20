@@ -3,6 +3,7 @@ import { getState, isStaff } from './state.js';
 import { qs, escapeHtml, formatDateTime, formatTime } from './ui.js';
 import { openPatient } from './patients.js';
 import { planWindow, dateKey, mondayOf, cadenceLabel } from './carePlan.js';
+import { todayId, isScheduledOn, isReserve } from './schedule.js';
 import { progressionLibrary } from './progressionLibrary.js';
 import { protocolLibrary } from './protocolLibrary.js';
 import { exerciseLibrary, exerciseDose } from './exerciseLibrary.js';
@@ -51,14 +52,14 @@ async function renderPatient(root) {
       .in('status', ['richiesto', 'confermato']).gte('slot_start', nowIso).order('slot_start').limit(1).maybeSingle(),
     supabase.from('appointments').select('id').eq('patient_id', uid).in('status', ['richiesto', 'confermato'])
       .gte('slot_start', plan.start.toISOString()).lt('slot_start', plan.end.toISOString()),
-    supabase.from('patient_exercises').select('id, last_done_at').eq('patient_id', uid),
+    supabase.from('patient_exercises').select('id, last_done_at, days').eq('patient_id', uid),
     supabase.from('messages').select('id', { count: 'exact', head: true }).eq('patient_id', uid)
       .neq('sender_role', 'patient').is('read_at', null),
   ]);
 
   const appt = nextAppt.data;
   const booked = (weekAppts.data || []).length;
-  const exList = exercises.data || [];
+  const exList = (exercises.data || []).filter((e) => !isReserve(e) && isScheduledOn(e, todayId()));
   const doneToday = exList.filter((e) => e.last_done_at && isSameDay(e.last_done_at)).length;
   const toDo = exList.length - doneToday;
   const unreadCount = unread.count || 0;
