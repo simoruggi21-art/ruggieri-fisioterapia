@@ -5,7 +5,7 @@ import { qs, el, escapeHtml, linkifyHtml, computeAge, showToast, formatDateTime,
 import { protocolLibrary } from './protocolLibrary.js';
 import { figureHtmlForName } from './exerciseFigures.js';
 import { exerciseLibrary, exercisePhases, phaseLabel, exerciseVideoUrl, exerciseDose, bumpDose } from './exerciseLibrary.js';
-import { evidenceByRegion, regionByProtocol, regionPrinciples, regionLabels } from './evidenceLibrary.js';
+import { protocolFocus, evidenceByRegion, regionByProtocol, regionPrinciples, regionLabels } from './evidenceLibrary.js';
 import { progressionLibrary } from './progressionLibrary.js';
 import { milestonesForCategory } from './milestoneLibrary.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
@@ -258,9 +258,10 @@ function renderPatientList() {
 // ritrova per id. "Salva scheda" resta fuori dai tab, sempre visibile.
 let activeDetailTab = 'overview';
 
-function groupDetailTabs(detail, exerciseCount) {
+function groupDetailTabs(detail, exerciseCount, preventionCount = 0) {
   const tabOf = (block) => {
     if (block.classList.contains('private')) return 'notes';
+    if (block.id === 'preventionPath') return 'prevention';
     if (block.classList.contains('suggest') || block.classList.contains('public') || block.id === 'guidedPath') return 'exercises';
     return 'overview';
   };
@@ -269,6 +270,7 @@ function groupDetailTabs(detail, exerciseCount) {
   const tabs = [
     { id: 'overview', label: 'Panoramica' },
     { id: 'exercises', label: 'Esercizi', count: exerciseCount },
+    { id: 'prevention', label: 'Esercizi di prevenzione', count: preventionCount },
     { id: 'notes', label: 'Note' },
   ];
   const bar = document.createElement('div');
@@ -403,11 +405,24 @@ export async function renderDetail(p, hasUnread) {
       <p class="rb-sub">Per il quadro clinico scelto vedi le fasi (acuta, subacuta, rinforzo, ritorno all'attività) con obiettivi, esercizi e criteri per avanzare. Per chi non ha una patologia scegli un percorso di Prevenzione (mobilità, stretching, rinforzo strutturale, mantenimento). Aggiungi alla scheda gli esercizi della fase in cui si trova il paziente.</p>
       <select id="guidedProtocolSelect" style="width:100%; margin-bottom:14px;">
         <option value="">— scegli un quadro clinico o la prevenzione —</option>
-        ${[...new Set(protocolLibrary.map(pl => pl.category))].map(cat =>
+        ${[...new Set(protocolLibrary.map(pl => pl.category))].filter(cat => !cat.startsWith('Prevenzione')).map(cat =>
           `<optgroup label="${cat}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}" ${pl.id === protocol?.protocol_library_id ? 'selected' : ''}>${pl.label}</option>`).join('')}</optgroup>`
         ).join('')}
       </select>
       <div id="guidedPhases"></div>
+    </div>
+
+    <div class="record-block" id="preventionPath">
+      <div class="rb-title">Esercizi di prevenzione</div>
+      <p class="rb-sub">Per chi fa sport e per chi non ha una patologia. Scegli lo sport: trovi tre livelli (basso, medio, alto) con mobilità, stretching, rinforzo strutturale e mantenimento, basati su articoli PubMed. Se gli esercizi risultano costantemente facili, in Home ti propongo il passaggio al livello successivo.</p>
+      <div id="preventionActive" class="prev-active"></div>
+      <select id="preventionSelect" style="width:100%; margin-bottom:14px;">
+        <option value="">— scegli lo sport o il percorso —</option>
+        ${['Prevenzione sportiva', 'Prevenzione'].map(cat =>
+          `<optgroup label="${cat === 'Prevenzione' ? 'Prevenzione generale (non sportivi)' : 'Sport'}">${protocolLibrary.filter(pl => pl.category === cat).map(pl => `<option value="${pl.id}">${pl.label}</option>`).join('')}</optgroup>`
+        ).join('')}
+      </select>
+      <div id="preventionPhases"></div>
     </div>
 
     <div class="record-block public">
@@ -513,7 +528,7 @@ export async function renderDetail(p, hasUnread) {
           `).join('')}</div>`}
     </div>
   `;
-  groupDetailTabs(detail, exercises.length);
+  groupDetailTabs(detail, exercises.length, exercises.filter((e) => e.prevention_protocol).length);
 
   // Ricorda quale voce della libreria e' stata usata per l'ultimo
   // suggerimento applicato: individua la categoria (quindi la sequenza di
@@ -536,6 +551,9 @@ export async function renderDetail(p, hasUnread) {
   wireCarePlan(p);
   drawGuidedPath(p.id, qs('#guidedProtocolSelect').value, exercises);
   qs('#guidedProtocolSelect').addEventListener('change', (e) => drawGuidedPath(p.id, e.target.value, exercises));
+  drawGuidedPath(p.id, qs('#preventionSelect').value, exercises, '#preventionPhases');
+  qs('#preventionSelect').addEventListener('change', (e) => drawGuidedPath(p.id, e.target.value, exercises, '#preventionPhases'));
+  renderPreventionSummary(p.id);
 
   renderMilestoneBlock(qs('#milestoneTimeline'), {
     category: protocolLibrary.find((pl) => pl.id === protocol?.protocol_library_id)?.category || null,
@@ -709,6 +727,7 @@ function evidenceHtml(protocolId) {
   const refs = (evidenceByRegion[region] || []).filter((r) => !r.for || r.for.includes(protocolId));
   return `
     <div class="guided-evidence">
+      ${protocolFocus && protocolFocus[protocolId] ? `<p class="guided-principles"><strong>In questo sport:</strong> ${escapeHtml(protocolFocus[protocolId])}</p>` : ''}
       <p class="guided-principles"><strong>${escapeHtml(regionLabels[region])} — principi dalla letteratura:</strong> ${escapeHtml(regionPrinciples[region])}</p>
       <details class="guided-sources">
         <summary>Fonti PubMed (${refs.length})</summary>
@@ -720,15 +739,15 @@ function evidenceHtml(protocolId) {
     </div>`;
 }
 
-export function drawGuidedPath(patientId, protocolId, assigned) {
-  const box = qs('#guidedPhases');
+export function drawGuidedPath(patientId, protocolId, assigned, boxSel = '#guidedPhases') {
+  const box = qs(boxSel);
   if (!box) return;
   const prog = progressionLibrary[protocolId];
   if (!protocolId || !prog) {
     box.innerHTML = '<p class="text-dim" style="font-size:13px;">Scegli un quadro clinico o un percorso di prevenzione per vedere le fasi.</p>';
     return;
   }
-  if (protocolId.startsWith('prev-')) { drawPreventionPath(patientId, protocolId, assigned).catch((e) => console.error(e)); return; }
+  if (protocolId.startsWith('prev-')) { drawPreventionPath(patientId, protocolId, assigned, boxSel).catch((e) => console.error(e)); return; }
   const have = new Set(assigned.map((a) => a.name));
   box.innerHTML = evidenceHtml(protocolId) + prog.map((ph, i) => {
     const meta = exercisePhases.find((x) => x.id === ph.phase);
@@ -767,10 +786,29 @@ const PREV_LEVELS = [
   { id: 'medio', label: 'Livello medio', hint: 'Sportivi amatoriali o già allenati: carico progressivo ed esercizi su una gamba.' },
   { id: 'alto', label: 'Livello alto', hint: 'Atleti agonisti: forza, eccentrici, pliometria e gesto sportivo.' },
 ];
+// Percorsi di prevenzione gia' attivi per il paziente, con il livello attuale.
+async function renderPreventionSummary(patientId) {
+  const el = qs('#preventionActive');
+  if (!el) return;
+  const { data } = await supabase.from('patient_prevention').select('protocol_id, level, level_since').eq('patient_id', patientId).order('created_at');
+  if (!data || !data.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="prev-active-title">Percorsi attivi</div>' + data.map((r) => {
+    const label = protocolLibrary.find((x) => x.id === r.protocol_id)?.label || r.protocol_id;
+    return `<button type="button" class="prev-chip" data-prev-open="${escapeHtml(r.protocol_id)}">${escapeHtml(label)} <span class="prev-chip-level">${escapeHtml(r.level)}</span></button>`;
+  }).join('');
+  el.querySelectorAll('[data-prev-open]').forEach((b) => {
+    b.onclick = () => {
+      const sel = qs('#preventionSelect');
+      sel.value = b.dataset.prevOpen;
+      sel.dispatchEvent(new Event('change'));
+    };
+  });
+}
+
 const prevUi = {};
 
-async function drawPreventionPath(patientId, protocolId, assigned) {
-  const box = qs('#guidedPhases');
+async function drawPreventionPath(patientId, protocolId, assigned, boxSel = '#preventionPhases') {
+  const box = qs(boxSel);
   const prog = progressionLibrary[protocolId];
   const { data: row } = await supabase.from('patient_prevention').select('level, level_since')
     .eq('patient_id', patientId).eq('protocol_id', protocolId).maybeSingle();
@@ -810,7 +848,7 @@ async function drawPreventionPath(patientId, protocolId, assigned) {
     </details>`;
   }).join('');
   box.querySelectorAll('[data-prev-level]').forEach((b) => {
-    b.onclick = () => { prevUi[key] = b.dataset.prevLevel; drawPreventionPath(patientId, protocolId, assigned); };
+    b.onclick = () => { prevUi[key] = b.dataset.prevLevel; drawPreventionPath(patientId, protocolId, assigned, boxSel); };
   });
   box.querySelectorAll('[data-prev-setlevel]').forEach((b) => {
     b.onclick = async () => {
@@ -818,7 +856,8 @@ async function drawPreventionPath(patientId, protocolId, assigned) {
         { patient_id: patientId, protocol_id: protocolId, level: shown, level_since: new Date().toISOString() }, { onConflict: 'patient_id,protocol_id' });
       if (error) { showToast('Errore nel salvataggio del livello.', 'error'); return; }
       showToast(`Livello ${shown} assegnato al paziente.`, 'ok');
-      drawPreventionPath(patientId, protocolId, assigned);
+      drawPreventionPath(patientId, protocolId, assigned, boxSel);
+      renderPreventionSummary(patientId);
     };
   });
   box.querySelectorAll('[data-guided-add]').forEach((btn) => {
