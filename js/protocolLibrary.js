@@ -2,6 +2,10 @@
 // Vanno sempre rivisti, personalizzati e validati clinicamente: non sono
 // un'indicazione automatica. Dato statico (non per-paziente): non serve nel database.
 export const protocolLibrary = [
+  // ---- PREVENZIONE: PESISTICA E CORSA ----
+  {id:'prev-sport-pesistica-corsa', category:'Prevenzione sportiva', label:'Pesistica e corsa: anca, ginocchio (quadricipite) e caviglia', text:
+    'Programma per chi fa pesistica e un po\' di corsa, pensato soprattutto per atleti alti e con massa corporea elevata. Obiettivo: prevenire il dolore al ginocchio e i sovraccarichi di caviglia e anca, rinforzando in particolare il quadricipite (zona del vasto mediale), i glutei e il piede.\nStruttura settimanale: 3 sedute da circa 25 minuti. Due abbinate alla pesistica (8 minuti di mobilità prima, rinforzo dopo) e una nel giorno di corsa (rinforzo del piede e del polpaccio, poi equilibrio). Stretching: circa 10 minuti a settimana per muscolo, in fondo alla seduta.\nIl vasto mediale non si può allenare da solo: si lavora sul quadricipite in tutta l\'ampiezza, con particolare attenzione agli ultimi gradi di estensione, e insieme ai glutei. Corsa: aumentare il volume gradualmente e alternare corsa e camminata se si riparte dopo una pausa.'},
+
   // ---- PREVENZIONE SPORTIVA ----
   {id:'prev-sport-pesi', category:'Prevenzione sportiva', label:'Pesi: palestra, powerlifting e bodybuilding', text:
     'Per chi si allena con i pesi. Mobilità di spalle, torace e anche per fare bene i movimenti, rinforzo dei muscoli che stabilizzano spalla e colonna, tecnica di stacco e squat, gestione del carico.\nFasi: mobilità e attivazione, stretching, rinforzo strutturale, mantenimento; tre livelli (basso, medio, alto) con passaggio proposto quando gli esercizi risultano facili.'},
