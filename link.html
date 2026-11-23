@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link utili | Simone Ruggieri Fisioterapista</title>
+<meta name="description" content="Tutti i link di Simone Ruggieri, fisioterapista a Roma: sito, prenotazioni, Instagram, Facebook e YouTube.">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#14161A">
+<link rel="canonical" href="https://ruggierifisio.it/link">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<style>
+:root{
+  --bg:#14161A; --surface:#20242A; --line:#2E3239; --text:#ECE9E4; --text-dim:#928E88;
+  --accent:#B08A55; --accent-soft:rgba(176,138,85,0.14);
+}
+@media (prefers-color-scheme: light){
+  :root{ --bg:#F5F6F4; --surface:#FFFFFF; --line:#BFC7C3; --text:#0E1A20; --text-dim:#34444C; --accent:#7A5A2C; --accent-soft:rgba(122,90,44,0.12); }
+}
+*{ box-sizing:border-box; }
+body{
+  margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+  font-family:'IBM Plex Sans', system-ui, sans-serif; line-height:1.5;
+  display:flex; justify-content:center; padding:48px 16px;
+}
+main{ width:100%; max-width:440px; }
+header{ text-align:center; margin-bottom:32px; }
+.monogram{
+  width:72px; height:72px; border-radius:50%; margin:0 auto 16px;
+  display:grid; place-items:center; border:1px solid var(--accent);
+  font-family:'Fraunces', Georgia, serif; font-size:26px; color:var(--accent);
+}
+h1{ font-family:'Fraunces', Georgia, serif; font-weight:400; font-size:28px; margin:0 0 6px; text-wrap:balance; }
+header p{ margin:0; color:var(--text-dim); font-size:15px; }
+ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+a.item{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:16px 18px; border:1px solid var(--line); border-radius:10px;
+  background:var(--surface); color:var(--text); text-decoration:none; font-size:16px;
+  transition:border-color .2s, transform .2s;
+}
+a.item:hover, a.item:focus-visible{ border-color:var(--accent); transform:translateY(-1px); outline:none; }
+a.item:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+a.item.primary{ background:var(--accent); border-color:var(--accent); color:#14161A; font-weight:600; }
+@media (prefers-color-scheme: light){ a.item.primary{ color:#FFFFFF; } }
+.item small{ display:block; color:var(--text-dim); font-size:13px; }
+.item.primary small{ color:inherit; opacity:.8; }
+.arrow{ color:var(--accent); font-size:18px; }
+.item.primary .arrow{ color:inherit; }
+footer{ margin-top:32px; text-align:center; color:var(--text-dim); font-size:13px; }
+@media (prefers-reduced-motion: reduce){ a.item{ transition:none; } a.item:hover{ transform:none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="monogram" aria-hidden="true">SR</div>
+    <h1>Simone Ruggieri</h1>
+    <p>Fisioterapista a Roma, Tre Pini</p>
+  </header>
+  <ul>
+    <li><a class="item primary" href="/#richiedi"><span>Prenota una seduta<small>Richiedi un appuntamento dal sito</small></span><span class="arrow" aria-hidden="true">→</span></a></li>
+    <li><a class="item" href="/"><span>Sito ufficiale<small>ruggierifisio.it</small></span><span class="arrow" aria-hidden="true">→</span></a></li>
+    <li><a class="item" href="tel:+393884080228"><span>Chiama<small>+39 388 408 0228</small></span><span class="arrow" aria-hidden="true">→</span></a></li>
+    <li><a class="item" href="https://www.instagram.com/ruggierifisio/" target="_blank" rel="noopener"><span>Instagram<small>@ruggierifisio</small></span><span class="arrow" aria-hidden="true">↗</span></a></li>
+    <li><a class="item" href="https://www.facebook.com/Activecarephysio" target="_blank" rel="noopener"><span>Facebook</span><span class="arrow" aria-hidden="true">↗</span></a></li>
+    <li><a class="item" href="https://www.youtube.com/@ruggierifisio" target="_blank" rel="noopener"><span>YouTube<small>Interviste, podcast e approfondimenti</small></span><span class="arrow" aria-hidden="true">↗</span></a></li>
+  </ul>
+  <footer>Collaboro con la FIJLKAM</footer>
+</main>
+</body>
+</html>
